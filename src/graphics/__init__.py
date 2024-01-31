@@ -1,2 +1,4 @@
 from .graphics import print_graphics
 from .graphics import save_graphics
+from .graphics import print_graphics_cv2
+from .graphics import print_hist_and_graphics
