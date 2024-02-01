@@ -48,7 +48,7 @@ result = data - data1
 
 #cv2.imshow('result', diff)
 #cv2.imshow('i1', data)
-#cv2.imshow('i2', data1)
+#cv2.imshow('i2', data1)q
 #cv2.waitKey()
 #cv2.destroyAllWindows()
 
@@ -56,7 +56,13 @@ result = data - data1
 #graphics.print_graphics(data)
 
 
-graphics.print_graphics_cv2(diff, diff.max())
+#graphics.print_graphics_cv2(diff, diff.max())
 
+
+combined_image = cv2.hconcat([data, data1, diff])
+
+#graphics.print_graphics_cv2(combined_image, combined_image.max())
+
+graphics.print_graphics_cv2_arr(data, data1, data.max())
 
 print('hay')
