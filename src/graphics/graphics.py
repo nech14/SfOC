@@ -23,13 +23,16 @@ def save_graphics(data, path, name):
     plt.close()
 
 
-def print_hist_and_graphics(data, vmin=5000, vmax=15000):
+def print_hist_and_graphics(data, vmin=5000, vmax=15000, name=""):
     plt.figure()
     plt.subplot(121)
     histogram = plt.hist(data.flatten(), bins='auto')
     plt.subplot(122)
     plt.imshow(data, cmap='gray', vmin=vmin, vmax=vmax)
     plt.colorbar()
+
+    if len(name) > 0:
+        plt.suptitle(name, fontsize=16)
 
     plt.show()
 
@@ -186,17 +189,17 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=['1', '2'
             if not result_flag:
                 cv2.destroyWindow("GraphicDiff")
         elif key == ord('1'):
-            print_hist_and_graphics(data, dlimit, ulimit)
+            print_hist_and_graphics(data, dlimit, ulimit, name=names[0])
         elif key == ord('2'):
-            print_hist_and_graphics(data1, dlimit, ulimit)
+            print_hist_and_graphics(data1, dlimit, ulimit, name=names[1])
         elif key == ord('3'):
             cmap_image1 = data.copy()
             cmap_image1[(cmap_image1 < dlimit) | (cmap_image1 > ulimit)] = 0
-            print_hist_and_graphics(cmap_image1, dlimit, ulimit)
+            print_hist_and_graphics(cmap_image1, dlimit, ulimit, name=names[0])
         elif key == ord('4'):
             cmap_image2 = data.copy()
             cmap_image2[(cmap_image2 < dlimit) | (cmap_image2 > ulimit)] = 0
-            print_hist_and_graphics(cmap_image2, dlimit, ulimit)
+            print_hist_and_graphics(cmap_image2, dlimit, ulimit, name=names[1])
         elif key == 44:
             cv2.destroyAllWindows()
             return 1
