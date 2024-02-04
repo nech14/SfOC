@@ -7,6 +7,8 @@ import cv2
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
+file_number = 11
+
 
 def create_all_png(frequency="5577"):
     current_directory = os.getcwd()
@@ -33,36 +35,31 @@ new_path = os.path.join(path, "5577")
 
 names = file.get_name_file(new_path)
 
-name_path = os.path.join(new_path, names[12])
-
+name_path = os.path.join(new_path, names[file_number])
 info, data = file.open_gz(name_path)
 
 
-
-name_path1 = os.path.join(new_path, names[11])
+name_path1 = os.path.join(new_path, names[file_number+1])
 info1, data1 = file.open_gz(name_path1)
 
-diff = cv2.absdiff(data, data1)
-result = data - data1
-
-
-#cv2.imshow('result', diff)
-#cv2.imshow('i1', data)
-#cv2.imshow('i2', data1)q
-#cv2.waitKey()
-#cv2.destroyAllWindows()
-
-#graphics.print_hist_and_graphics(data)
-#graphics.print_graphics(data)
-
-
-#graphics.print_graphics_cv2(diff, diff.max())
-
-
-combined_image = cv2.hconcat([data, data1, diff])
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
 
-graphics.print_graphics_cv2_arr(data, data1, data.max())
+mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
+print(names)
+while True:
+    if mode == 0:
+        break
+    elif mode == 1:
+        file_number -= 1
+    elif mode == 2:
+        file_number += 1
+
+    name_path = os.path.join(new_path, names[file_number])
+    info, data = file.open_gz(name_path)
+
+    name_path1 = os.path.join(new_path, names[file_number+1])
+    info1, data1 = file.open_gz(name_path1)
+    mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
 
 print('hay')
