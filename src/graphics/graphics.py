@@ -82,7 +82,10 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
             print_hist_and_graphics(image, dlimit, ulimit)
 
 
-def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=['1', '2']):
+def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
+    if names is None:
+        names = ['1', '2']
+        
     combined_image = cv2.hconcat([data, data1])
 
     ulimit = max_limit
