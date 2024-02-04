@@ -87,7 +87,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=['1', '2'
     ulimit_diff = max_limit
     dlimit_diff = 0
 
-    result_flag = False
+    result_flag = True
 
     def uupdate(value):
         nonlocal ulimit
@@ -109,6 +109,10 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=['1', '2'
 
     cv2.createTrackbar("U", "GraphicData", ulimit, max_limit, uupdate)
     cv2.createTrackbar("D", "GraphicData", dlimit, max_limit, dupdate)
+
+    cv2.namedWindow("GraphicDiff", cv2.WINDOW_KEEPRATIO)
+    cv2.createTrackbar("U", "GraphicDiff", ulimit_diff, max_limit, uupdate_diff)
+    cv2.createTrackbar("D", "GraphicDiff", dlimit_diff, max_limit, dupdate_diff)
 
     cmap = plt.get_cmap('gray')
 
