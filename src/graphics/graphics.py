@@ -127,11 +127,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0):
                 cv2.destroyWindow("GraphicDiff")
 
         if cv2.waitKey(1) == ord('1'):
-            if not result_flag:
-                cmap_image1 = drive_to_color_palette(data, dlimit, ulimit, cmap)
-            print_hist_and_graphics(cmap_image1, dlimit, ulimit)
+            print_hist_and_graphics(data, dlimit, ulimit)
 
         if cv2.waitKey(1) == ord('2'):
-            if not result_flag:
-                cmap_image2 = drive_to_color_palette(data1, dlimit, ulimit, cmap)
-            print_hist_and_graphics(cmap_image2, dlimit, ulimit)
+            print_hist_and_graphics(data1, dlimit, ulimit)
