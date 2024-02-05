@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+from skimage.measure import label
 
 
 def print_graphics(data):
@@ -9,6 +10,22 @@ def print_graphics(data):
     plt.imshow(data, origin='lower', cmap='gray')
     plt.subplot(122)
     plt.imshow(data, origin='lower')
+    plt.show()
+
+
+def print_graphics_binary(data):
+    buf = data.copy()
+    buf[buf > 0] = 1
+    labeled = label(buf)
+
+    plt.figure()
+    plt.subplot(121)
+    plt.imshow(buf, origin='lower', cmap='gray')
+    plt.subplot(122)
+    plt.imshow(labeled, origin='lower')
+
+    plt.suptitle(f"number of objects: {labeled.max()}", fontsize=16)
+
     plt.show()
 
 
@@ -26,7 +43,7 @@ def save_graphics(data, path, name):
 def print_hist_and_graphics(data, vmin=5000, vmax=15000, name=""):
     plt.figure()
     plt.subplot(121)
-    histogram = plt.hist(data.flatten(), bins='auto')
+    histogram = plt.hist(data.flatten(), bins='auto', range=(vmin, vmax))
     plt.subplot(122)
     plt.imshow(data, cmap='gray', vmin=vmin, vmax=vmax)
     plt.colorbar()
@@ -85,7 +102,7 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
 def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
     if names is None:
         names = ['1', '2']
-        
+
     combined_image = cv2.hconcat([data, data1])
 
     ulimit = max_limit
@@ -123,6 +140,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
     cmap = plt.get_cmap('gray')
 
     p_flag = True
+    s_flag = False
     while True:
 
         cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
@@ -158,22 +176,46 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
         key = cv2.waitKey(1)
 
         if result_flag:
-            #cmap_image1 = drive_to_color_palette(data, dlimit, ulimit, cmap)
-            cmap_image1 = data.copy()
-            cmap_image1[(cmap_image1 < dlimit) | (cmap_image1 > ulimit)] = 0
+            if not s_flag:
+                #cmap_image1 = drive_to_color_palette(data, dlimit, ulimit, cmap)
+                cmap_image1 = data.copy()
+                cmap_image1[(cmap_image1 < dlimit) | (cmap_image1 > ulimit)] = 0
 
-            #cmap_image2 = drive_to_color_palette(data1, dlimit, ulimit, cmap)
-            cmap_image2 = data1.copy()
-            cmap_image2[(cmap_image2 < dlimit) | (cmap_image2 > ulimit)] = 0
+                #cmap_image2 = drive_to_color_palette(data1, dlimit, ulimit, cmap)
+                cmap_image2 = data1.copy()
+                cmap_image2[(cmap_image2 < dlimit) | (cmap_image2 > ulimit)] = 0
 
-            diff = cv2.absdiff(cmap_image1, cmap_image2)
+                diff = cv2.absdiff(cmap_image1, cmap_image2)
 
-            diff1 = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+            diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
 
-            cv2.imshow("GraphicDiff", diff1)
+
+            cv2.imshow("GraphicDiff", diff_cmap)
 
             if key == ord('h'):
-                print_hist_and_graphics(diff, dlimit_diff, ulimit_diff)
+                f_diff = diff.copy()
+                f_diff[f_diff < dlimit_diff] = 0
+                f_diff[f_diff > ulimit_diff] = ulimit_diff
+                print_hist_and_graphics(f_diff, dlimit_diff, ulimit_diff)
+
+            elif key == ord('x'):
+                ulimit_diff = 1500
+                dlimit_diff = 800
+                cv2.setTrackbarPos("U", "GraphicDiff", ulimit_diff)
+                cv2.setTrackbarPos("D", "GraphicDiff", dlimit_diff)
+            elif key == ord('o'):
+                ulimit_diff = max_limit
+                dlimit_diff = 0
+                cv2.setTrackbarPos("U", "GraphicDiff", ulimit_diff)
+                cv2.setTrackbarPos("D", "GraphicDiff", dlimit_diff)
+            elif key == ord('b'):
+                f_diff = diff.copy()
+                f_diff[f_diff < dlimit_diff] = 0
+                f_diff[f_diff > ulimit_diff] = ulimit_diff
+
+                print_graphics_binary(f_diff)
+            elif key == ord('s'):
+                s_flag = not s_flag
 
         if key == ord('q'):
             cv2.destroyAllWindows()
@@ -197,12 +239,24 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
             print_hist_and_graphics(data1, dlimit, ulimit, name=names[1])
         elif key == ord('3'):
             cmap_image1 = data.copy()
-            cmap_image1[(cmap_image1 < dlimit) | (cmap_image1 > ulimit)] = 0
+            cmap_image1[(cmap_image1 < dlimit)] = 0
+            cmap_image1[(cmap_image1 > ulimit)] = ulimit
             print_hist_and_graphics(cmap_image1, dlimit, ulimit, name=names[0])
         elif key == ord('4'):
-            cmap_image2 = data.copy()
-            cmap_image2[(cmap_image2 < dlimit) | (cmap_image2 > ulimit)] = 0
+            cmap_image2 = data1.copy()
+            cmap_image2[(cmap_image2 < dlimit)] = 0
+            cmap_image2[(cmap_image2 > ulimit)] = ulimit
             print_hist_and_graphics(cmap_image2, dlimit, ulimit, name=names[1])
+        elif key == ord('z'):
+            ulimit = 15000
+            dlimit = 5000
+            cv2.setTrackbarPos("U", "GraphicData", ulimit)
+            cv2.setTrackbarPos("D", "GraphicData", dlimit)
+        elif key == ord('o'):
+            ulimit = max_limit
+            dlimit = 0
+            cv2.setTrackbarPos("U", "GraphicData", ulimit)
+            cv2.setTrackbarPos("D", "GraphicData", dlimit)
         elif key == 44:
             cv2.destroyAllWindows()
             return 1
