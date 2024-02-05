@@ -196,7 +196,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
                 f_diff = diff.copy()
                 f_diff[f_diff < dlimit_diff] = 0
                 f_diff[f_diff > ulimit_diff] = ulimit_diff
-                print_hist_and_graphics(f_diff, dlimit_diff, ulimit_diff)
+                print_hist_and_graphics(diff, dlimit_diff, ulimit_diff)
 
             elif key == ord('x'):
                 ulimit_diff = 1500
