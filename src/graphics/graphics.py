@@ -266,7 +266,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
 
 
 
-def create_img_for_video(data, data1, names=None):
+def create_img_for_video(data, data1, name=None):
     ulimit = 10000
     dlimit = 5000
     ulimit_diff = 900
@@ -281,5 +281,34 @@ def create_img_for_video(data, data1, names=None):
 
     cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
 
-    return cv2.hconcat([cmap_image, diff_cmap])
+    result = cv2.hconcat([cmap_image, diff_cmap])
+
+    if name:
+        top_border = 50
+        bottom_border = 50
+        left_border = 0
+        right_border = 0
+
+        # Расширение изображения
+        expanded_image = cv2.copyMakeBorder(result, top_border, bottom_border, left_border, right_border,
+                                            cv2.BORDER_CONSTANT)
+
+        # Добавление текста
+        text = name
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.6
+        font_thickness = 1
+        text_color = (255, 255, 255)  # Цвет текста в формате BGR
+
+        # Определение размера текста для вычисления координат центра
+        text_size = cv2.getTextSize(text, font, font_scale, font_thickness)[0]
+
+        # Определение координат текста в расширенной области
+        text_position = ((expanded_image.shape[1] - text_size[0]) // 2, top_border-10)
+
+        # Нанесение текста на изображение
+        cv2.putText(expanded_image, text, text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
+        return expanded_image
+
+    return result
 
