@@ -193,9 +193,9 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
             cv2.imshow("GraphicDiff", diff_cmap)
 
             if key == ord('h'):
-                f_diff = diff.copy()
-                f_diff[f_diff < dlimit_diff] = 0
-                f_diff[f_diff > ulimit_diff] = ulimit_diff
+                # f_diff = diff.copy()
+                # f_diff[f_diff < dlimit_diff] = 0
+                # f_diff[f_diff > ulimit_diff] = ulimit_diff
                 print_hist_and_graphics(diff, dlimit_diff, ulimit_diff)
 
             elif key == ord('x'):
@@ -263,3 +263,23 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
         elif key == 46:
             cv2.destroyAllWindows()
             return 2
+
+
+
+def create_img_for_video(data, data1, names=None):
+    ulimit = 10000
+    dlimit = 5000
+    ulimit_diff = 900
+    dlimit_diff = 0
+    cmap = plt.get_cmap('gray')
+
+    combined_image = cv2.hconcat([data, data1])
+
+    diff = cv2.absdiff(data, data1)
+
+    diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+
+    cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
+
+    return cv2.hconcat([cmap_image, diff_cmap])
+

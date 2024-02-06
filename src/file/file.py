@@ -4,6 +4,7 @@ import gzip
 from astropy.io import fits
 
 
+
 class FitsInfo:
     def __init__(self, info):
         self.SIMPLEX = info[0]
