@@ -50,7 +50,7 @@ def create_mp4(dates, name="output", flag_info=False):
     out.release()
 
 
-def create_img_for_video(names, start_i, end_i, flag_info=False):
+def create_img_for_video(names, start_i, end_i, flag_info=False, name=None):
     datas = []
     for i in range(start_i, end_i):
         name_path = os.path.join(new_path, names[i])
@@ -58,24 +58,30 @@ def create_img_for_video(names, start_i, end_i, flag_info=False):
 
         name_path1 = os.path.join(new_path, names[i + 1])
         info1, data1 = file.open_gz(name_path1)
-
-        img = graphics.create_img_for_video(data, data1)
-
+        img = graphics.create_img_for_video(data, data1, name=name)
+        # plt.imshow(img)
+        # plt.show()
         datas.append(img)
         if flag_info:
             print(f"create img: {(i-start_i)}/{end_i-start_i-1}")
     return datas
 
 
-def create_video(names, name_file="output", flag_info=False):
-    datas = create_img_for_video(names, start_i=6, end_i=len(names)-2, flag_info=flag_info)
+def create_video(names, start_i=6, end_i=None, name_file="output", flag_info=False, name=None):
+    if end_i is None:
+        end_i = len(names)-2
+    datas = create_img_for_video(names, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name)
     create_mp4(dates=datas, name=name_file, flag_info=flag_info)
 
 
 current_directory = os.getcwd()
 
-path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
+#path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
+#"data.ASI0.2023.10.11.5577"
+# name="data.ASI0.2024.01.12.5577", name_file="data.ASI0.2024.01.12.5577"
+path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
+
 
 names = file.get_name_file(new_path)
 
@@ -89,29 +95,28 @@ info1, data1 = file.open_gz(name_path1)
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
 #
-# mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
-# print(names)
-# while True:
-#     if mode == 0:
-#         break
-#     elif mode == 1:
-#         file_number -= 1
-#     elif mode == 2:
-#         file_number += 1
-#
-#     name_path = os.path.join(new_path, names[file_number])
-#     info, data = file.open_gz(name_path)
-#
-#     name_path1 = os.path.join(new_path, names[file_number+1])
-#     info1, data1 = file.open_gz(name_path1)
-#     mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
+mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
+print(names)
+while True:
+    if mode == 0:
+        break
+    elif mode == 1:
+        file_number -= 1
+    elif mode == 2:
+        file_number += 1
+
+    name_path = os.path.join(new_path, names[file_number])
+    info, data = file.open_gz(name_path)
+
+    name_path1 = os.path.join(new_path, names[file_number+1])
+    info1, data1 = file.open_gz(name_path1)
+    mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
 
 
-    #plt.imshow(img)
-    #plt.show()
 
 
-#create_video(names)
+
+#create_video(names, start_i=12, flag_info=True)
 
 
 print('hay')
