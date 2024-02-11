@@ -65,9 +65,8 @@ def drive_to_color_palette(combined_image, dlimit, ulimit, cmap):
     cmap_image = cmap(cmap_image)
 
     # Преобразование в BGR (OpenCV использует формат BGR)
-    cmap_image = (cmap_image[:, :, :3] * 255).astype(np.uint8)
-    return cmap_image
-
+    cmap_image = (cmap_image[:, :, 0] * 255).astype(np.uint8)
+    return cmap_image[:, :]
 
 def print_graphics_cv2(data, max_limit=255, dlimit=0):
     image = data.copy()
@@ -105,20 +104,49 @@ def auto_contrast(data):
     image = data.copy()
     # Автоматическое выравнивание гистограммы
     non_zero_values = image[image > 0]
-    p2, p98 = np.percentile(non_zero_values, (5, 95))
-    result = exposure.rescale_intensity(image, in_range=(p2, p98))
-    print( p2, p98)
+    q_d = 2
+    q_u = 98
+    while True:
+        p2, p98 = np.percentile(non_zero_values, (q_d, q_u))
+        result = exposure.rescale_intensity(image, in_range=(p2, p98))
+        print(p2, p98, q_d, q_u)
 
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
-    result1 = clahe.apply(image)
+        clahe = exposure.equalize_adapthist(image, clip_limit=0.03)
+        result1 = (clahe * 255).astype('uint8')
 
-    cv2.imshow('Original', result1)
-    cv2.imshow('Auto Contrast', result)
-    cv2.waitKey(0)
+        cv2.imshow('Original', result1)
+        cv2.imshow('Auto Contrast', result)
+        key = cv2.waitKey(0)
+
+        if key == ord("q"):
+            break
+        elif key == ord('a'):
+            q_d -= 1
+        elif key == ord('d'):
+            q_d += 1
+        elif key == ord('w'):
+            q_u += 1
+        elif key == ord('s'):
+            q_u -= 1
     cv2.destroyAllWindows()
 
 
-def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
+def auto_contrast_skimage(data):
+    image = data.copy()
+    non_zero_values = image[image > 0]
+    p2, p98 = np.percentile(non_zero_values, (2, 98))
+    result = exposure.rescale_intensity(image, in_range=(p2, p98))
+    return result
+
+
+def auto_contrast_cv2(data):
+    image = data.copy()
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
+    result = clahe.apply(image)
+    return result
+
+
+def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nameWindow="GraphicData"):
     if names is None:
         names = ['1', '2']
 
@@ -147,10 +175,10 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
         nonlocal dlimit_diff
         dlimit_diff = value
 
-    cv2.namedWindow("GraphicData", cv2.WINDOW_KEEPRATIO)
+    cv2.namedWindow(nameWindow, cv2.WINDOW_KEEPRATIO)
 
-    cv2.createTrackbar("U", "GraphicData", ulimit, max_limit, uupdate)
-    cv2.createTrackbar("D", "GraphicData", dlimit, max_limit, dupdate)
+    cv2.createTrackbar("U", nameWindow, ulimit, max_limit, uupdate)
+    cv2.createTrackbar("D", nameWindow, dlimit, max_limit, dupdate)
 
     cv2.namedWindow("GraphicDiff", cv2.WINDOW_KEEPRATIO)
     cv2.createTrackbar("U", "GraphicDiff", ulimit_diff, max_limit, uupdate_diff)
@@ -190,7 +218,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
             cv2.putText(expanded_image, text, text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
             cmap_image = expanded_image
 
-        cv2.imshow("GraphicData", cmap_image)
+        cv2.imshow(nameWindow, cmap_image)
 
         key = cv2.waitKey(1)
 
@@ -207,13 +235,13 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
                 diff = cv2.absdiff(cmap_image1, cmap_image2)
 
             diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
-
+            #diff_cmap = auto_contrast_cv2(diff)
 
             cv2.imshow("GraphicDiff", diff_cmap)
 
             if key == ord('h'):
-                # f_diff = diff.copy()
-                # f_diff[f_diff < dlimit_diff] = 0
+                #f_diff = diff.copy()
+                # f_diff[f_diff < dlimit_diff] = 0.
                 # f_diff[f_diff > ulimit_diff] = ulimit_diff
                 print_hist_and_graphics(diff, dlimit_diff, ulimit_diff)
 
@@ -232,7 +260,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
                 f_diff[f_diff < dlimit_diff] = 0
                 f_diff[f_diff > ulimit_diff] = ulimit_diff
 
-                print_graphics_binary(f_diff)
+                print_graphics_binary(np.flip(f_diff, axis=0))
             elif key == ord('s'):
                 s_flag = not s_flag
 
@@ -269,15 +297,19 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
         elif key == ord('z'):
             ulimit = 15000
             dlimit = 5000
-            cv2.setTrackbarPos("U", "GraphicData", ulimit)
-            cv2.setTrackbarPos("D", "GraphicData", dlimit)
+            cv2.setTrackbarPos("U", nameWindow, ulimit)
+            cv2.setTrackbarPos("D", nameWindow, dlimit)
         elif key == ord('c'):
             auto_contrast(combined_image)
+        elif key == ord('e'):
+            d = np.array(auto_contrast_cv2(data))
+            d1 = np.array(auto_contrast_cv2(data1))
+            print_graphics_cv2_arr(d, d1, d.max(), nameWindow="auto")
         elif key == ord('o'):
             ulimit = max_limit
             dlimit = 0
-            cv2.setTrackbarPos("U", "GraphicData", ulimit)
-            cv2.setTrackbarPos("D", "GraphicData", dlimit)
+            cv2.setTrackbarPos("U", nameWindow, ulimit)
+            cv2.setTrackbarPos("D", nameWindow, dlimit)
         elif key == 44:
             cv2.destroyAllWindows()
             return 1
@@ -299,7 +331,9 @@ def create_img_for_video(data, data1, name=None):
 
     diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
 
-    cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
+    #cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
+    cmap_image = np.array(auto_contrast_skimage(combined_image))
+    cmap_image = drive_to_color_palette(cmap_image, 0, cmap_image.max(), cmap)
 
     result = cv2.hconcat([cmap_image, diff_cmap])
 
