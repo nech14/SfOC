@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 from skimage.measure import label
+from skimage import exposure
 
 
 def print_graphics(data):
@@ -43,7 +44,8 @@ def save_graphics(data, path, name):
 def print_hist_and_graphics(data, vmin=5000, vmax=15000, name=""):
     plt.figure()
     plt.subplot(121)
-    histogram = plt.hist(data.flatten(), bins='auto', range=(vmin, vmax))
+    non_zero_values = data[data > 0]
+    histogram = plt.hist(non_zero_values.flatten(), bins='auto')
     plt.subplot(122)
     plt.imshow(data, cmap='gray', vmin=vmin, vmax=vmax)
     plt.colorbar()
@@ -97,6 +99,23 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
 
         if cv2.waitKey(1) == ord('f'):
             print_hist_and_graphics(image, dlimit, ulimit)
+
+
+def auto_contrast(data):
+    image = data.copy()
+    # Автоматическое выравнивание гистограммы
+    non_zero_values = image[image > 0]
+    p2, p98 = np.percentile(non_zero_values, (5, 95))
+    result = exposure.rescale_intensity(image, in_range=(p2, p98))
+    print( p2, p98)
+
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
+    result1 = clahe.apply(image)
+
+    cv2.imshow('Original', result1)
+    cv2.imshow('Auto Contrast', result)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
@@ -252,6 +271,8 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
             dlimit = 5000
             cv2.setTrackbarPos("U", "GraphicData", ulimit)
             cv2.setTrackbarPos("D", "GraphicData", dlimit)
+        elif key == ord('c'):
+            auto_contrast(combined_image)
         elif key == ord('o'):
             ulimit = max_limit
             dlimit = 0
@@ -263,7 +284,6 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None):
         elif key == 46:
             cv2.destroyAllWindows()
             return 2
-
 
 
 def create_img_for_video(data, data1, name=None):
@@ -312,3 +332,16 @@ def create_img_for_video(data, data1, name=None):
 
     return result
 
+
+def cut_img(image, percent_to_trim=0.1):
+    height, width = image.shape
+    radius = min(height, width) // 2
+
+    center = (width // 2, height // 2)
+    trim_radius = int(radius * percent_to_trim)
+
+    mask = np.zeros((height, width), dtype=np.uint8)
+    cv2.circle(mask, center, radius - trim_radius, (255, 255, 255), thickness=-1)
+
+    result_image = cv2.bitwise_and(image, image, mask=mask)
+    return result_image

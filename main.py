@@ -76,10 +76,10 @@ def create_video(names, start_i=6, end_i=None, name_file="output", flag_info=Fal
 
 current_directory = os.getcwd()
 
-#path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
+path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 #"data.ASI0.2023.10.11.5577"
 # name="data.ASI0.2024.01.12.5577", name_file="data.ASI0.2024.01.12.5577"
-path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
+#path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
 
@@ -110,8 +110,11 @@ while True:
 
     name_path1 = os.path.join(new_path, names[file_number+1])
     info1, data1 = file.open_gz(name_path1)
-    mode = graphics.print_graphics_cv2_arr(data, data1, data.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
 
+    data_cut = graphics.cut_img(data)
+    data1_cut = graphics.cut_img(data1)
+
+    mode = graphics.print_graphics_cv2_arr(data_cut, data1_cut, data_cut.max(), names=[names[file_number][:-8], names[file_number+1][:-8]])
 
 
 
