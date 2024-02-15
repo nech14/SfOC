@@ -4,6 +4,7 @@ import cv2
 from skimage.measure import label
 from skimage import exposure
 from matplotlib import cm
+from matplotlib.colors import Normalize
 
 
 def print_graphics(data):
@@ -70,6 +71,18 @@ def drive_to_color_palette(combined_image, dlimit, ulimit, cmap):
     return cmap_image[:, :]
 
 
+def drive_to_color_palette_heat_mao(data):
+    norm = Normalize(vmin=data.min(), vmax=data.max())
+
+    # Создаем цветовую карту для отображения положительных и отрицательных значений
+    cmap_RdBu = cm.get_cmap("RdBu")
+
+    # Применяем цветовую карту к нормализованным значениям
+    color_mapped = (cmap_RdBu(norm(data))[:, :, :3] * 255).astype(np.uint8)
+
+    return color_mapped
+
+
 def print_graphics_cv2(data, max_limit=255, dlimit=0):
     image = data.copy()
     ulimit = max_limit
@@ -111,25 +124,25 @@ def print_heat_map(data_heat, data_base=None):
     c = 2
 
     plt.subplot(r, c, 1)
-    plt.imshow(data_heat, cmap="RdBu_r", interpolation='nearest', origin='lower')
+    plt.imshow(data_heat, cmap="RdBu_r", interpolation='nearest')
     plt.colorbar()
 
     plt.subplot(r, c, 2)
-    plt.imshow(data_heat, cmap="gray", origin='lower')
+    plt.imshow(data_heat, cmap="gray")
     plt.colorbar()
 
     if not data_base is None:
         h_buf_diff = data_heat.copy()
         h_buf_diff[(h_buf_diff < 1000) & (h_buf_diff > -1000)] = None
         plt.subplot(r, c, 3)
-        plt.imshow(h_buf_diff, cmap="RdBu_r", interpolation='nearest', origin='lower')
+        plt.imshow(h_buf_diff, cmap="RdBu_r", interpolation='nearest')
         plt.colorbar()
 
         plt.subplot(r, c, 4)
-        plt.imshow(data_base, cmap="gray", origin='lower')
+        plt.imshow(data_base, cmap="gray")
         plt.colorbar()
     else:
-        plt.subplot(r, c, 4)
+        plt.subplot(r, 1, 2)
         histogram = plt.hist(data_heat.flatten(), bins='auto')
 
     plt.show()
@@ -300,6 +313,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
                 s_flag = not s_flag
             elif key == ord('n'):
                 h_diff = data.astype(float) - data1.astype(float)
+                h_diff[h_diff==0] = None
                 print_heat_map(h_diff)
             elif key == ord('m'):
                 h_diff = data.astype(float) - data1.astype(float)
@@ -307,12 +321,23 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             elif key == ord('i'):
                 h_diff = data.astype(float) - data1.astype(float)
 
-                # Создание аппроксимированной цветовой карты
-                cmap_rdbu_r = plt.cm.get_cmap("RdBu_r")
-                res = drive_to_color_palette(h_diff, h_diff.min(), h_diff.max(), cmap_rdbu_r)
+                # Нормализуем значения в диапазон [0, 1]
+                color_mapped = drive_to_color_palette_heat_mao(h_diff)
 
-                # Отображение изображения с использованием cv2.imshow
-                cv2.imshow('Heatmap', res)
+                # Отображаем изображение с цветовой картой
+                cv2.namedWindow("Color Mapped Image", cv2.WINDOW_KEEPRATIO)
+                cv2.imshow('Color Mapped Image', color_mapped)
+            elif key == ord('u'):
+                h_diff = data.astype(float) - data1.astype(float)
+
+                h_diff[h_diff == 0] = None
+
+                # Нормализуем значения в диапазон [0, 1]
+                color_mapped = drive_to_color_palette_heat_mao(h_diff)
+
+                # Отображаем изображение с цветовой картой
+                cv2.namedWindow("Color Mapped Image", cv2.WINDOW_KEEPRATIO)
+                cv2.imshow('Color Mapped Image', color_mapped)
 
         if key == ord('q'):
             cv2.destroyAllWindows()
@@ -458,7 +483,7 @@ def cut_img(image, percent_to_trim=0.1):
     trim_radius = int(radius * percent_to_trim)
 
     mask = np.zeros((height, width), dtype=np.uint8)
-    cv2.circle(mask, center, radius - trim_radius, (255, 255, 255), thickness=-1)
+    cv2.circle(mask, center, radius - trim_radius,(255, 255, 255), thickness=cv2.FILLED)
 
     result_image = cv2.bitwise_and(image, image, mask=mask)
     return result_image
