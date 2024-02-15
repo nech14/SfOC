@@ -1,8 +1,6 @@
-
 import os
 import gzip
 from astropy.io import fits
-
 
 
 class FitsInfo:
@@ -34,6 +32,13 @@ class FitsInfo:
         self.FWTEMP = info[24]
         self.VERSION = info[25]
 
+    def get_time(self):
+        return str(self.EXPOTIME)[-6:]
+
+    def get_norm_time(self):
+        time = self.get_time()
+        return time[:2] + ':' + time[2:4] + ':' + time[4:]
+
 
 def get_name_file(folder_path="/"):
     files = os.listdir(folder_path)
@@ -51,4 +56,3 @@ def open_gz(gz_file_path):
         # Чтение файла FITS из архива Gzip
         with fits.open(gz_file) as f:
             return f[0].header, f[0].data
-
