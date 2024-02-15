@@ -51,21 +51,34 @@ def create_mp4(dates, name="output", flag_info=False):
     out.release()
 
 
-def create_img_for_video(names, start_i, end_i, flag_info=False, name=None, cut=False, percent_to_trim=0.1):
+def create_img_for_video(names_files, start_i, end_i, flag_info=False, name=None, cut=False,
+                         percent_to_trim=0.1, names=False):
     datas = []
     for i in range(start_i, end_i):
-        name_path = os.path.join(new_path, names[i])
+        name_path = os.path.join(new_path, names_files[i])
         info, data = file.open_gz(name_path)
 
-        name_path1 = os.path.join(new_path, names[i + 1])
+        name_path1 = os.path.join(new_path, names_files[i + 1])
         info1, data1 = file.open_gz(name_path1)
 
         if cut:
             data_cut = graphics.cut_img(data, percent_to_trim)
             data1_cut = graphics.cut_img(data1, percent_to_trim)
-            img = graphics.create_img_for_video(data_cut, data1_cut, name=name)
+            if names:
+                info_f = file.FitsInfo(info)
+                info_f1 = file.FitsInfo(info1)
+                img = graphics.create_img_for_video(data_cut, data1_cut, name=name,
+                                                    names=[info_f.get_norm_time(), info_f1.get_norm_time()])
+            else:
+                img = graphics.create_img_for_video(data_cut, data1_cut, name=name)
         else:
-            img = graphics.create_img_for_video(data, data1, name=name)
+            if names:
+                info_f = file.FitsInfo(info)
+                info_f1 = file.FitsInfo(info1)
+                img = graphics.create_img_for_video(data, data1, name=name,
+                                                    names=[info_f.get_norm_time(), info_f1.get_norm_time()])
+            else:
+                img = graphics.create_img_for_video(data, data1, name=name)
         # plt.imshow(img)
         # plt.show()
         datas.append(img)
@@ -74,10 +87,12 @@ def create_img_for_video(names, start_i, end_i, flag_info=False, name=None, cut=
     return datas
 
 
-def create_video(names, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False):
+def create_video(names_files, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
+                 names=False):
     if end_i is None:
-        end_i = len(names) - 2
-    datas = create_img_for_video(names, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name,cut=cut)
+        end_i = len(names_files) - 2
+    datas = create_img_for_video(names_files, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name, cut=cut,
+                                 names=names)
     create_mp4(dates=datas, name=name_file, flag_info=flag_info)
 
 
@@ -114,20 +129,22 @@ def viewing_pictures(names, file_number):
 
 current_directory = os.getcwd()
 
-# path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
+path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 # "data.ASI0.2023.10.11.5577"
 # name="data.ASI0.2024.01.12.5577", name_file="data.ASI0.2024.01.12.5577"
-path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
+#path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
 names = file.get_name_file(new_path)
 
-#viewing_pictures(names, file_number)
+viewing_pictures(names, file_number)
 
-# graphics.print_graphics_cv2(combined_image, combined_image.max())
+#graphics.print_graphics_cv2(combined_image, combined_image.max())
 #
 
 
 #create_video(names, start_i=13, flag_info=True, name_file="data.ASI0.2024.01.12.5577", name="data.ASI0.2024.01.12.5577", cut=True)
+
+
 
 print('hay')
