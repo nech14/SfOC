@@ -166,7 +166,7 @@ names = file.get_name_file(new_path)
 
 
 
-def hist_3d(names, file_number, end=10):
+def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=10000, ylim3d_min=0, ylim3d_max=2):
 
     #histogram = plt.hist(data_cut.flatten(), bins='auto')
    # print(histogram)
@@ -184,10 +184,10 @@ def hist_3d(names, file_number, end=10):
         info, data = file.open_gz(name_path)
         data_cut = graphics.cut_img(data)
 
-        non_zero_data_cut = data_cut[data_cut != 0]
+        #non_zero_data_cut = data_cut[data_cut != 0]
         
-        histvals, _ = np.histogram(non_zero_data_cut.flatten(), bins="auto")
-        
+        histvals, _ = np.histogram(data_cut.flatten(), bins="auto")
+        histvals = histvals[1:]
 
         xbins = np.linspace(data_cut.flatten().min().min(), data_cut.flatten().max().max(), len(histvals)+1)
         # and calculate the center and widths of the bars
@@ -208,10 +208,46 @@ def hist_3d(names, file_number, end=10):
     ax.set_zlabel("value")
 
     # label every other column number
-    ax.set_ylim3d(0,2)
-    plt.show()
+    ax.set_ylim3d(ylim3d_min, ylim3d_max)
+    ax.set_xlim3d(xlim3d_min, xlim3d_max)
 
-hist_3d(names, file_number)
+    plt.title(name_g)
+
+    for angle in range(0, 180):
+        ax.view_init(angle, 130)
+        print(f"rotate: {angle}/{180}")
+        #plt.draw()
+        plt.savefig('result/rotanim_' + str(angle+131) + '.png')
+        #plt.pause(.001)
+
+    #plt.show()
+
+
+#hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5)
+#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=1.5)
+
+
+nn = "rotanim_"
+name = "rrr0"
+# Размеры кадра и частота кадров в видео
+date1 = plt.imread(f'result/rotanim_{0}.png')
+frame_width = date1.shape[1]
+frame_height = date1.shape[0]
+fps = 5
+# Создаем объект VideoWriter для записи видео в формате MP4
+fourcc1 = cv2.VideoWriter_fourcc(*'mp4v')
+out1 = cv2.VideoWriter(name + ".mp4", fourcc1, fps, (frame_width, frame_height))
+
+count = 0
+for i in range(1, 223):
+    frame = cv2.imread(f'result/rotanim_{i}.png')
+    out1.write(frame)
+    if True:
+        count += 1
+        print(f"create video: {count}/221")
+
+# Закрываем объект VideoWriter
+out1.release()
 
 
 print('hay')
