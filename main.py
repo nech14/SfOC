@@ -137,7 +137,7 @@ new_path = os.path.join(path, "5577")
 
 names = file.get_name_file(new_path)
 
-viewing_pictures(names, file_number)
+#viewing_pictures(names, file_number)
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
 #
@@ -145,6 +145,73 @@ viewing_pictures(names, file_number)
 
 #create_video(names, start_i=13, flag_info=True, name_file="data.ASI0.2024.01.12.5577", name="data.ASI0.2024.01.12.5577", cut=True)
 
+
+# import joypy
+#
+# import pandas as pd
+# import numpy as np
+# from matplotlib import pyplot as plt
+# from matplotlib import cm
+#
+#
+# temp = pd.read_csv("data/daily_temp.csv",comment="%")
+#
+# labels=[y if y%10==0 else None for y in list(temp.Year.unique())]
+# fig, axes = joypy.joyplot(temp, by="Year", column="Anomaly", labels=labels, range_style='own',
+#                           grid="y", linewidth=1, legend=False, figsize=(6,5),
+#                           title="Global daily temperature 1880-2014 \n(°C above 1950-80 average)",
+#                           colormap=cm.autumn_r)
+#
+# plt.show()
+
+
+
+def hist_3d(names, file_number, end=10):
+
+    #histogram = plt.hist(data_cut.flatten(), bins='auto')
+   # print(histogram)
+    #plt.show()
+
+    fig = plt.figure(figsize=(10, 10))
+    ax = fig.add_subplot(projection="3d")
+    my_cmap = plt.cm.inferno
+
+    count_files = len(names)-end
+
+    for i in range(file_number, count_files):
+        # we create evenly spaced bins between the minimum and maximum of the entire dataframe
+        name_path = os.path.join(new_path, names[i])
+        info, data = file.open_gz(name_path)
+        data_cut = graphics.cut_img(data)
+
+        non_zero_data_cut = data_cut[data_cut != 0]
+        
+        histvals, _ = np.histogram(non_zero_data_cut.flatten(), bins="auto")
+        
+
+        xbins = np.linspace(data_cut.flatten().min().min(), data_cut.flatten().max().max(), len(histvals)+1)
+        # and calculate the center and widths of the bars
+        xcenter = np.convolve(xbins, np.ones(2), "valid") / 2
+        xwidth = np.diff(xbins)
+
+        # print(xbins)
+        # print(xcenter)
+
+
+        ax.bar(left=xcenter, height=histvals, width=xwidth, zs=(i-file_number)/100, zdir="y", alpha=0.666, linewidth=0.3, color=my_cmap((i-file_number)/(count_files-file_number)))
+
+        print(f"{i-file_number}/{count_files-file_number}")
+
+
+    ax.set_xlabel("bin")
+    ax.set_ylabel("column")
+    ax.set_zlabel("value")
+
+    # label every other column number
+    ax.set_ylim3d(0,2)
+    plt.show()
+
+hist_3d(names, file_number)
 
 
 print('hay')

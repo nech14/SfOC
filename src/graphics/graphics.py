@@ -123,12 +123,15 @@ def print_heat_map(data_heat, data_base=None):
 
     c = 2
 
+    pp = 1000
+
     plt.subplot(r, c, 1)
-    plt.imshow(data_heat, cmap="RdBu_r", interpolation='nearest')
+
+    plt.imshow(data_heat, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
     plt.colorbar()
 
     plt.subplot(r, c, 2)
-    plt.imshow(data_heat, cmap="gray")
+    plt.imshow(data_heat, cmap="gray", vmin=-pp, vmax=pp)
     plt.colorbar()
 
     if not data_base is None:
@@ -144,6 +147,7 @@ def print_heat_map(data_heat, data_base=None):
     else:
         plt.subplot(r, 1, 2)
         histogram = plt.hist(data_heat.flatten(), bins='auto')
+        plt.xlim(-pp, pp)
 
     plt.show()
 
@@ -192,6 +196,30 @@ def auto_contrast_cv2(data):
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(10, 10))
     result = clahe.apply(image)
     return result
+
+
+def get_hist_for_video(data):
+    non_zero_values = data[data > 0]
+
+    percentiles = np.percentile(non_zero_values, [0, 99.9])
+    range = (percentiles[0], percentiles[1])
+
+    histogram = plt.hist(non_zero_values.flatten(), bins="auto")
+    #print(range)
+    plt.xlim(range[0], range[1])
+    plt.show()
+
+
+def get_hist_diff_for_video(data, pp=1000):
+    histogram = plt.hist(data.flatten(), bins='auto')
+    plt.xlim(-pp, pp)
+    plt.show()
+
+
+def get_heat_map_diff_for_video(data, pp=1000, cmap="RdBu_r"):
+    plt.imshow(data, cmap=cmap, interpolation='nearest', vmin=-pp, vmax=pp)
+    plt.colorbar()
+    plt.show()
 
 
 def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nameWindow="GraphicData"):
@@ -313,6 +341,12 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
                 s_flag = not s_flag
             elif key == ord('n'):
                 h_diff = data.astype(float) - data1.astype(float)
+
+
+                h, b = np.histogram(h_diff, bins=2000)
+                print(len(h), h)
+                print(len(b), b)
+
                 h_diff[h_diff==0] = None
                 print_heat_map(h_diff)
             elif key == ord('m'):
@@ -356,8 +390,15 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             if not result_flag:
                 cv2.destroyWindow("GraphicDiff")
         elif key == ord('1'):
+
+            get_hist_for_video(data)
+
             print_hist_and_graphics(data, dlimit, ulimit, name=names[0])
         elif key == ord('2'):
+
+            h, b = np.histogram(data1, bins="auto")
+            print(h, b)
+
             print_hist_and_graphics(data1, dlimit, ulimit, name=names[1])
         elif key == ord('3'):
             cmap_image1 = data.copy()
