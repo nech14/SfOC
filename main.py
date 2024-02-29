@@ -166,7 +166,7 @@ names = file.get_name_file(new_path)
 
 
 
-def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=10000, ylim3d_min=0, ylim3d_max=2):
+def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=10000, ylim3d_min=0, ylim3d_max=None,rotate=False, x_agnes_end=130, y_agnes_end=90, start_folder="result", save_folder="img"):
 
     #histogram = plt.hist(data_cut.flatten(), bins='auto')
    # print(histogram)
@@ -185,7 +185,7 @@ def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=1000
         data_cut = graphics.cut_img(data)
 
         #non_zero_data_cut = data_cut[data_cut != 0]
-        
+
         histvals, _ = np.histogram(data_cut.flatten(), bins="auto")
         histvals = histvals[1:]
 
@@ -203,51 +203,77 @@ def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=1000
         print(f"{i-file_number}/{count_files-file_number}")
 
 
-    ax.set_xlabel("bin")
+    ax.set_xlabel("value")
     ax.set_ylabel("column")
-    ax.set_zlabel("value")
+    ax.set_zlabel("count")
 
     # label every other column number
-    ax.set_ylim3d(ylim3d_min, ylim3d_max)
+    if not ylim3d_max is None:
+        ax.set_ylim3d(ylim3d_max, ylim3d_min)
     ax.set_xlim3d(xlim3d_min, xlim3d_max)
 
     plt.title(name_g)
 
-    for angle in range(0, 180):
-        ax.view_init(angle, 130)
-        print(f"rotate: {angle}/{180}")
-        #plt.draw()
-        plt.savefig('result/rotanim_' + str(angle+131) + '.png')
-        #plt.pause(.001)
+    if rotate:
+        if not os.path.exists(start_folder+'/'+save_folder):
+            # Если не существует, создаем папку
+            os.makedirs(start_folder+'/'+save_folder)
+        for angle in range(0, x_agnes_end):
+            ax.view_init(0, angle)
+            print(f"rotate_x: {angle}/{x_agnes_end}")
+            #plt.draw()
+            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle) + '.png')
+            #plt.pause(.001)
+
+        for angle in range(0, y_agnes_end):
+            ax.view_init(angle, x_agnes_end)
+            print(f"rotate_y: {angle}/{y_agnes_end}")
+            #plt.draw()
+            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle+x_agnes_end) + '.png')
+            #plt.pause(.001)
 
     #plt.show()
 
+def create_video_hist_3d(name_file=None, folder_name="result/ASI0/2023/10/11/OH1", save_folder='video'):
+    if name_file is None:
+        name_file = folder_name
 
-#hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5)
-#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=1.5)
+    if not os.path.exists(folder_name + '/' + save_folder):
+        # Если не существует, создаем папку
+        os.makedirs(folder_name + '/../' + save_folder)
+
+    # Размеры кадра и частота кадров в видео
+    date1 = plt.imread(folder_name+f'/rotanim_{0}.png')
+    frame_width = date1.shape[1]
+    frame_height = date1.shape[0]
+    fps = 5
+    # Создаем объект VideoWriter для записи видео в формате MP4
+    fourcc1 = cv2.VideoWriter_fourcc(*'mp4v')
+    out1 = cv2.VideoWriter(folder_name + '/../' + save_folder + '/' + name_file + ".mp4", fourcc1, fps, (frame_width, frame_height))
+    print(folder_name + '/../' + save_folder + '/' + name_file + ".mp4")
+
+    count = 0
+    for i in range(1, 220):
+        frame = cv2.imread(folder_name + f'/rotanim_{i}.png')
+        out1.write(frame)
+        if True:
+            count += 1
+            print(f"create video: {count}/221")
+
+    # Закрываем объект VideoWriter
+    out1.release()
 
 
-nn = "rotanim_"
-name = "rrr0"
-# Размеры кадра и частота кадров в видео
-date1 = plt.imread(f'result/rotanim_{0}.png')
-frame_width = date1.shape[1]
-frame_height = date1.shape[0]
-fps = 5
-# Создаем объект VideoWriter для записи видео в формате MP4
-fourcc1 = cv2.VideoWriter_fourcc(*'mp4v')
-out1 = cv2.VideoWriter(name + ".mp4", fourcc1, fps, (frame_width, frame_height))
 
-count = 0
-for i in range(1, 223):
-    frame = cv2.imread(f'result/rotanim_{i}.png')
-    out1.write(frame)
-    if True:
-        count += 1
-        print(f"create video: {count}/221")
+#hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5, rotate=True)
+#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=1.5, rotate=True)
+#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.OH1", xlim3d_max=20000, ylim3d_max=(len(names)-file_number-20)//100, rotate=True, start_folder="result/ASI0/2023/10/11/OH1")
 
-# Закрываем объект VideoWriter
-out1.release()
+
+#hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
+
+create_video_hist_3d(name_file="result_ASI0_2023_10_11_5577", folder_name="result/ASI0/2023/10/11/5577/img")
+
 
 
 print('hay')
