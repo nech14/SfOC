@@ -38,10 +38,11 @@ def create_mp4(dates, name="output", flag_info=False):
     print(date.shape)
     # Создаем объект VideoWriter для записи видео в формате MP4
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(name + ".mp4", fourcc, fps, (frame_width, frame_height), isColor=False)
-
+    out = cv2.VideoWriter(name + ".mp4", fourcc, fps, (frame_width, frame_height))
     count = 0
     for i in dates:
+        # plt.imshow(i)
+        # plt.show()
         out.write(i)
         if flag_info:
             count += 1
@@ -127,6 +128,37 @@ def viewing_pictures(names, file_number):
                                                names=[names[file_number][:-8], names[file_number + 1][:-8]])
 
 
+def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100, auto_contrast=True, cmap="viridis"):
+    if end_file is None:
+        end_file = len(names)
+    print('fick')
+    count_files = end_file - start_file - edges*2
+    data_for_heatmap = [0] * count_files
+    count = 0
+    for i in range(start_file+edges, end_file-edges):
+        name_path = os.path.join(new_path, names[i])
+        info, data = file.open_gz(name_path)
+        data_cut = graphics.cut_img(data)
+        if auto_contrast:
+            data_c = graphics.auto_contrast_skimage(data_cut)
+            data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
+        else:
+            data_for_heatmap[count] = graphics.get_bins_hist(data_cut, bins=bins)
+        count += 1
+        if log_info:
+            print(f"create {count}/{count_files}")
+    data_for_heatmap = np.array(data_for_heatmap)
+    transposed_data = np.transpose(data_for_heatmap)
+    
+    if not title is None:
+        plt.title(title)
+    
+    plt.imshow(transposed_data, cmap=cmap)
+    plt.colorbar()
+    plt.savefig(f'{title}.png')
+    #plt.show()
+    print("create")
+
 current_directory = os.getcwd()
 
 path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
@@ -137,13 +169,18 @@ new_path = os.path.join(path, "5577")
 
 names = file.get_name_file(new_path)
 
-#viewing_pictures(names, file_number)
+viewing_pictures(names, file_number)
+
+#create_heatmap(names, new_path, bins=100, edges=15, log_info=True, auto_contrast=False, title="data.ASI0.2023.10.11.5577.hot.100bins", cmap='hot')
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
-#
 
 
-#create_video(names, start_i=13, flag_info=True, name_file="data.ASI0.2024.01.12.5577", name="data.ASI0.2024.01.12.5577", cut=True)
+#result = create_img_for_video(names, 13, 14, name="GG", cut=True, names=True)
+#plt.imshow(result[0])
+#plt.show()
+
+#create_video(names, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap", name="data.ASI0.2023.10.11.5577", cut=True)
 
 
 # import joypy
@@ -346,16 +383,16 @@ def create_video_hist_3d(name_file=None, folder_name="result/ASI0/2023/10/11/OH1
 
 #hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5, rotate=True)
 #hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=1.5, rotate=True)
-#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.OH1", xlim3d_max=20000, ylim3d_max=(len(names)-file_number-20)//100, rotate=True, start_folder="result/ASI0/2023/10/11/OH1")
+#hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.OH", xlim3d_max=20000, ylim3d_max=(len(names)-file_number-20)//100, rotate=True, start_folder="result/ASI0/2023/10/11/OH")
 
 
 #hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=(len(names)-file_number)/100, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
 
-#create_video_hist_3d(name_file="result_ASI0_2023_10_11_5577", folder_name="result/ASI0/2023/10/11/5577/img")
+#create_video_hist_3d(name_file="result_ASI0_2023_10_11_OH", folder_name="result/ASI0/2023/10/11/OH/img")
 
 
-hist_3d_diff(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577.diff", ylim3d_max=(len(names)-file_number)/100, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
+#hist_3d_diff(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577.diff", ylim3d_max=(len(names)-file_number)/100, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
 
-create_video_hist_3d(name_file="result_ASI0_2023_10_11_5577_diff", folder_name="result/ASI0/2023/10/11/5577/diff")
+#create_video_hist_3d(name_file="result_ASI0_2023_10_11_5577_diff", folder_name="result/ASI0/2023/10/11/5577/diff")
 
 print('hay')

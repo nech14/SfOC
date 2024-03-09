@@ -5,3 +5,5 @@ from .graphics import print_hist_and_graphics
 from .graphics import print_graphics_cv2_arr
 from .graphics import create_img_for_video
 from .graphics import cut_img
+from .graphics import get_bins_hist
+from .graphics import auto_contrast_skimage

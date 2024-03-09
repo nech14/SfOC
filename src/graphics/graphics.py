@@ -115,6 +115,33 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
             print_hist_and_graphics(image, dlimit, ulimit)
 
 
+def save_heat_map(data_heat, pp=500):
+    fig, ax = plt.subplots(figsize=(8, 8))
+    #print(f"hsdjhfds:{data_heat.shape}")
+    mask = np.ma.masked_equal(data_heat, 0)
+    plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    cbar = plt.colorbar(shrink=0.8, fraction=0.1)
+    plt.axis('off')
+    fig.set_facecolor('black')
+
+    for text in cbar.ax.get_yticklabels():
+        text.set_color('white')
+
+    #plt.savefig(buffer, format="png")
+
+    canvas = plt.gcf().canvas
+    canvas.draw()
+    rgb_string = canvas.tostring_rgb()
+
+    image_array = np.frombuffer(rgb_string, dtype=np.uint8)
+    image_array = image_array.reshape(canvas.get_width_height()[::-1] + (3,))
+
+    plt.close()
+    image_array = image_array[144:-144, 114:-54]
+    #image_array = image_array[137:-138, 114:-54]
+
+    return image_array
+
 def print_heat_map(data_heat, data_base=None):
     if not data_base is None:
         r = 2
@@ -220,6 +247,46 @@ def get_heat_map_diff_for_video(data, pp=1000, cmap="RdBu_r"):
     plt.imshow(data, cmap=cmap, interpolation='nearest', vmin=-pp, vmax=pp)
     plt.colorbar()
     plt.show()
+
+
+def hist_datas(data, data1, mode=0, show=False, diff=False, pp=500, bins="auto"):
+
+    r = 2
+    c = 2
+    if diff:
+        c = 3
+        h_diff = data.astype(float) - data1.astype(float)
+        plt.subplot(r, c, c)
+        plt.imshow(h_diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+        plt.colorbar()
+        plt.title("diff")
+
+    plt.subplot(r, c, 1)
+    data_c = auto_contrast_skimage(data)
+    plt.imshow(data_c, cmap='gray')
+
+
+    plt.subplot(r, c, 2)
+    data_c1 = auto_contrast_skimage(data1)
+    plt.imshow(data_c1, cmap='gray')
+
+    plt.subplot(r, 1, 2)
+    non_zero_values = data[data > 0]
+    non_zero_values1 = data1[data1 > 0]
+    histogram = plt.hist(non_zero_values.flatten(), bins=bins)
+
+    histogram1= plt.hist(non_zero_values1.flatten(), bins=bins, alpha=0.5)
+    plt.savefig('hist2.png')
+
+
+
+def get_bins_hist(data, bins=100):
+    non_zero_values = data[data > 0]
+    n, bins, _ = plt.hist(non_zero_values.flatten(), bins=bins)
+    plt.close()
+    return n
+
+
 
 
 def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nameWindow="GraphicData"):
@@ -352,6 +419,10 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             elif key == ord('m'):
                 h_diff = data.astype(float) - data1.astype(float)
                 print_heat_map(h_diff, diff)
+            elif key == ord('a'):
+                h_diff = data.astype(float) - data1.astype(float)
+                save_heat_map(h_diff)
+                print('ffffffffffffffffffff')
             elif key == ord('i'):
                 h_diff = data.astype(float) - data1.astype(float)
 
@@ -401,6 +472,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
 
             print_hist_and_graphics(data1, dlimit, ulimit, name=names[1])
         elif key == ord('3'):
+            hist_datas(data, data1)
             cmap_image1 = data.copy()
             cmap_image1[(cmap_image1 < dlimit)] = 0
             cmap_image1[(cmap_image1 > ulimit)] = ulimit
@@ -434,7 +506,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             return 2
 
 
-def create_img_for_video(data, data1, name=None, names=None, text_place="t"):
+def create_img_for_video(data, data1, name=None, names=None, text_place="t", type=1):
     ulimit = 10000
     dlimit = 5000
     ulimit_diff = 900
@@ -443,13 +515,24 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t"):
 
     combined_image = cv2.hconcat([data, data1])
 
-    diff = cv2.absdiff(data, data1)
-
-    diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
-
-    # cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
     cmap_image = np.array(auto_contrast_skimage(combined_image))
     cmap_image = drive_to_color_palette(cmap_image, 0, cmap_image.max(), cmap)
+
+    if type == 0: #Gray
+        diff = cv2.absdiff(data, data1)
+
+        diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+
+
+    elif type == 1: #heat map
+        diff = data.astype(float) - data1.astype(float)
+        diff_cmap = save_heat_map(diff)
+        cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2RGB)
+        # print(f'gg: {diff_cmap.shape}')
+        # print(f'gg1: {cmap_image.shape}')
+        #cmap_image = np.hstack((combined_image, diff_cmap))
+
+    # cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
 
     if names:
         top_border = 50
@@ -462,9 +545,12 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t"):
         expanded_image_diff = cv2.copyMakeBorder(diff_cmap, top_border, bottom_border, left_border, right_border,
                                                  cv2.BORDER_CONSTANT)
 
-        print(data.shape)
+        # print(f'ff: {expanded_image.shape}')
+        # print(f'ff1: {expanded_image_diff.shape}')
+
+        #print(data.shape)
         n = data.shape[1] // 14
-        text = names[0] + ' ' * n + "|" + ' ' * n + names[1]
+        text = names[0] + ' ' * n + " " + ' ' * n + names[1]
         font = cv2.FONT_HERSHEY_SIMPLEX
         font_scale = 0.4
         font_thickness = 1
@@ -480,6 +566,7 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t"):
             text_position = ((expanded_image.shape[1] - text_size[0]) // 2, cmap_image.shape[0] + top_border + 30)
 
         cv2.putText(expanded_image, text, text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
+        cv2.putText(expanded_image_diff, "    diff", text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
 
         result = cv2.hconcat([expanded_image, expanded_image_diff])
     else:
