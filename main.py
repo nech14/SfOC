@@ -163,7 +163,7 @@ def viewing_pictures(names, file_number):
                                                names=[names[file_number][:-8], names[file_number + 1][:-8]])
 
 
-def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100, auto_contrast=True, cmap="viridis", save_folder=""):
+def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100, auto_contrast=True, cmap="viridis", save_folder="", limit=None):
     if end_file is None:
         end_file = len(names)
 
@@ -182,7 +182,10 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
             data_c = graphics.auto_contrast_skimage(data_cut)
             data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
         else:
-            data_for_heatmap[count] = graphics.get_bins_hist(data_cut, bins=bins)
+            data_c = data_cut.copy()
+            if not limit is None:
+                data_c[data_c > limit] = limit
+            data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
         count += 1
         if log_info:
             print(f"create {count}/{count_files}")
@@ -218,12 +221,14 @@ print(names)
 
 #viewing_pictures(names, file_number)
 
-#create_heatmap(names, new_path, bins=100, edges=15, log_info=True, auto_contrast=True, title="data.ASI0.2023.10.11.5577.auto_contrast.viridis.100bins", cmap='viridis', save_folder="result/ASI0/2023/10/11/5577")
+create_heatmap(names, new_path, bins=100, edges=0, log_info=True, auto_contrast=False,
+               title="data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0",
+               limit=10000, cmap='viridis', save_folder="result/ASI0/2023/10/11/5577")
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
 
 
-GUI.start()
+#GUI.start()
 
 
 
