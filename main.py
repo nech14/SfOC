@@ -221,14 +221,14 @@ print(names)
 
 #viewing_pictures(names, file_number)
 
-create_heatmap(names, new_path, bins=100, edges=0, log_info=True, auto_contrast=False,
-               title="data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0",
-               limit=10000, cmap='viridis', save_folder="result/ASI0/2023/10/11/5577")
+# create_heatmap(names, new_path, bins=100, edges=0, log_info=True, auto_contrast=False,
+#                title="data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0",
+#                limit=10000, cmap='viridis', save_folder="result/ASI0/2023/10/11/5577")
 
 #graphics.print_graphics_cv2(combined_image, combined_image.max())
 
 
-#GUI.start()
+GUI.start()
 
 
 
