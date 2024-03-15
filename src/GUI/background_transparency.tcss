@@ -3,7 +3,22 @@ Screen {
 }
 
 Static {
-    height: 100%;
     width: 1fr;
     content-align: center middle;
+}
+
+Button {
+    margin: 1 2;
+    content-align: center middle;
+}
+
+Grid {
+    grid-size: 3 5;
+    align: center middle;
+    grid-gutter: 1 2;
+}
+
+#kkk{
+    row-span: 1;
+    column-span: 2;
 }

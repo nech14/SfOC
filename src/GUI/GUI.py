@@ -7,8 +7,9 @@ from typing import Iterable
 import numpy as np
 from textual.app import App, ComposeResult
 from textual.await_complete import AwaitComplete
+from textual.containers import Horizontal, VerticalScroll, Grid, Container
 from textual.screen import Screen
-from textual.widgets import DirectoryTree, Footer, Header, Static
+from textual.widgets import DirectoryTree, Footer, Header, Static, Button
 from textual.widgets._directory_tree import DirEntry
 
 import psutil
@@ -222,7 +223,6 @@ class BSOD(Screen):
 
     def compose(self) -> ComposeResult:
         yield Static(" Windows ", id="title")
-        yield Static(ERROR_TEXT)
         yield Static("Press any key to continue [blink]_[/]", id="any-key")
 
 
@@ -248,7 +248,23 @@ class DirectoryTreeApp(App):
 
     def compose(self) -> ComposeResult:
         yield FilteredDirectoryTree(self.root_directory)
-        yield self.widget
+
+        yield VerticalScroll(
+            VerticalScroll(
+                Grid(
+                    Container(
+                        Static("Standard Buttons", classes="header"),
+                        Button("Default"),
+                        id="kkk"
+                    ),
+                    Button("Primary!", variant="primary"),
+                    Button.success("Success!"),
+                    Button.warning("Warning!"),
+                    Button.error("Error!"),
+                    id="k1"
+                ),
+            )
+        )
         yield Header()
         yield Footer()
 
