@@ -8,8 +8,9 @@ import numpy as np
 from textual.app import App, ComposeResult
 from textual.await_complete import AwaitComplete
 from textual.containers import Horizontal, VerticalScroll, Grid, Container
+from textual.reactive import Reactive
 from textual.screen import Screen
-from textual.widgets import DirectoryTree, Footer, Header, Static, Button
+from textual.widgets import DirectoryTree, Footer, Header, Static, Button, Label
 from textual.widgets._directory_tree import DirEntry
 
 import psutil
@@ -223,7 +224,7 @@ class BSOD(Screen):
 
     def compose(self) -> ComposeResult:
         yield Static(" Windows ", id="title")
-        yield Static("Press any key to continue [blink]_[/]", id="any-key")
+        yield Static(ERROR_TEXT, id="any-key")
 
 
 TEXT = """I must not fear.
@@ -234,43 +235,74 @@ I will permit it to pass over me and through me.
 And when it has gone past, I will turn the inner eye to see its path.
 Where the fear has gone there will be nothing. Only I will remain."""
 
+
+
+class DirContainer(Container):
+    text = "gggg"
+
+    def __new__(cls, text):
+        return Container(
+            Static(text, classes="header"),
+            Button(variant="primary", classes="create_save_dir"),
+            Button(variant="primary", classes="delete_button")
+        )
+
+    def __call__(self, text):
+        return Container(
+            Static(text, classes="header"),
+            Button(variant="primary", classes="create_save_dir"),
+            Button(variant="primary", classes="delete_button")
+        )
+
+
+
+
+
+
 class DirectoryTreeApp(App):
     current_directory = os.path.dirname(os.path.abspath(__file__))
     parent_directory = os.path.dirname(current_directory)
     root_directory = os.path.dirname(parent_directory)
 
     BINDINGS = [("d", "toggle_dark", "Toggle dark mode"),
-                ("k", "push_screen('bsod')", "K")]
+                ("k", "push_screen('bsod')", "K"),
+                ("r", "add_gg", "r")]
 
     CSS_PATH = "background_transparency.tcss"
 
     widget = Static(TEXT)
-
+    VS = VerticalScroll(
+            DirContainer("gggg"),
+            Container(
+                Static("Standard Buttons", classes="header"),
+                Button(variant="primary", classes="create_save_dir"),
+                Button(variant="primary", classes="delete_button")
+            ),
+            Button.success("Success!"),
+            Button.warning("Warning!"),
+            Button.error("Error!")
+        )
     def compose(self) -> ComposeResult:
         yield FilteredDirectoryTree(self.root_directory)
 
-        yield VerticalScroll(
-            VerticalScroll(
-                Grid(
-                    Container(
-                        Static("Standard Buttons", classes="header"),
-                        Button("Default"),
-                        id="kkk"
-                    ),
-                    Button("Primary!", variant="primary"),
-                    Button.success("Success!"),
-                    Button.warning("Warning!"),
-                    Button.error("Error!"),
-                    id="k1"
-                ),
-            )
-        )
+        yield self.VS
+
         yield Header()
         yield Footer()
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
         self.dark = not self.dark
+
+    def action_add_gg(self) -> None:
+        """An action to toggle dark mode."""
+        self.VS._nodes._append(DirContainer("gggg"))
+
+        global ERROR_TEXT
+        ERROR_TEXT = str(self.VS.displayed_children)
+        self.VS.set_loading(True)
+        self.VS.set_loading(False)
+
 
     def on_mount(self) -> None:
         self.install_screen(BSOD(), name="bsod")

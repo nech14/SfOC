@@ -1,24 +1,54 @@
 Screen {
+    width: 100%;
     layout: horizontal;
 }
 
+HorizontalScroll {
+    height: auto;
+}
+
 Static {
-    width: 1fr;
-    content-align: center middle;
+    width: 80%;
+    height: 100%;
+    content-align: left middle;
 }
 
 Button {
-    margin: 1 2;
-    content-align: center middle;
+    margin: 0 1;
 }
 
-Grid {
-    grid-size: 3 5;
-    align: center middle;
-    grid-gutter: 1 2;
+
+
+
+.create_save_dir{
+    min-width: 2;
+    width: 4;
+    height: 2;
+    background: yellow
 }
 
-#kkk{
-    row-span: 1;
-    column-span: 2;
+.create_save_dir:focus{
+    background: yellow 30%;
+}
+
+.delete_button{
+    min-width: 2;
+    width: 4;
+    height: 2;
+    background: red;
+}
+
+.delete_button:focus{
+    background: red 30%;
+}
+
+Container{
+    layout: horizontal;
+    width: 100%;
+    height: 4;
+    margin: 1;
+    padding: 0;
+    background: green;
+    color: white 90%;
+    border: heavy white;
 }
