@@ -3,21 +3,73 @@ Screen {
     layout: horizontal;
 }
 
-HorizontalScroll {
-    height: auto;
-}
-
-Static {
-    width: 80%;
-    height: 100%;
-    content-align: left middle;
-}
-
 Button {
     margin: 0 1;
 }
 
+YesOrNo {
+    align: center middle;
+}
 
+YesOrNo > Container {
+    width: auto;
+    height: auto;
+    align: center middle;
+    padding: 1 2;
+    background: $panel;
+}
+
+YesOrNo > Container > Label {
+    width: 100%;
+    content-align-horizontal: center;
+}
+
+YesOrNo > Container > Horizontal {
+    height: auto;
+    width: auto;
+}
+
+YesOrNo > Container > Horizontal > Button {
+    margin: 1 2;
+}
+
+
+InputYesOrNo {
+    align: center middle;
+}
+
+InputYesOrNo > Container {
+    width: auto;
+    height: auto;
+    align: center middle;
+    padding: 1 2;
+    background: $panel;
+}
+
+InputYesOrNo > Container > Input {
+    width: 100%;
+    content-align-horizontal: center;
+}
+
+InputYesOrNo > Container > Horizontal {
+    height: auto;
+    width: auto;
+}
+
+InputYesOrNo > Container > Horizontal > Button {
+    margin: 1 2;
+}
+
+
+HorizontalScroll {
+    height: auto;
+}
+
+.static_selected {
+    width: 80%;
+    height: 100%;
+    content-align: left middle;
+}
 
 
 .create_save_dir{
@@ -42,7 +94,24 @@ Button {
     background: red 30%;
 }
 
-Container{
+#save_dir {
+    width: 100%;
+    height: 100%;
+    content-align: left middle;
+}
+
+.save_dir_div{
+    layout: horizontal;
+    width: 100%;
+    height: 4;
+    margin: 1;
+    padding: 0;
+    background: green 80%;
+    color: white 90%;
+    border: heavy white;
+}
+
+.selected_div{
     layout: horizontal;
     width: 100%;
     height: 4;
