@@ -381,13 +381,13 @@ class DirectoryTreeApp(App):
         yield Footer()
 
     def action_slect_1(self):
-        self.push_screen(SelectionListM(), self.GG)
+        self.push_screen(SelectionListM(), self.create_heatmap)
 
-    def GG(self, bool):
+    def create_heatmap(self, bool):
         if bool:
             new_path, names = logics.get_names(self.tree.selected[-1])
             save_dir = os.path.normpath(str(self.save_dir_container.renderable))
-            logics.create_heatmap(names, new_path, save_folder=save_dir, title="gggg12", auto_contrast=False, edges=15, limit=10000)
+            logics.create_heatmap(names, new_path, save_folder=save_dir, title="heatmap", auto_contrast=False, edges=0, limit=None)
         pass
 
     def action_toggle_dark(self) -> None:
