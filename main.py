@@ -2,6 +2,7 @@
 from src import graphics
 from src import file
 from src import GUI
+from src import logics
 import os
 
 import cv2
@@ -29,7 +30,7 @@ names = file.get_name_file(new_path)
 
 #viewing_pictures(names, file_number)
 
-# create_heatmap(names, new_path, bins=100, edges=0, log_info=True, auto_contrast=False,
+# logics.create_heatmap(names, new_path, bins=100, edges=0, log_info=True, auto_contrast=False,
 #                title="data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0",
 #                limit=10000, cmap='viridis', save_folder="result/ASI0/2023/10/11/5577")
 
