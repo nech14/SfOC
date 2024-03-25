@@ -210,12 +210,13 @@ def auto_contrast(data):
     cv2.destroyAllWindows()
 
 
-def auto_contrast_skimage(data):
+def auto_contrast_skimage(data, p2=None, p98=None):
     image = data.copy()
     non_zero_values = image[image > 0]
-    p2, p98 = np.percentile(non_zero_values, (2, 98))
+    if p2 is None or p98 is None:
+        p2, p98 = np.percentile(non_zero_values, (2, 98))
     result = exposure.rescale_intensity(image, in_range=(p2, p98))
-    return result
+    return result, p2, p98
 
 
 def auto_contrast_cv2(data):
@@ -287,6 +288,11 @@ def get_bins_hist(data, bins=100):
     return n
 
 
+def get_binss_hist(data, bins=100):
+    non_zero_values = data[data > 0]
+    n, bins, _ = plt.hist(non_zero_values.flatten(), bins=bins)
+    plt.close()
+    return bins
 
 
 def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nameWindow="GraphicData"):

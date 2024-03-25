@@ -7,3 +7,4 @@ from .graphics import create_img_for_video
 from .graphics import cut_img
 from .graphics import get_bins_hist
 from .graphics import auto_contrast_skimage
+from .graphics import get_binss_hist

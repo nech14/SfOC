@@ -291,9 +291,7 @@ class SelectionListM(ModalScreen):
                 Selection("8400", 3),
                 Selection("8465", 4),
                 Selection("8570", 5),
-                Selection("OH", 6, True),
-                Selection("Poker", 7),
-                Selection("Fighter Combat", 8, True),
+                Selection("OH", 6, True)
             )
             with Horizontal():
                 yield Button.success("Yes", id="yes")
@@ -387,7 +385,7 @@ class DirectoryTreeApp(App):
         if bool:
             new_path, names = logics.get_names(self.tree.selected[-1])
             save_dir = os.path.normpath(str(self.save_dir_container.renderable))
-            logics.create_heatmap(names, new_path, save_folder=save_dir, title="heatmap", auto_contrast=False, edges=0, limit=None)
+            logics.create_heatmap(names, new_path, save_folder=save_dir, title="heatmap", auto_contrast=False, edges=15, limit=10000)
         pass
 
     def action_toggle_dark(self) -> None:

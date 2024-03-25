@@ -162,7 +162,7 @@ def viewing_pictures(names, file_number, new_path):
 
 
 def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
-                   auto_contrast=True, cmap="viridis", save_folder="", limit=None):
+                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None):
     if end_file is None:
         end_file = len(names)
 
@@ -172,22 +172,59 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
     data_for_heatmap = [0] * count_files
     info_for_heatmap = [0] * count_files
     count = 0
+
+
+
+    if auto_contrast:
+        name_path = os.path.join(new_path, names[start_file + edges])
+        info, data = file.open_gz(name_path)
+        data_cut = graphics.cut_img(data)
+        info_for_heatmap[count] = file.FitsInfo(info).get_norm_time()
+
+        print(f"max: {data_cut.max()}")
+
+        _, p2, p98 = graphics.auto_contrast_skimage(data_cut)
+        p2 -= 2000
+        p98 += 1000
+
+        data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
+
+        if type(bins) == int:
+            print("ggg")
+            bins = np.linspace(0, data_c.max(), bins+1)
+
+        data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
+        #bins = graphics.get_binss_hist(data_c, bins=bins)
+        count += 1
+        if log_info:
+            print(f"create 0/{count_files}, {p2}, {p98}")
+            print(f"max: {data_c.max()}")
+            print(graphics.get_bins_hist(data_c, bins=bins))
+            print(graphics.get_binss_hist(data_c, bins=bins))
+            print('\n')
+            print(bins)
+        start_file += 1
+
     for i in range(start_file + edges, end_file - edges):
         name_path = os.path.join(new_path, names[i])
         info, data = file.open_gz(name_path)
         data_cut = graphics.cut_img(data)
         info_for_heatmap[count] = file.FitsInfo(info).get_norm_time()
         if auto_contrast:
-            data_c = graphics.auto_contrast_skimage(data_cut)
-            data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
+            data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
         else:
             data_c = data_cut.copy()
             if not limit is None:
                 data_c[data_c > limit] = limit
-            data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
+        data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
         count += 1
         if log_info:
             print(f"create {count}/{count_files}")
+            if 45 <= count <= 55:
+                print(f"max: {data_c.max()}")
+                print(graphics.get_bins_hist(data_c, bins=bins))
+                print(graphics.get_binss_hist(data_c, bins=bins))
+            #print(graphics.get_binss_hist(data_c, bins=bins))
     data_for_heatmap = np.array(data_for_heatmap)
     transposed_data = np.transpose(data_for_heatmap)
 
@@ -196,12 +233,19 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
     plt.imshow(transposed_data, cmap=cmap)
     colorbar = plt.colorbar()
-    colorbar.set_label('Intensity')
-    plt.ylabel("bins")
+    colorbar.set_label('n in bin')
+    if type(bins) != int:
+        plt.ylabel(f"bins ({bins.max()})")
+    else:
+        plt.ylabel(f"bins")
+
     plt.xlabel("time")
     plt.xticks(np.arange(0, len(info_for_heatmap), 10), info_for_heatmap[::10], rotation=45, ha='right', fontsize=8)
 
-    plt.savefig(save_folder + f'/{title}.png')
+    if save_folder is None:
+        plt.savefig(f'{title}.png')
+    else:
+        plt.savefig(save_folder + f'/{title}.png')
     # plt.show()
     if log_info:
         print(f"create heatmap: {title}")
