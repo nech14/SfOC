@@ -256,7 +256,13 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
 
 
 def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
-                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None):
+                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=None, zip=True):
+
+    if fit_format is None:
+        fit_f = file.FitsInfo
+    elif fit_format == "2014":
+        fit_f = file.FitsInfo2014
+
     if end_file is None:
         end_file = len(names)
 
@@ -271,21 +277,23 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
     if auto_contrast:
         name_path = os.path.join(new_path, names[start_file + edges])
-        info, data = file.open_gz(name_path)
+        info, data = file.open_gz(name_path, zip=zip)
         data_cut = graphics.cut_img(data)
-        info_for_heatmap[count] = file.FitsInfo(info).get_norm_time()
+        info_for_heatmap[count] = fit_f(info).get_norm_time()
 
-        print(f"max: {data_cut.max()}")
+        print(f"max: {np.max(data_cut[~np.isnan(data_cut)])}")
 
         _, p2, p98 = graphics.auto_contrast_skimage(data_cut)
-        p2 -= 2000
+        p2 -= 2000-500
         p98 += 1000
 
         data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
 
+        max_value = np.max(data_c[~np.isnan(data_c)])
+
         if type(bins) == int:
             print("ggg")
-            bins = np.linspace(0, data_c.max(), bins+1)
+            bins = np.linspace(0, max_value, bins+1)
 
         data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
         #bins = graphics.get_binss_hist(data_c, bins=bins)
@@ -301,9 +309,9 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
     for i in range(start_file + edges, end_file - edges):
         name_path = os.path.join(new_path, names[i])
-        info, data = file.open_gz(name_path)
+        info, data = file.open_gz(name_path, zip=zip)
         data_cut = graphics.cut_img(data)
-        info_for_heatmap[count] = file.FitsInfo(info).get_norm_time()
+        info_for_heatmap[count] = fit_f(info).get_norm_time()
         if auto_contrast:
             data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
         else:
@@ -314,10 +322,10 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
         count += 1
         if log_info:
             print(f"create {count}/{count_files}")
-            if 45 <= count <= 55:
-                print(f"max: {data_c.max()}")
-                print(graphics.get_bins_hist(data_c, bins=bins))
-                print(graphics.get_binss_hist(data_c, bins=bins))
+            # if 45 <= count <= 55:
+            #     print(f"max: {data_c.max()}")
+            #     print(graphics.get_bins_hist(data_c, bins=bins))
+            #     print(graphics.get_binss_hist(data_c, bins=bins))
             #print(graphics.get_binss_hist(data_c, bins=bins))
     data_for_heatmap = np.array(data_for_heatmap)
     transposed_data = np.transpose(data_for_heatmap)
