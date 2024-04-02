@@ -1,3 +1,5 @@
+import datetime
+
 from src import graphics
 from src import file
 import os
@@ -8,14 +10,61 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_names(path):
+def get_names(path, zip=True):
     new_path = os.path.join(path, "5577")
 
-    names = file.get_name_file(new_path)
+    names = file.get_name_file(new_path, zip=zip)
     return new_path, names
 
 
-def create_all_png(frequency="5577"):
+def get_dark(names, new_path, check_name="DARK", zip=True):
+    if check_name in names[0]:
+        name_path = os.path.join(new_path, names[0])
+        info, data = file.open_gz(name_path)
+
+        buf = np.array([data])
+        buf_time = np.array([file.FitsInfo(info).get_datetime()])
+    else:
+        return None
+
+    for name in names[1:]:
+        if not check_name in name:
+            break
+
+        name_path = os.path.join(new_path, name)
+        info, data = file.open_gz(name_path, zip=zip)
+
+        buf = np.vstack((buf, [data]))
+        buf_time = np.append(buf_time, file.FitsInfo(info).get_datetime())
+
+    return buf, buf_time
+
+
+def get_dark_AVG(names, new_path, dark_name="DARK"):
+    datas, times = get_dark(names, new_path, dark_name)
+    data_avg = (np.mean(datas, axis=0))
+
+    # Получаем среднее время в секундах
+    average_time_seconds = sum(dt.timestamp() for dt in times) / len(times)
+
+    # Преобразовываем среднее значение времени обратно в формат datetime.datetime
+    time_avg = datetime.datetime.fromtimestamp(average_time_seconds)
+
+    return data_avg, time_avg
+
+
+def subtract_noise_frame(dark1, dark2, time1, time2, data, date_time):
+
+    k1 = (date_time - time1) / (time2-time1)
+    k2 = (time2 - date_time) / (time2-time1)
+
+    fix_data = data.copy()
+    fix_data = fix_data - (dark1*k2 + dark2*k1)/2
+
+    return fix_data
+
+
+def create_all_png(frequency="5577", zip=True):
     current_directory = os.getcwd()
 
     path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
@@ -26,7 +75,7 @@ def create_all_png(frequency="5577"):
     save_path = os.path.join(path, frequency + "_img")
     for name in names:
         name_path = os.path.join(new_path, name)
-        data = file.open_gz(name_path)
+        data = file.open_gz(name_path, zip=zip)
 
         graphics.save_graphics(data, save_path, name[:-8])
         # graphics.print_graphics(data)
@@ -61,33 +110,56 @@ def create_mp4(dates, name="output", flag_info=False, save_folder=""):
 
 
 def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
-                         percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100)):
+                         percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
+                         fit_format=None, dark=False, n=10000, zip=True):
+
+    if fit_format is None:
+        fit_f = file.FitsInfo
+    elif fit_format == "2014":
+        fit_f = file.FitsInfo2014
+
     datas = []
+    if dark:
+        dark1, time1 = get_dark_AVG(names_files, new_path)
+        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path)
 
     if end_i is None:
         end_i = len(names_files)
 
     for i in range(start_i, end_i):
         name_path = os.path.join(new_path, names_files[i])
-        info, data = file.open_gz(name_path)
+        info, data = file.open_gz(name_path, zip=zip)
+
+        if dark:
+            time = fit_f(info).get_datetime()
+            data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+            data = (data - data.min()) / (data.max() - data.min())
+            data = (data * n).astype(int)
+
 
         name_path1 = os.path.join(new_path, names_files[i + 1])
-        info1, data1 = file.open_gz(name_path1)
+        info1, data1 = file.open_gz(name_path1, zip=zip)
+
+        if dark:
+            time = fit_f(info).get_datetime()
+            data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
+            data1 = (data1 - data1.min()) / (data1.max() - data1.min())
+            data1 = (data1 * n).astype(int)
 
         if cut:
             data_cut = graphics.cut_img(data, percent_to_trim)
             data1_cut = graphics.cut_img(data1, percent_to_trim)
             if names:
-                info_f = file.FitsInfo(info)
-                info_f1 = file.FitsInfo(info1)
+                info_f = fit_f(info)
+                info_f1 = fit_f(info1)
                 img = graphics.create_img_for_video(data_cut, data1_cut, name=name,
                                                     names=[info_f.get_norm_time(), info_f1.get_norm_time()])
             else:
                 img = graphics.create_img_for_video(data_cut, data1_cut, name=name)
         else:
             if names:
-                info_f = file.FitsInfo(info)
-                info_f1 = file.FitsInfo(info1)
+                info_f = fit_f(info)
+                info_f1 = fit_f(info1)
                 img = graphics.create_img_for_video(data, data1, name=name,
                                                     names=[info_f.get_norm_time(), info_f1.get_norm_time()])
             else:
@@ -101,7 +173,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             if not os.path.exists(save_folder):
                 # Если папки не существует, создаем её
                 os.makedirs(save_folder)
-
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             plt.figure(figsize=figsize, dpi=100)
             plt.imshow(img)
             plt.savefig(save_folder + f"/{i}.png")
@@ -112,25 +184,33 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
     return datas
 
 
-def create_video(names_files, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
+def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_vide=None, save_img=False, name_img_folder="img_for_video",
-                 name_video_folder="video"):
+                 name_video_folder="video", dark=False, fit_format=None, zip=True):
     if end_i is None:
         end_i = len(names_files) - 2
 
     if save_img:
-        datas = create_img_for_video(names_files, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name, cut=cut,
-                                     names=names, save_folder=(save_folder + '/' + name_img_folder))
+        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name, cut=cut,
+                                     names=names, save_folder=(save_folder + '/' + name_img_folder),
+                                     dark=dark, fit_format=fit_format, zip=zip)
     else:
-        datas = create_img_for_video(names_files, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name, cut=cut,
-                                     names=names)
+        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
+                                     name=name, cut=cut, names=names, dark=dark, fit_format=fit_format, zip=zip)
 
     if save_folder_vide is None:
         save_folder_vide = save_folder + "/" + name_video_folder
     create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_vide)
 
 
-def viewing_pictures(names, file_number, new_path):
+
+
+def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
+
+    if dark:
+        dark1, time1 = get_dark_AVG(names, new_path)
+        dark2, time2 = get_dark_AVG(np.flip(names), new_path)
+
     name_path = os.path.join(new_path, names[file_number])
     info, data = file.open_gz(name_path)
 
@@ -151,11 +231,25 @@ def viewing_pictures(names, file_number, new_path):
         name_path = os.path.join(new_path, names[file_number])
         info, data = file.open_gz(name_path)
 
+
+        if dark:
+            time = file.FitsInfo(info).get_datetime()
+            data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+            data = (data - data.min()) / (data.max() - data.min())
+            data = (data * n).astype(int)
+
         name_path1 = os.path.join(new_path, names[file_number + 1])
         info1, data1 = file.open_gz(name_path1)
 
-        data_cut = graphics.cut_img(data)
-        data1_cut = graphics.cut_img(data1)
+        if dark:
+            time = file.FitsInfo(info).get_datetime()
+            data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time).astype(int)
+            data1 = (data1 - data1.min()) / (data1.max() - data1.min())
+            data1 = (data1 * n).astype(int)
+
+
+        data_cut = graphics.cut_img(data, nan=False)
+        data1_cut = graphics.cut_img(data1, nan=False)
 
         mode = graphics.print_graphics_cv2_arr(data_cut, data1_cut, data_cut.max(),
                                                names=[names[file_number][:-8], names[file_number + 1][:-8]])

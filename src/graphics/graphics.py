@@ -59,7 +59,10 @@ def print_hist_and_graphics(data, vmin=5000, vmax=15000, name=""):
 
 
 def drive_to_color_palette(combined_image, dlimit, ulimit, cmap):
-    cmap_image = np.clip(combined_image, dlimit, ulimit)
+
+    buf_combined_image = np.nan_to_num(combined_image, nan=0)
+
+    cmap_image = np.clip(buf_combined_image, dlimit, ulimit)
     cmap_image = (cmap_image - dlimit) / (ulimit - dlimit)  # Нормализация значений
     cmap_image = (cmap_image * 255).astype(np.uint8)  # Конвертация в формат uint8
 
@@ -512,7 +515,7 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             return 2
 
 
-def create_img_for_video(data, data1, name=None, names=None, text_place="t", type=1):
+def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1):
     ulimit = 10000
     dlimit = 5000
     ulimit_diff = 900
@@ -521,19 +524,24 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", typ
 
     combined_image = cv2.hconcat([data, data1])
 
-    cmap_image = np.array(auto_contrast_skimage(combined_image))
-    cmap_image = drive_to_color_palette(cmap_image, 0, cmap_image.max(), cmap)
+    processed_image, _, _ = auto_contrast_skimage(combined_image)
+    cmap_image = np.array(processed_image)
 
-    if type == 0: #Gray
+    cmap_image_max = np.max(cmap_image[~np.isnan(cmap_image)])
+
+    cmap_image = drive_to_color_palette(cmap_image, 0, cmap_image_max, cmap)
+
+    if _type == 0: #Gray
         diff = cv2.absdiff(data, data1)
 
         diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
 
 
-    elif type == 1: #heat map
+    elif _type == 1: #heat map
         diff = data.astype(float) - data1.astype(float)
         diff_cmap = save_heat_map(diff)
-        cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2RGB)
+        diff_cmap = cv2.cvtColor(diff_cmap, cv2.COLOR_RGB2BGR)
+        cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2BGR)
         # print(f'gg: {diff_cmap.shape}')
         # print(f'gg1: {cmap_image.shape}')
         #cmap_image = np.hstack((combined_image, diff_cmap))
@@ -574,7 +582,9 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", typ
         cv2.putText(expanded_image, text, text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
         cv2.putText(expanded_image_diff, "    diff", text_position, font, font_scale, text_color, font_thickness, cv2.LINE_AA)
 
-        result = cv2.hconcat([expanded_image, expanded_image_diff])
+
+        mistake = expanded_image_diff.shape[0] - expanded_image.shape[0]
+        result = cv2.hconcat([expanded_image, expanded_image_diff[mistake:]])
     else:
         result = cv2.hconcat([cmap_image, diff_cmap])
 
@@ -609,15 +619,19 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", typ
     return result
 
 
-def cut_img(image, percent_to_trim=0.1):
+def cut_img(image, percent_to_trim=0.1, nan=True):
     height, width = image.shape
     radius = min(height, width) // 2
 
     center = (width // 2, height // 2)
     trim_radius = int(radius * percent_to_trim)
 
-    mask = np.zeros((height, width), dtype=np.uint8)
-    cv2.circle(mask, center, radius - trim_radius,(255, 255, 255), thickness=cv2.FILLED)
+    mask = np.zeros((height, width), dtype=np.uint8)  # Используем тип uint8 для маски
 
-    result_image = cv2.bitwise_and(image, image, mask=mask)
+    cv2.circle(mask, center, radius - trim_radius, 255, thickness=cv2.FILLED)  # Заполняем круг значением 255
+
+    if nan:
+        result_image = np.where(mask == 255, image, np.nan)  # Используем np.where для создания нового изображения с np.nan вместо 0
+    else:
+        result_image = np.where(mask == 255, image, 0)
     return result_image
