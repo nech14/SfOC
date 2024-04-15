@@ -10,14 +10,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_names(path, zip=True):
+def get_names(path, _zip=True):
     new_path = os.path.join(path, "5577")
 
-    names = file.get_name_file(new_path, zip=zip)
+    names = file.get_name_file(new_path, _zip=_zip)
     return new_path, names
 
 
-def get_dark(names, new_path, check_name="DARK", zip=True):
+def get_dark(names, new_path, check_name="DARK", _zip=True):
     if check_name in names[0]:
         name_path = os.path.join(new_path, names[0])
         info, data = file.open_gz(name_path)
@@ -32,7 +32,7 @@ def get_dark(names, new_path, check_name="DARK", zip=True):
             break
 
         name_path = os.path.join(new_path, name)
-        info, data = file.open_gz(name_path, zip=zip)
+        info, data = file.open_gz(name_path, _zip=_zip)
 
         buf = np.vstack((buf, [data]))
         buf_time = np.append(buf_time, file.FitsInfo(info).get_datetime())
@@ -64,7 +64,7 @@ def subtract_noise_frame(dark1, dark2, time1, time2, data, date_time):
     return fix_data
 
 
-def create_all_png(frequency="5577", zip=True):
+def create_all_png(frequency="5577", _zip=True):
     current_directory = os.getcwd()
 
     path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
@@ -75,7 +75,7 @@ def create_all_png(frequency="5577", zip=True):
     save_path = os.path.join(path, frequency + "_img")
     for name in names:
         name_path = os.path.join(new_path, name)
-        data = file.open_gz(name_path, zip=zip)
+        data = file.open_gz(name_path, _zip=_zip)
 
         graphics.save_graphics(data, save_path, name[:-8])
         # graphics.print_graphics(data)
@@ -111,7 +111,7 @@ def create_mp4(dates, name="output", flag_info=False, save_folder=""):
 
 def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
-                         fit_format=None, dark=False, n=10000, zip=True):
+                         fit_format=None, dark=False, n=10000, _zip=True, hists=True):
 
     if fit_format is None:
         fit_f = file.FitsInfo
@@ -128,7 +128,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
     for i in range(start_i, end_i):
         name_path = os.path.join(new_path, names_files[i])
-        info, data = file.open_gz(name_path, zip=zip)
+        info, data = file.open_gz(name_path, _zip=_zip)
 
         if dark:
             time = fit_f(info).get_datetime()
@@ -138,7 +138,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
 
         name_path1 = os.path.join(new_path, names_files[i + 1])
-        info1, data1 = file.open_gz(name_path1, zip=zip)
+        info1, data1 = file.open_gz(name_path1, _zip=_zip)
 
         if dark:
             time = fit_f(info).get_datetime()
@@ -147,28 +147,31 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             data1 = (data1 * n).astype(int)
 
         if cut:
-            data_cut = graphics.cut_img(data, percent_to_trim)
-            data1_cut = graphics.cut_img(data1, percent_to_trim)
-            if names:
-                info_f = fit_f(info)
-                info_f1 = fit_f(info1)
-                img = graphics.create_img_for_video(data_cut, data1_cut, name=name,
-                                                    names=[info_f.get_norm_time(), info_f1.get_norm_time()])
-            else:
-                img = graphics.create_img_for_video(data_cut, data1_cut, name=name)
+            data = graphics.cut_img(data, percent_to_trim)
+            data1 = graphics.cut_img(data1, percent_to_trim)
+
+        if names:
+            info_f = fit_f(info)
+            info_f1 = fit_f(info1)
+            img = graphics.create_img_for_video(data, data1, name=name,
+                                                names=[info_f.get_norm_time(), info_f1.get_norm_time()])
         else:
-            if names:
-                info_f = fit_f(info)
-                info_f1 = fit_f(info1)
-                img = graphics.create_img_for_video(data, data1, name=name,
-                                                    names=[info_f.get_norm_time(), info_f1.get_norm_time()])
-            else:
-                img = graphics.create_img_for_video(data, data1, name=name)
+            img = graphics.create_img_for_video(data, data1, name=name)
         # plt.imshow(img)
         # plt.show()
+
+        if hists:
+            if i == start_i:
+                diff1 = None
+            diff = data - data1
+            img_hist = graphics.create_hists(data, data1, diff, diff1)
+            img_hist_BGR = cv2.cvtColor(img_hist, cv2.COLOR_RGB2BGR)
+            img = cv2.vconcat([img, img_hist_BGR])
+            diff1 = diff
+
         datas.append(img)
 
-        if not save_folder is None:
+        if save_folder is not None:
 
             if not os.path.exists(save_folder):
                 # Если папки не существует, создаем её
@@ -186,17 +189,18 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
 def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_vide=None, save_img=False, name_img_folder="img_for_video",
-                 name_video_folder="video", dark=False, fit_format=None, zip=True):
+                 name_video_folder="video", dark=False, fit_format=None, _zip=True, hists=False):
     if end_i is None:
         end_i = len(names_files) - 2
 
     if save_img:
-        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info, name=name, cut=cut,
-                                     names=names, save_folder=(save_folder + '/' + name_img_folder),
-                                     dark=dark, fit_format=fit_format, zip=zip)
+        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
+                                     name=name, cut=cut, names=names, save_folder=(save_folder + '/' + name_img_folder),
+                                     dark=dark, fit_format=fit_format, _zip=_zip, hists=hists)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
-                                     name=name, cut=cut, names=names, dark=dark, fit_format=fit_format, zip=zip)
+                                     name=name, cut=cut, names=names, dark=dark, fit_format=fit_format, _zip=_zip,
+                                     hists=hists)
 
     if save_folder_vide is None:
         save_folder_vide = save_folder + "/" + name_video_folder
@@ -205,17 +209,17 @@ def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output
 
 
 
-def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
+def viewing_pictures(names, file_number, new_path, dark=True, n = 120000, _zip=True):
 
     if dark:
         dark1, time1 = get_dark_AVG(names, new_path)
         dark2, time2 = get_dark_AVG(np.flip(names), new_path)
 
     name_path = os.path.join(new_path, names[file_number])
-    info, data = file.open_gz(name_path)
+    info, data = file.open_gz(name_path, _zip=_zip)
 
     name_path1 = os.path.join(new_path, names[file_number + 1])
-    info1, data1 = file.open_gz(name_path1)
+    info1, data1 = file.open_gz(name_path1, _zip=_zip)
 
     mode = graphics.print_graphics_cv2_arr(data, data1, data.max(),
                                            names=[names[file_number][:-8], names[file_number + 1][:-8]])
@@ -229,7 +233,7 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
             file_number += 1
 
         name_path = os.path.join(new_path, names[file_number])
-        info, data = file.open_gz(name_path)
+        info, data = file.open_gz(name_path, _zip=_zip)
 
 
         if dark:
@@ -239,7 +243,7 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
             data = (data * n).astype(int)
 
         name_path1 = os.path.join(new_path, names[file_number + 1])
-        info1, data1 = file.open_gz(name_path1)
+        info1, data1 = file.open_gz(name_path1, _zip=_zip)
 
         if dark:
             time = file.FitsInfo(info).get_datetime()
@@ -256,7 +260,7 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000):
 
 
 def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
-                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=None, zip=True):
+                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=None, _zip=True):
 
     if fit_format is None:
         fit_f = file.FitsInfo
@@ -277,7 +281,7 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
     if auto_contrast:
         name_path = os.path.join(new_path, names[start_file + edges])
-        info, data = file.open_gz(name_path, zip=zip)
+        info, data = file.open_gz(name_path, _zip=_zip)
         data_cut = graphics.cut_img(data)
         info_for_heatmap[count] = fit_f(info).get_norm_time()
 
@@ -309,7 +313,7 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
     for i in range(start_file + edges, end_file - edges):
         name_path = os.path.join(new_path, names[i])
-        info, data = file.open_gz(name_path, zip=zip)
+        info, data = file.open_gz(name_path, _zip=_zip)
         data_cut = graphics.cut_img(data)
         info_for_heatmap[count] = fit_f(info).get_norm_time()
         if auto_contrast:
