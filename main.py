@@ -2,38 +2,186 @@ from src import graphics
 from src import file
 from src import GUI
 from src import logics
+from skimage.measure import label
 import os
 
 import cv2
 import numpy as np
 
 import matplotlib.pyplot as plt
-from matplotlib.colors import LogNorm
 
-file_number = 11
+from src.graphics import auto_contrast_skimage
+
+file_number = 150
 
 current_directory = os.getcwd()
 
 path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
+
+path = os.path.join(current_directory, "data", "KEO", "2014", "30")
+
+#path = os.path.join(current_directory, "data", "KEO", "20130417")
+
+#path = os.path.join(current_directory, "data", "KEO", "20130416")
 # "data.ASI0.2023.10.11.5577"
 # name="data.ASI0.2024.01.12.5577", name_file="data.ASI0.2024.01.12.5577"
 # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
+new_path = path
+
 names = file.get_name_file(new_path)
+
+
+logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap.hists",
+                    name="data.KEO.2014.30.heatmap.hists", cut=True, save_folder="result/KEO/2014/30", save_img=True,
+                    dark=False, fit_format="2014", _zip=False, hists=True, name_img_folder="img_for_video/hists")
+
+logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
+                    name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
+                    dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
+
+#
+# name_path = os.path.join(new_path, names[22])
+# info, data = file.open_gz(name_path, zip=False)
+#
+# blurred_image = cv2.GaussianBlur(data, (5, 5), 0)  # (5, 5) - размер ядра фильтра, 0 - стандартное отклонение
+#
+# diff = data - blurred_image
+# cut_diff = graphics.cut_img(diff)
+# cut_diff[cut_diff == np.nan] = 0
+#
+#
+#
+# cut1_diff = cut_diff.copy()
+# cut1_diff[cut1_diff<10000] = np.nan
+#
+# label_diff = label(cut1_diff)
+# print(label_diff.max())
+#
+# plt.subplot(221)
+# plt.imshow(data, cmap="gray")
+# plt.subplot(222)
+# plt.imshow(blurred_image, cmap="gray")
+# plt.subplot(223)
+# plt.imshow(cut_diff, cmap="gray")
+# plt.subplot(224)
+# plt.imshow(cut1_diff, cmap="gray")
+# plt.show()
+
+
+# data_c = data.copy()
+# c = 0
+# for i in range(label_diff.max()):
+#     #if np.count_nonzero(label_diff == i) == 1:
+#     if np.sum((label_diff == i) & (~np.isnan(label_diff))) == 1:
+#         indices = np.where(label_diff == i)
+#         #print(indices[0], indices[1])
+#         data_c[indices[0], indices[1]] = (data[indices[0]-1, indices[1]] + data[indices[0], indices[1]-1] +
+#                                         data[indices[0]+1, indices[1]] + data[indices[0], indices[1]+1])/4
+#         # label_diff_c = label_diff.copy()
+#         # label_diff_c[label_diff_c != i] = 0
+#         # plt.imshow(label_diff_c)
+#         # plt.show()
+#         c += 1
+
+
+#
+# plt.subplot(141)
+# plt.imshow(data, cmap="gray")
+# plt.subplot(142)
+# plt.imshow(data_c, cmap="gray")
+# plt.subplot(143)
+# plt.imshow(blurred_image, cmap="gray")
+# plt.subplot(144)
+# plt.imshow(diff)
+# plt.show()
+
+
+#
+# dark1, time1 = logics.get_dark_AVG(names, new_path)
+# dark2, time2 = logics.get_dark_AVG(np.flip(names), new_path)
+#
+#
+# name_path = os.path.join(new_path, names[70])
+# info, data = file.open_gz(name_path)
+#
+#
+#
+# time = file.FitsInfo(info).get_datetime()
+# data = logics.subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+# data = (data - data.min()) / (data.max() - data.min())
+# data = (data * 10000).astype(int)
+#
+# data = graphics.cut_img(data)
+# data, _, _ = auto_contrast_skimage(data)
+# data_orig = data.astype(float)
+# data = data_orig.copy()
+#
+
+# from photutils.background import Background2D, MedianBackground
+# bkg_estimator = MedianBackground()
+# bkg = Background2D(data, (50, 50), filter_size=(3, 3),
+#                    bkg_estimator=bkg_estimator)
+# data = data.astype(np.float64)
+# data -= bkg.background  # subtract the background
+#
+# threshold = 1.5 * bkg.background_rms
+#
+# from astropy.convolution import convolve
+# from photutils.segmentation import make_2dgaussian_kernel
+# kernel = make_2dgaussian_kernel(3.0, size=5)  # FWHM = 3.0
+# convolved_data = convolve(data, kernel)
+#
+# from photutils.segmentation import detect_sources
+# segment_map = detect_sources(convolved_data, threshold, npixels=10)
+#
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from astropy.visualization import SqrtStretch
+# from astropy.visualization.mpl_normalize import ImageNormalize
+# norm = ImageNormalize(stretch=SqrtStretch())
+# fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12.5))
+# ax1.imshow(data, origin='lower', cmap='Greys_r', norm=norm)
+# ax1.set_title('Background-subtracted Data')
+# ax2.imshow(segment_map, origin='lower', cmap=segment_map.cmap,
+#            interpolation='nearest')
+# ax2.set_title('Segmentation Image')
+#
+# plt.show()
+
+# print(names[0])
+# name_path = os.path.join(new_path, names[0])
+# info, data = file.open_gz(name_path)
+
+
+#
+# name_path = os.path.join(new_path, names[1])
+# info, data1 = file.open_gz(name_path)
+#
+# name_path = os.path.join(new_path, names[2])
+# info, data2 = file.open_gz(name_path)
+#
+# avg = np.mean([data, data1, data2], axis=0)
+# print(avg)
+
+
 # print(names)
 
 # bins = np.linspace(0, 10000, 101)
 #bins = np.append(bins, 70000)
 # print(bins)
 
-# logics.viewing_pictures(names, file_number, new_path)
+
+
+#logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
 
 # save_folder="result/ASI0/2023/10/11/5577"
 # title = "data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0"
-# logics.create_heatmap(names, new_path, bins=100, edges=15, log_info=True, auto_contrast=True,
-#                       title="ASI0.2023.10.11.5577.viridis_auto_contrast_edges.15",
-#                       limit=None, cmap='viridis', save_folder="test")
+#"ASI0.2023.10.11.5577.viridis_auto_contrast_edges.15"
+# logics.create_heatmap(names, new_path, bins=100, edges=5, log_info=True, auto_contrast=False,
+#                       title="KEO.20130417.viridis_edges_5_limit_5000",
+#                       limit=5000, cmap='viridis', save_folder="result/KEO/20130417", fit_format="2014", zip=False)
 
 # graphics.print_graphics_cv2(combined_image, combined_image.max())
 
@@ -51,9 +199,35 @@ names = file.get_name_file(new_path)
 # result = create_img_for_video(names, 13, 14, name="GG", cut=True, names=True)
 # plt.imshow(result[0])
 # plt.show()
+#name_file="data.ASI0.2023.10.11.5577.heatmap.test_1
+#"data.KEO.2014.30.heatmap",
+#"data.KEO.20130417.heatmap"
 
-# create_video(names, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap", name="data.ASI0.2023.10.11.5577", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True)
 
+#
+# name_path = os.path.join(new_path, names[20])
+# info, data = file.open_gz(name_path, _zip=False)
+#
+# name_path1 = os.path.join(new_path, names[21])
+# info1, data1 = file.open_gz(name_path1, _zip=False)
+#
+# data_c = graphics.cut_img(data, nan=True)
+# data1_c = graphics.cut_img(data1, nan=True)
+#
+# diff1 = data_c - data1_c
+#
+# name_path = os.path.join(new_path, names[21])
+# _, data = file.open_gz(name_path, _zip=False)
+#
+# name_path1 = os.path.join(new_path, names[22])
+# _, data1 = file.open_gz(name_path1, _zip=False)
+#
+# data_c = graphics.cut_img(data, nan=True)
+# data1_c = graphics.cut_img(data1, nan=True)
+# diff = data_c - data1_c
+#
+#
+# graphics.create_hists(data_c, data1_c, diff, diff1, show=True)
 
 # import joypy
 #
