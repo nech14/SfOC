@@ -253,6 +253,18 @@ def get_heat_map_diff_for_video(data, pp=1000, cmap="RdBu_r"):
     plt.show()
 
 
+def hist_all(data, data1, diff, diff1=None, bins="auto"):
+
+    plt.subplot(1, 3, 2)
+    non_zero_values = data[data > 0]
+    non_zero_values1 = data1[data1 > 0]
+    histogram = plt.hist(non_zero_values.flatten(), bins=bins)
+
+    histogram1 = plt.hist(non_zero_values1.flatten(), bins=bins, alpha=0.5)
+    plt.show()
+    pass
+
+
 def hist_datas(data, data1, mode=0, show=False, diff=False, pp=500, bins="auto"):
 
     r = 2
@@ -265,13 +277,15 @@ def hist_datas(data, data1, mode=0, show=False, diff=False, pp=500, bins="auto")
         plt.colorbar()
         plt.title("diff")
 
+
+
     plt.subplot(r, c, 1)
-    data_c = auto_contrast_skimage(data)
+    data_c, _, _ = auto_contrast_skimage(data)
     plt.imshow(data_c, cmap='gray')
 
 
     plt.subplot(r, c, 2)
-    data_c1 = auto_contrast_skimage(data1)
+    data_c1, _, _ = auto_contrast_skimage(data1)
     plt.imshow(data_c1, cmap='gray')
 
     plt.subplot(r, 1, 2)
@@ -513,6 +527,45 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
         elif key == 46:
             cv2.destroyAllWindows()
             return 2
+
+
+def create_hists(data, data1, diff, diff1=None, bins=2000,
+                 xmin_data=0, xmax_data=6000, xmin_diff=-1000, xmax_diff=1000, alpha=0.5,
+                 ymin_data=0, ymax_data=20000, ymin_diff=0, ymax_diff=30000, show=False):
+    #15.36
+    fig = plt.figure(figsize=(16.54, 5.12))
+    gs = fig.add_gridspec(1, 2, width_ratios=[1.65, 1])
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.hist(data.flatten(), bins=bins)
+    ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
+    ax1.set_xlim(xmin=xmin_data, xmax=xmax_data)
+    ax1.set_ylim(ymin=ymin_data, ymax=ymax_data)
+
+    ax2 = fig.add_subplot(gs[0, 1])
+    if diff1 is not None:
+        ax2.hist(diff1.flatten(), bins=bins)
+    else:
+        alpha = 1
+    ax2.hist(diff.flatten(), bins=bins, alpha=alpha, color="orange")
+    ax2.set_xlim(xmin=xmin_diff, xmax=xmax_diff)
+    ax2.set_ylim(ymin=ymin_diff, ymax=ymax_diff)
+
+    plt.subplots_adjust(left=0.05, bottom=0.05, right=0.97, top=0.99, wspace=0.13, hspace=0)
+
+    canvas = plt.gcf().canvas
+    canvas.draw()
+    rgb_string = canvas.buffer_rgba()
+
+    image_array = np.frombuffer(rgb_string, dtype=np.uint8)
+    image_array = image_array.reshape(canvas.get_width_height()[::-1] + (4,))
+
+    if show:
+        plt.show()
+    plt.close()
+
+    return image_array[:, :, :3]
+
 
 
 def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1):
