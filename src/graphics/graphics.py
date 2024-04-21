@@ -6,6 +6,8 @@ from skimage import exposure
 from matplotlib import cm
 from matplotlib.colors import Normalize
 
+from src import file
+
 
 def print_graphics(data):
     plt.figure()
@@ -217,7 +219,7 @@ def auto_contrast_skimage(data, p2=None, p98=None):
     image = data.copy()
     non_zero_values = image[image > 0]
     if p2 is None or p98 is None:
-        p2, p98 = np.percentile(non_zero_values, (2, 98))
+        p2, p98 = np.percentile(non_zero_values, (10, 60))
     result = exposure.rescale_intensity(image, in_range=(p2, p98))
     return result, p2, p98
 
@@ -531,16 +533,20 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
 
 def create_hists(data, data1, diff, diff1=None, bins=2000,
                  xmin_data=0, xmax_data=6000, xmin_diff=-1000, xmax_diff=1000, alpha=0.5,
-                 ymin_data=0, ymax_data=20000, ymin_diff=0, ymax_diff=30000, show=False):
+                 ymin_data=0, ymax_data=20000, ymin_diff=0, ymax_diff=30000, show=False,
+                 figsize_x=16.54, figsize_y=5.12):
     #15.36
-    fig = plt.figure(figsize=(16.54, 5.12))
+    fig = plt.figure(figsize=(figsize_x, figsize_y))
     gs = fig.add_gridspec(1, 2, width_ratios=[1.65, 1])
 
     ax1 = fig.add_subplot(gs[0, 0])
     ax1.hist(data.flatten(), bins=bins)
     ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
-    ax1.set_xlim(xmin=xmin_data, xmax=xmax_data)
-    ax1.set_ylim(ymin=ymin_data, ymax=ymax_data)
+
+    if xmin_data is not None and xmax_data is not None:
+        ax1.set_xlim(xmin=xmin_data, xmax=xmax_data)
+    if ymin_data is not None and ymax_data is not None:
+        ax1.set_ylim(ymin=ymin_data, ymax=ymax_data)
 
     ax2 = fig.add_subplot(gs[0, 1])
     if diff1 is not None:
@@ -548,8 +554,10 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
     else:
         alpha = 1
     ax2.hist(diff.flatten(), bins=bins, alpha=alpha, color="orange")
-    ax2.set_xlim(xmin=xmin_diff, xmax=xmax_diff)
-    ax2.set_ylim(ymin=ymin_diff, ymax=ymax_diff)
+    if xmin_diff is not None and xmax_diff is not None:
+        ax2.set_xlim(xmin=xmin_diff, xmax=xmax_diff)
+    if ymin_diff is not None and ymax_diff is not None:
+        ax2.set_ylim(ymin=ymin_diff, ymax=ymax_diff)
 
     plt.subplots_adjust(left=0.05, bottom=0.05, right=0.97, top=0.99, wspace=0.13, hspace=0)
 
@@ -689,6 +697,7 @@ def cut_img(image, percent_to_trim=0.1, nan=True):
         result_image = np.where(mask == 255, image, 0)
     return result_image
 
+
 def remove_single_pixels(data, log=False, label_diff_region=False, data_copy_del=False):
 
     blurred_image = cv2.GaussianBlur(data, (21, 21), 0)  # (5, 5) - размер ядра фильтра, 0 - стандартное отклонение
@@ -765,3 +774,40 @@ def remove_single_pixels(data, log=False, label_diff_region=False, data_copy_del
     if data_copy_del is not False:
         return data_copy, data_copy_del
     return data_copy
+
+
+def create_correct_matrix(
+        count_compression=2,
+        base_shape=2048,
+        path_file="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+):
+    matrix = np.fromfile(path_file, dtype='float32')
+
+    matrix2048 = np.reshape(matrix, (base_shape, base_shape), order='F')
+
+    new_matrix = matrix2048
+    new_shape = base_shape
+    for i in range(count_compression):
+        new_shape //= 2
+        old_matrix = new_matrix
+        new_matrix = np.zeros((new_shape, new_shape))
+
+        for i in range(new_shape):  # range(1,uc.shape[0],2):
+            for j in range(new_shape):  # range(1,uc.shape[1],2):
+                new_matrix[i, j] = old_matrix[i * 2:i * 2 + 1, j * 2:j * 2 + 1].mean()
+
+    return new_matrix
+
+def calculate_frame_Rayleigh(data, info, log=False):
+    A = np.float64(file.get_A(info.CCDGAIN, info.ROSPEED, info.DEVICEID))
+    B = np.float64(info.BINNING*info.BINNING)
+    t_exp = np.float64(info.EXPOSURE[:-2])/1000
+    G = 1.
+
+    if log:
+        print(f"A={A}, B={B}, t_exp={t_exp}, G={G}")
+
+    data = data.copy()
+    data = A * data / B * t_exp * G
+
+    return data

@@ -111,12 +111,16 @@ def create_mp4(dates, name="output", flag_info=False, save_folder=""):
 
 def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
-                         fit_format=None, dark=False, n=10000, _zip=True, hists=True):
+                         fit_format=None, dark=False, n=10000, _zip=True, hists=True, remove_single_pixels=False,
+                         correct_matrix=None, Rayleigh=False):
 
     if fit_format is None:
         fit_f = file.FitsInfo
     elif fit_format == "2014":
         fit_f = file.FitsInfo2014
+
+    if correct_matrix is not None:
+        corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
 
     datas = []
     if dark:
@@ -130,21 +134,36 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
         name_path = os.path.join(new_path, names_files[i])
         info, data = file.open_gz(name_path, _zip=_zip)
 
+        name_path1 = os.path.join(new_path, names_files[i + 1])
+        info1, data1 = file.open_gz(name_path1, _zip=_zip)
+
+        if remove_single_pixels:
+            data = graphics.remove_single_pixels(data, False, False, False)
+            data1 = graphics.remove_single_pixels(data1, False, False, False)
+
+
         if dark:
             time = fit_f(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
             data = (data - data.min()) / (data.max() - data.min())
             data = (data * n).astype(int)
 
-
-        name_path1 = os.path.join(new_path, names_files[i + 1])
-        info1, data1 = file.open_gz(name_path1, _zip=_zip)
-
-        if dark:
             time = fit_f(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
             data1 = (data1 - data1.min()) / (data1.max() - data1.min())
             data1 = (data1 * n).astype(int)
+
+        if correct_matrix is not None:
+            data = data * corr_matrix.astype(np.float64)
+            data1 = data1 * corr_matrix.astype(np.float64)
+            data[data < 0] = np.nan
+            data1[data1 < 0] = np.nan
+
+        if Rayleigh:
+            info_f = fit_f(info)
+            info_f1 = fit_f(info1)
+            data = graphics.calculate_frame_Rayleigh(data, info_f, False)
+            data1 = graphics.calculate_frame_Rayleigh(data1, info_f1, False)
 
         if cut:
             data = graphics.cut_img(data, percent_to_trim)
@@ -164,7 +183,10 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             if i == start_i:
                 diff1 = None
             diff = data - data1
-            img_hist = graphics.create_hists(data, data1, diff, diff1)
+            img_hist = graphics.create_hists(data, data1, diff, diff1, figsize_x=(img.shape[1]+0.5)/100,
+                                             figsize_y=img.shape[0]/100,
+                                             xmin_data=None, xmax_data=None, xmin_diff=None, xmax_diff=None,
+                                             ymin_data=None, ymax_data=None, ymin_diff=None, ymax_diff=None)
             img_hist_BGR = cv2.cvtColor(img_hist, cv2.COLOR_RGB2BGR)
             img = cv2.vconcat([img, img_hist_BGR])
             diff1 = diff
@@ -188,22 +210,27 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
 
 def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
-                 names=False, save_folder="", save_folder_vide=None, save_img=False, name_img_folder="img_for_video",
-                 name_video_folder="video", dark=False, fit_format=None, _zip=True, hists=False):
+                 names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
+                 name_video_folder="video", dark=False, fit_format=None, _zip=True, hists=False, remove_single_pixels=False,
+                 correct_matrix=None, Rayleigh=False):
+
     if end_i is None:
         end_i = len(names_files) - 2
 
     if save_img:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, save_folder=(save_folder + '/' + name_img_folder),
-                                     dark=dark, fit_format=fit_format, _zip=_zip, hists=hists)
+                                     dark=dark, fit_format=fit_format, _zip=_zip, hists=hists,
+                                     remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
+                                     Rayleigh=Rayleigh)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, fit_format=fit_format, _zip=_zip,
-                                     hists=hists)
+                                     hists=hists, remove_single_pixels=remove_single_pixels,
+                                     correct_matrix=correct_matrix, Rayleigh=Rayleigh)
 
-    if save_folder_vide is None:
-        save_folder_vide = save_folder + "/" + name_video_folder
+    if save_folder_video is None:
+        save_folder_video = save_folder + "/" + name_video_folder
     create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_vide)
 
 

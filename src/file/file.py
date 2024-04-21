@@ -83,6 +83,23 @@ class FitsInfo2014(FitsInfoBase):
         self.SWCREATE = info[23]
 
 
+def get_A(CCDGAIN, ROSPEED, DEVICEID="ASI0"):
+    if "ASI0" in DEVICEID:
+        if "2MHz" in ROSPEED:
+            A = [0.255, 0.508, 1.]
+            return A[CCDGAIN-1]
+        elif "100kHz" in ROSPEED:
+            A = [0.252, 0.503, 1.]
+            return A[CCDGAIN-1]
+
+    elif "ASI1" in DEVICEID:
+        if "2MHz" in ROSPEED:
+            A = [0.258, 0.512, 1.]
+            return A[CCDGAIN-1]
+        elif "100kHz" in ROSPEED:
+            A = [0.253, 0.503, 1.]
+            return A[CCDGAIN-1]
+
 
 def get_name_file(folder_path="/"):
     files = os.listdir(folder_path)

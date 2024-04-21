@@ -22,7 +22,7 @@ path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 
 #path = os.path.join(current_directory, "data", "KEO", "2014", "30")
 
-path = os.path.join(current_directory, "data", "KEO", "20130417")
+#path = os.path.join(current_directory, "data", "KEO", "20130417")
 
 #path = os.path.join(current_directory, "data", "KEO", "20130416")
 # "data.ASI0.2023.10.11.5577"
@@ -30,53 +30,135 @@ path = os.path.join(current_directory, "data", "KEO", "20130417")
 # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
-new_path = path
+#new_path = path
 
 names = file.get_name_file(new_path)
 
-#
-# logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap.hists",
-#                     name="data.KEO.2014.30.heatmap.hists", cut=True, save_folder="result/KEO/2014/30", save_img=True,
-#                     dark=False, fit_format="2014", _zip=False, hists=True, name_img_folder="img_for_video/hists")
-#
+path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+
+logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
+                    name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
+                    dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
+                    remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
+
 # logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
 #                     name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
 #                     dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
 
 #
-name_path = os.path.join(new_path, names[22])
-info, data = file.open_gz(name_path, _zip=False)
-
-data[300, 250] = 60000
 
 
 
-data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
+def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/client_test_unifmap_1024x320.dat'):
+    test0 = np.fromfile(path_file, dtype='float32')
+    print(test0)
+
+    test0 = np.reshape(test0, (1024, 320), order='F')
+    print(test0[0, 0])
+    print(test0[0, 319])
+    print(test0[1023, 0])
+    print(test0[1023, 319])
 
 
-plt.subplot(231)
-plt.imshow(data, cmap="gray")
-plt.subplot(232)
-plt.imshow(graphics.cut_img(data_copy_del), cmap="gray")
-plt.subplot(233)
-plt.imshow(graphics.cut_img(data_copy), cmap="gray")
+# plt.subplot(132)
+# plt.imshow(uc_1024)
+#
+# plt.subplot(133)
+# plt.imshow(uc_512)
+#
+# plt.show()
 
-plt.subplot(234)
-# plt.imshow(cut_diff, cmap="gray")
-plt.hist(graphics.cut_img(data).flatten(), bins=2000)
-plt.xlim(xmin=0, xmax=10000)
+# name_path = os.path.join(new_path, names[22])
+# name_path1 = os.path.join(new_path, names[23])
+#
+# info, data = file.open_gz(name_path, _zip=True)
+# info1, data1 = file.open_gz(name_path1, _zip=True)
+#
+# data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
+# data_copy1, label_diff_region, data_copy_del = graphics.remove_single_pixels(data1, True, True, True)
+#
+# print(info)
+#
+#
+# corr_matrix = graphics.create_correct_matrix(2, 2048, path_file_matrix)
+#
+# data_matr = data_copy.copy()
+# data_matr = data_matr * corr_matrix.astype(np.float64)
+# data_matr1 = data_copy1.copy()
+# data_matr1 = data_matr1 * corr_matrix.astype(np.float64)
+#
+# data_matr[data_matr < 0] = np.nan
+# data_matr1[data_matr1 < 0] = np.nan
+#
+# info = file.FitsInfo(info)
+# info1 = file.FitsInfo(info1)
+#
+# data_cadr = graphics.calculate_frame_Rayleigh(data_matr, info, True)
+# data_cadr1 = graphics.calculate_frame_Rayleigh(data_matr1, info1, True)
 
-plt.subplot(235)
-# plt.imshow(cut1_diff, cmap="gray")
-plt.hist(graphics.cut_img(data_copy).flatten(), bins=2000)
-plt.xlim(xmin=0, xmax=10000)
 
-plt.subplot(236)
-plt.imshow(label_diff_region)
+# plt.subplot(131)
+# plt.imshow(data, cmap="gray")
+# plt.subplot(132)
+# plt.imshow(data_matr, cmap="gray")
+# plt.subplot(133)
+# plt.imshow(data_cadr, cmap="gray")
+#
+# plt.show()
 
-plt.show()
+#
+# name_path = os.path.join(new_path, names[22])
+# info, data = file.open_gz(name_path, _zip=False)
+#
+# data[300, 250] = 60000
+#
+#data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
+#
+#
+# plt.subplot(231)
+# plt.imshow(data, cmap="gray")
+# plt.subplot(232)
+# plt.imshow(graphics.cut_img(data_copy_del), cmap="gray")
+# plt.subplot(233)
+# plt.imshow(graphics.cut_img(data_copy), cmap="gray")
+#
+# plt.subplot(234)
+# # plt.imshow(cut_diff, cmap="gray")
+# plt.hist(graphics.cut_img(data).flatten(), bins=2000)
+# plt.xlim(xmin=0, xmax=10000)
+#
+# plt.subplot(235)
+# # plt.imshow(cut1_diff, cmap="gray")
+# plt.hist(graphics.cut_img(data_copy).flatten(), bins=2000)
+# plt.xlim(xmin=0, xmax=10000)
+#
+# plt.subplot(236)
+# plt.imshow(label_diff_region)
+#
+# plt.show()
 
-# graphics.print_graphics_cv2_arr(data, data_copy, data.max())
+
+
+
+# data_cadr_cut = graphics.cut_img(data_cadr, nan=False)
+# data_cadr_cut1 = graphics.cut_img(data_cadr1, nan=False)
+
+# plt.subplot(131)
+# plt.imshow(data_cadr)
+# plt.subplot(132)
+# plt.imshow(data_matr1)
+# plt.subplot(133)
+# plt.imshow(data_cadr-data_cadr1)
+# plt.show()
+
+# data_cadr_cut = data_cadr_cut.astype(np.int64)
+# data_cadr_cut1 = data_cadr_cut1.astype(np.int64)
+#
+#
+# graphics.print_graphics_cv2_arr(data_cadr_cut, data_cadr_cut1, data_cadr_cut.max())
+
+
+
 
 #logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
 
