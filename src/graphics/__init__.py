@@ -10,3 +10,4 @@ from .graphics import auto_contrast_skimage
 from .graphics import get_binss_hist
 from .graphics import save_heat_map
 from .graphics import create_hists
+from .graphics import remove_single_pixels

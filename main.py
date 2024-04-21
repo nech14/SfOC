@@ -1,8 +1,10 @@
+from scipy.interpolate import interp2d, RegularGridInterpolator
+
 from src import graphics
 from src import file
 from src import GUI
 from src import logics
-from skimage.measure import label
+from skimage.measure import label, regionprops
 import os
 
 import cv2
@@ -18,9 +20,9 @@ current_directory = os.getcwd()
 
 path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 
-path = os.path.join(current_directory, "data", "KEO", "2014", "30")
+#path = os.path.join(current_directory, "data", "KEO", "2014", "30")
 
-#path = os.path.join(current_directory, "data", "KEO", "20130417")
+path = os.path.join(current_directory, "data", "KEO", "20130417")
 
 #path = os.path.join(current_directory, "data", "KEO", "20130416")
 # "data.ASI0.2023.10.11.5577"
@@ -32,32 +34,53 @@ new_path = path
 
 names = file.get_name_file(new_path)
 
+#
+# logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap.hists",
+#                     name="data.KEO.2014.30.heatmap.hists", cut=True, save_folder="result/KEO/2014/30", save_img=True,
+#                     dark=False, fit_format="2014", _zip=False, hists=True, name_img_folder="img_for_video/hists")
+#
+# logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
+#                     name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
+#                     dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
 
-logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap.hists",
-                    name="data.KEO.2014.30.heatmap.hists", cut=True, save_folder="result/KEO/2014/30", save_img=True,
-                    dark=False, fit_format="2014", _zip=False, hists=True, name_img_folder="img_for_video/hists")
+#
+name_path = os.path.join(new_path, names[22])
+info, data = file.open_gz(name_path, _zip=False)
 
-logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
-                    name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
-                    dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
+data[300, 250] = 60000
 
-#
-# name_path = os.path.join(new_path, names[22])
-# info, data = file.open_gz(name_path, zip=False)
-#
-# blurred_image = cv2.GaussianBlur(data, (5, 5), 0)  # (5, 5) - размер ядра фильтра, 0 - стандартное отклонение
-#
-# diff = data - blurred_image
-# cut_diff = graphics.cut_img(diff)
-# cut_diff[cut_diff == np.nan] = 0
-#
-#
-#
-# cut1_diff = cut_diff.copy()
-# cut1_diff[cut1_diff<10000] = np.nan
-#
-# label_diff = label(cut1_diff)
-# print(label_diff.max())
+
+
+data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
+
+
+plt.subplot(231)
+plt.imshow(data, cmap="gray")
+plt.subplot(232)
+plt.imshow(graphics.cut_img(data_copy_del), cmap="gray")
+plt.subplot(233)
+plt.imshow(graphics.cut_img(data_copy), cmap="gray")
+
+plt.subplot(234)
+# plt.imshow(cut_diff, cmap="gray")
+plt.hist(graphics.cut_img(data).flatten(), bins=2000)
+plt.xlim(xmin=0, xmax=10000)
+
+plt.subplot(235)
+# plt.imshow(cut1_diff, cmap="gray")
+plt.hist(graphics.cut_img(data_copy).flatten(), bins=2000)
+plt.xlim(xmin=0, xmax=10000)
+
+plt.subplot(236)
+plt.imshow(label_diff_region)
+
+plt.show()
+
+# graphics.print_graphics_cv2_arr(data, data_copy, data.max())
+
+#logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
+
+
 #
 # plt.subplot(221)
 # plt.imshow(data, cmap="gray")
@@ -174,7 +197,7 @@ logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name
 
 
 
-#logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
+
 
 # save_folder="result/ASI0/2023/10/11/5577"
 # title = "data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0"
