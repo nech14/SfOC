@@ -185,8 +185,8 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             diff = data - data1
             img_hist = graphics.create_hists(data, data1, diff, diff1, figsize_x=(img.shape[1]+0.5)/100,
                                              figsize_y=img.shape[0]/100,
-                                             xmin_data=None, xmax_data=None, xmin_diff=None, xmax_diff=None,
-                                             ymin_data=None, ymax_data=None, ymin_diff=None, ymax_diff=None)
+                                             xmin_data=0, xmax_data=40000, xmin_diff=-10000, xmax_diff=10000,
+                                             ymin_data=0, ymax_data=5000, ymin_diff=0, ymax_diff=14000)
             img_hist_BGR = cv2.cvtColor(img_hist, cv2.COLOR_RGB2BGR)
             img = cv2.vconcat([img, img_hist_BGR])
             diff1 = diff
@@ -231,7 +231,7 @@ def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output
 
     if save_folder_video is None:
         save_folder_video = save_folder + "/" + name_video_folder
-    create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_vide)
+    create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_video)
 
 
 
