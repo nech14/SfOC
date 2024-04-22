@@ -219,7 +219,7 @@ def auto_contrast_skimage(data, p2=None, p98=None):
     image = data.copy()
     non_zero_values = image[image > 0]
     if p2 is None or p98 is None:
-        p2, p98 = np.percentile(non_zero_values, (10, 60))
+        p2, p98 = np.percentile(non_zero_values, (2, 98))
     result = exposure.rescale_intensity(image, in_range=(p2, p98))
     return result, p2, p98
 
@@ -794,7 +794,7 @@ def create_correct_matrix(
 
         for i in range(new_shape):  # range(1,uc.shape[0],2):
             for j in range(new_shape):  # range(1,uc.shape[1],2):
-                new_matrix[i, j] = old_matrix[i * 2:i * 2 + 1, j * 2:j * 2 + 1].mean()
+                new_matrix[i, j] = np.mean(old_matrix[i*2:i*2+2, j*2:j*2+2])
 
     return new_matrix
 

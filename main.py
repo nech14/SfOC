@@ -22,7 +22,7 @@ path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 
 #path = os.path.join(current_directory, "data", "KEO", "2014", "30")
 
-#path = os.path.join(current_directory, "data", "KEO", "20130417")
+path = os.path.join(current_directory, "data", "KEO", "20130417")
 
 #path = os.path.join(current_directory, "data", "KEO", "20130416")
 # "data.ASI0.2023.10.11.5577"
@@ -30,18 +30,18 @@ path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
-#new_path = path
+new_path = path
 
 names = file.get_name_file(new_path)
 
 path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+#
+# logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
+#                     name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
+#                     dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
+#                     remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
 
-logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
-                    name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
-                    dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
-                    remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
-
-# logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
+#logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
 #                     name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
 #                     dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
 
@@ -67,6 +67,7 @@ def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Cali
 # plt.imshow(uc_512)
 #
 # plt.show()
+#
 
 # name_path = os.path.join(new_path, names[22])
 # name_path1 = os.path.join(new_path, names[23])
@@ -106,13 +107,13 @@ def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Cali
 #
 # plt.show()
 
-#
+
 # name_path = os.path.join(new_path, names[22])
 # info, data = file.open_gz(name_path, _zip=False)
 #
 # data[300, 250] = 60000
 #
-#data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
+# data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
 #
 #
 # plt.subplot(231)
@@ -137,19 +138,122 @@ def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Cali
 #
 # plt.show()
 
-
-
-
+# #
+# #
+# #
 # data_cadr_cut = graphics.cut_img(data_cadr, nan=False)
 # data_cadr_cut1 = graphics.cut_img(data_cadr1, nan=False)
+#
+# # plt.subplot(131)
+# # plt.imshow(data_cadr)
+# # plt.subplot(132)
+# # plt.imshow(data_matr1)
+# # plt.subplot(133)
+# # plt.imshow(data_cadr-data_cadr1)
+# # plt.show()
+#
 
-# plt.subplot(131)
-# plt.imshow(data_cadr)
-# plt.subplot(132)
-# plt.imshow(data_matr1)
-# plt.subplot(133)
-# plt.imshow(data_cadr-data_cadr1)
-# plt.show()
+print("start KMeans")
+
+from sklearn.cluster import KMeans
+
+name_path = os.path.join(new_path, names[21])
+name_path1 = os.path.join(new_path, names[22])
+
+info, data = file.open_gz(name_path, _zip=False)
+info1, data1 = file.open_gz(name_path1, _zip=False)
+
+data_cut = graphics.cut_img(data, nan=False)
+data1_cut = graphics.cut_img(data1, nan=False)
+
+diff = data_cut - data1_cut
+
+data_c, _, _ = auto_contrast_skimage(data)
+data1_c, _, _ = auto_contrast_skimage(data1)
+
+def find_optimal_num_clusters(data, max_clusters=100):
+    # Определение диапазона количества кластеров для проверки
+    num_clusters_range = range(1, max_clusters + 1)
+    inertia_values = []
+
+    # Выполнение кластеризации для разного количества кластеров
+    for num_clusters in num_clusters_range:
+        kmeans = KMeans(n_clusters=num_clusters)
+        kmeans.fit(data)
+        inertia_values.append(kmeans.inertia_)
+
+    # Нахождение "локтя" на графике инерции
+    diff = np.diff(inertia_values)
+    diff_r = np.diff(diff)
+    elbow_index = np.where(diff_r > diff_r.mean())[0][0] + 1
+
+    return elbow_index
+
+# Пример использования функции для определения оптимального количества кластеров
+#optimal_clusters = find_optimal_num_clusters(data)
+optimal_clusters = 200
+print("Optimal number of clusters:", optimal_clusters)
+
+# Выполнение кластеризации с оптимальным количеством кластеров
+kmeans = KMeans(n_clusters=optimal_clusters)
+kmeans.fit(data_cut)
+cluster_labels = kmeans.labels_
+cluster_centers = kmeans.cluster_centers_
+
+# Кластеризация пикселей изображения
+clustered_image = cluster_centers[cluster_labels].reshape(data_cut.shape).astype(np.uint8)
+
+
+kmeans = KMeans(n_clusters=optimal_clusters)
+kmeans.fit(data1_cut)
+cluster_labels = kmeans.labels_
+cluster_centers = kmeans.cluster_centers_
+
+# Кластеризация пикселей изображения
+clustered_image1 = cluster_centers[cluster_labels].reshape(data1_cut.shape).astype(np.uint8)
+
+
+kmeans = KMeans(n_clusters=optimal_clusters)
+kmeans.fit(diff)
+cluster_labels = kmeans.labels_
+cluster_centers = kmeans.cluster_centers_
+
+clustered_image_diff = cluster_centers[cluster_labels].reshape(diff.shape).astype(np.uint8)
+
+
+data_cut = graphics.cut_img(data_c, nan=False)
+data1_cut = graphics.cut_img(data1_c, nan=False)
+
+# Визуализация кластеризованного изображения
+plt.subplot(231)
+plt.imshow(data_cut, cmap="gray")
+plt.title('Image')
+
+plt.subplot(232)
+plt.imshow(clustered_image)
+plt.title('Clustered Image')
+
+plt.subplot(233)
+plt.imshow(diff, cmap="RdBu_r")
+plt.title('Diff')
+
+plt.subplot(234)
+plt.imshow(data1_cut, cmap="gray")
+plt.title('Image1')
+
+plt.subplot(235)
+plt.imshow(clustered_image1)
+plt.title('Clustered Image1')
+
+plt.subplot(236)
+plt.imshow(clustered_image_diff)
+plt.title('Clustered diff')
+
+
+plt.show()
+
+
+
 
 # data_cadr_cut = data_cadr_cut.astype(np.int64)
 # data_cadr_cut1 = data_cadr_cut1.astype(np.int64)
