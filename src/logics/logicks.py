@@ -17,13 +17,13 @@ def get_names(path, _zip=True):
     return new_path, names
 
 
-def get_dark(names, new_path, check_name="DARK", _zip=True):
+def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.FitsInfo):
+
     if check_name in names[0]:
         name_path = os.path.join(new_path, names[0])
-        info, data = file.open_gz(name_path)
-
+        info, data = file.open_gz(name_path, _zip=_zip)
         buf = np.array([data])
-        buf_time = np.array([file.FitsInfo(info).get_datetime()])
+        buf_time = np.array([fit_format(info).get_datetime()])
     else:
         return None
 
@@ -35,13 +35,13 @@ def get_dark(names, new_path, check_name="DARK", _zip=True):
         info, data = file.open_gz(name_path, _zip=_zip)
 
         buf = np.vstack((buf, [data]))
-        buf_time = np.append(buf_time, file.FitsInfo(info).get_datetime())
+        buf_time = np.append(buf_time, fit_format(info).get_datetime())
 
     return buf, buf_time
 
 
-def get_dark_AVG(names, new_path, dark_name="DARK"):
-    datas, times = get_dark(names, new_path, dark_name)
+def get_dark_AVG(names, new_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
+    datas, times = get_dark(names, new_path, dark_name, _zip=_zip, fit_format=fit_format)
     data_avg = (np.mean(datas, axis=0))
 
     # Получаем среднее время в секундах
@@ -111,21 +111,16 @@ def create_mp4(dates, name="output", flag_info=False, save_folder=""):
 
 def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
-                         fit_format=None, dark=False, n=10000, _zip=True, hists=True, remove_single_pixels=False,
+                         fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False):
-
-    if fit_format is None:
-        fit_f = file.FitsInfo
-    elif fit_format == "2014":
-        fit_f = file.FitsInfo2014
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
 
     datas = []
     if dark:
-        dark1, time1 = get_dark_AVG(names_files, new_path)
-        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path)
+        dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
 
     if end_i is None:
         end_i = len(names_files)
@@ -136,6 +131,9 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
         name_path1 = os.path.join(new_path, names_files[i + 1])
         info1, data1 = file.open_gz(name_path1, _zip=_zip)
+        if fit_format == file.FitsInfoAndor:
+            data = data[0]
+            data1 = data1[0]
 
         if remove_single_pixels:
             data = graphics.remove_single_pixels(data, False, False, False)
@@ -143,12 +141,12 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
 
         if dark:
-            time = fit_f(info).get_datetime()
+            time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
             data = (data - data.min()) / (data.max() - data.min())
             data = (data * n).astype(int)
 
-            time = fit_f(info).get_datetime()
+            time = fit_format(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
             data1 = (data1 - data1.min()) / (data1.max() - data1.min())
             data1 = (data1 * n).astype(int)
@@ -160,8 +158,8 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             data1[data1 < 0] = np.nan
 
         if Rayleigh:
-            info_f = fit_f(info)
-            info_f1 = fit_f(info1)
+            info_f = fit_format(info)
+            info_f1 = fit_format(info1)
             data = graphics.calculate_frame_Rayleigh(data, info_f, False)
             data1 = graphics.calculate_frame_Rayleigh(data1, info_f1, False)
 
@@ -170,8 +168,8 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             data1 = graphics.cut_img(data1, percent_to_trim)
 
         if names:
-            info_f = fit_f(info)
-            info_f1 = fit_f(info1)
+            info_f = fit_format(info)
+            info_f1 = fit_format(info1)
             img = graphics.create_img_for_video(data, data1, name=name,
                                                 names=[info_f.get_norm_time(), info_f1.get_norm_time()])
         else:
@@ -211,7 +209,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
 def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
-                 name_video_folder="video", dark=False, fit_format=None, _zip=True, hists=False, remove_single_pixels=False,
+                 name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
                  correct_matrix=None, Rayleigh=False):
 
     if end_i is None:
@@ -220,12 +218,12 @@ def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output
     if save_img:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, save_folder=(save_folder + '/' + name_img_folder),
-                                     dark=dark, fit_format=fit_format, _zip=_zip, hists=hists,
+                                     dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip, hists=hists,
                                      remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
                                      Rayleigh=Rayleigh)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
-                                     name=name, cut=cut, names=names, dark=dark, fit_format=fit_format, _zip=_zip,
+                                     name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
                                      hists=hists, remove_single_pixels=remove_single_pixels,
                                      correct_matrix=correct_matrix, Rayleigh=Rayleigh)
 
@@ -287,12 +285,8 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000, _zip=T
 
 
 def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
-                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=None, _zip=True):
+                   auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=file.FitsInfo, _zip=True):
 
-    if fit_format is None:
-        fit_f = file.FitsInfo
-    elif fit_format == "2014":
-        fit_f = file.FitsInfo2014
 
     if end_file is None:
         end_file = len(names)
@@ -310,7 +304,7 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
         name_path = os.path.join(new_path, names[start_file + edges])
         info, data = file.open_gz(name_path, _zip=_zip)
         data_cut = graphics.cut_img(data)
-        info_for_heatmap[count] = fit_f(info).get_norm_time()
+        info_for_heatmap[count] = fit_format(info).get_norm_time()
 
         print(f"max: {np.max(data_cut[~np.isnan(data_cut)])}")
 
@@ -342,7 +336,7 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
         name_path = os.path.join(new_path, names[i])
         info, data = file.open_gz(name_path, _zip=_zip)
         data_cut = graphics.cut_img(data)
-        info_for_heatmap[count] = fit_f(info).get_norm_time()
+        info_for_heatmap[count] = fit_format(info).get_norm_time()
         if auto_contrast:
             data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
         else:
