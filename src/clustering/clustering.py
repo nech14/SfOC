@@ -11,13 +11,451 @@ from sklearn.neighbors import NearestNeighbors
 from skimage.transform import resize
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
 import matplotlib.patches as patches
 from scipy.signal import argrelextrema
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import MeanShift, estimate_bandwidth
+from sklearn.metrics import silhouette_samples, silhouette_score
+from scipy.spatial.distance import cdist
+from sklearn.mixture import GaussianMixture
 
+
+def model_method_frame_GaussianMixture(names_files, new_path):
+    _zip = False
+    i = 123
+    i = 358
+    i = 21
+    start = 121
+    end = 126
+    # start = 20
+    # end = 25
+    # i=359
+
+    min_area_threshold = 1950
+    max_area_threshold = 50000
+    # eps_l = 6.5
+    eps_l = 7.5
+    # min_samples_l = 50
+    min_samples_l = 100
+    pp = 500
+    percent_to_trim = 0.1
+
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=_zip, type_fits=file.FitsInfo2014)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+    mask = np.ma.masked_equal(diff_resized, 0)
+    small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+    w, h = small_image.shape
+    image_array = small_image.reshape(-1, 1)
+    dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    segmented_image[segmented_image != -1] = 0
+    segmented_image[segmented_image == -1] = 1
+    d_segmented_image = segmented_image.copy()
+
+    # Извлечение координат пикселей, имеющих значение 1
+    coords = np.column_stack(np.where(d_segmented_image == 1))
+    plt.imshow(d_segmented_image)
+    plt.show()
+
+    X = d_segmented_image.copy()
+
+    # Диапазон возможных значений количества кластеров
+    n_components_range = range(2, 10)
+    silhouette_scores = []
+
+    for n_components in n_components_range:
+        gmm = GaussianMixture(n_components=n_components, random_state=0, covariance_type="spherical")
+        labels = gmm.fit_predict(coords)
+        silhouette_avg = silhouette_score(coords, labels)
+        silhouette_scores.append(silhouette_avg)
+
+    # Визуализация силуэтных коэффициентов
+    plt.plot(n_components_range, silhouette_scores, marker='o')
+    plt.xlabel('Количество кластеров')
+    plt.ylabel('Силуэтный коэффициент')
+    plt.title('Силуэтный коэффициент при разных количествах кластеров')
+    plt.show()
+
+    # Определение оптимального количества кластеров
+    optimal_n_components = n_components_range[np.argmax(silhouette_scores)]
+    print(f'Оптимальное количество кластеров: {optimal_n_components}')
+
+    # Создание и обучение модели Gaussian Mixture
+    gmm = GaussianMixture(n_components=optimal_n_components, random_state=0, covariance_type="spherical")
+    gmm.fit(coords)
+
+    # Предсказание кластеров
+    labels = gmm.predict(coords)
+
+    for (x, y), color in zip(coords, labels):
+        X[x][y] = color+1
+
+    plt.subplot(121)
+    plt.imshow(d_segmented_image)
+    # Визуализация результатов
+    plt.subplot(122)
+    plt.imshow(X)
+    # plt.scatter(coords[:, 0], coords[:, 1], c=labels, s=40)
+    plt.show()
+
+
+
+def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None, start=18, end=25, log=False):
+    _zip = False
+    # i = 22
+    # start = 120
+    # end = 127
+    # start = 20
+    # end = 25
+    # start = 354
+    # end = 361
+    # i=359
+
+    min_area_threshold = 1950
+    max_area_threshold = 50000
+    # eps_l = 6.5
+    eps_l = 7.5
+    # min_samples_l = 50
+    min_samples_l = 100
+    pp = 500
+    percent_to_trim = 0.1
+
+    diffs_base = []
+    base = [0, 0, 0]
+    n = 0
+    steep = 2.5
+
+    name_info = []
+
+    for i in range(start, end):
+        data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                        _zip=_zip, type_fits=file.FitsInfo2014)
+
+        diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+        mask = np.ma.masked_equal(diff_resized, 0)
+        small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+        w, h = small_image.shape
+        image_array = small_image.reshape(-1, 1)
+        dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+        labels = dbscan.labels_
+        segmented_image = labels.reshape(w, h)
+        segmented_image[segmented_image != -1] = 0
+        segmented_image[segmented_image == -1] = 1
+        d_segmented_image = segmented_image.copy()
+
+        # Извлечение координат пикселей, имеющих значение 1
+        diffs_base.append(mask)
+        coords = np.column_stack(np.where(d_segmented_image == 1))
+        base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
+        name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+        # plt.imshow(d_segmented_image)
+        # plt.show()
+        diffs_base.append(diff_resized)
+        n += steep
+
+        if not save_folder is None:
+            os.makedirs(save_folder + '\\bin_GM', exist_ok=True)
+            file_name = f"{start}-{end}.png"
+            output_path = os.path.join(save_folder, 'bin_GM', file_name)
+            plt.savefig(output_path)
+
+    diffs_base = np.array(diffs_base)
+    data = base
+
+    # Найдем оптимальное количество кластеров с использованием коэффициента силуэта
+    # Диапазон возможных значений количества кластеров
+    n_components_range = range(2, 10)
+    silhouette_scores = []
+    for n_components in n_components_range:
+        gmm = GaussianMixture(n_components=n_components, random_state=0, covariance_type="spherical")
+        labels = gmm.fit_predict(data)
+        silhouette_avg = silhouette_score(data, labels)
+        silhouette_scores.append(silhouette_avg)
+
+    # Определение оптимального количества кластеров
+    optimal_n_components = n_components_range[np.argmax(silhouette_scores)]
+    print(f'Оптимальное количество кластеров: {optimal_n_components}')
+
+    # Создание и обучение модели Gaussian Mixture
+    gmm = GaussianMixture(n_components=optimal_n_components, random_state=0, covariance_type="spherical")
+    gmm.fit(data)
+
+    # Предсказание кластеров
+    labels = gmm.predict(data)
+    unique_labels = set(labels)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for label in unique_labels:
+        cluster_data = data[labels == label]
+        ax.scatter(cluster_data[:, 0], cluster_data[:, 1], cluster_data[:, 2], label=f'Cluster {label}')
+
+    ax.set_title(f"best {optimal_n_components}")
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('T')
+    plt.legend()
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cut3D_GM', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cut3D_GM', file_name)
+        plt.savefig(output_path)
+
+    # Создание подграфиков
+    fig, axes = plt.subplots(1, 7, figsize=(20, 3))
+    n = -0.5
+    for frame, ax in enumerate(axes, start=1):
+        mask = np.ma.masked_equal(diffs_base[frame - 1], 0)
+        ax.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+        ax.set_title(f'{name_info[frame-1]}')
+        # ax.set_title(f'Frame {frame}')
+
+        # Нанесение точек на изображения
+        for label in unique_labels:
+            cluster_data = data[labels == label]
+            cluster_data_z = cluster_data[cluster_data[:, 0] == (frame - 1) * steep]
+            ax.scatter(cluster_data_z[:, 2] * 2, cluster_data_z[:, 1] * 2, label=f'Cluster {label}')
+
+        # Отображение легенды только на последнем подграфике
+    plt.tight_layout()
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cut_GM', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cut_GM', file_name)
+        plt.savefig(output_path)
+
+
+    if log:
+        print(f"create {start}-{end}")
+
+    plt.close()
+    # plt.show()
+
+
+def model_method_frame(names_files, new_path):
+    _zip = False
+    i = 123
+    i = 358
+    start = 121
+    end = 126
+    # start = 20
+    # end = 25
+    # i=359
+
+    min_area_threshold = 1950
+    max_area_threshold = 50000
+    # eps_l = 6.5
+    eps_l = 7.5
+    # min_samples_l = 50
+    min_samples_l = 100
+    pp = 500
+    percent_to_trim = 0.1
+
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=_zip, type_fits=file.FitsInfo2014)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+    mask = np.ma.masked_equal(diff_resized, 0)
+    small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+    w, h = small_image.shape
+    image_array = small_image.reshape(-1, 1)
+    dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    segmented_image[segmented_image != -1] = 0
+    segmented_image[segmented_image == -1] = 1
+    d_segmented_image = segmented_image.copy()
+
+
+    # Извлечение координат пикселей, имеющих значение 1
+    coords = np.column_stack(np.where(d_segmented_image == 1))
+    plt.imshow(d_segmented_image)
+    plt.show()
+
+    # Найдем оптимальное количество кластеров с использованием коэффициента силуэта
+    range_n_clusters = [i for i in range(2, 20)]
+    best_n_clusters = 2
+    best_silhouette_avg = -1
+
+    for n_clusters in range_n_clusters:
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        cluster_labels = kmeans.fit_predict(coords)
+
+        # Вычисляем силуэт без учета выбросов
+        silhouette_avg = silhouette_score(coords, cluster_labels)
+        print(f"Для {n_clusters} кластеров средний коэффициент силуэта: {silhouette_avg}")
+
+        if silhouette_avg > best_silhouette_avg:
+            best_silhouette_avg = silhouette_avg
+            best_n_clusters = n_clusters
+    print(f"best {best_n_clusters}")
+    # Проведем окончательную кластеризацию с лучшим количеством кластеров
+    kmeans = KMeans(n_clusters=best_n_clusters, random_state=42)
+    cluster_labels = kmeans.fit_predict(coords)
+
+    X = d_segmented_image.copy()
+    for (x, y), color in zip(coords, cluster_labels):
+        X[x][y] = color+1
+
+    # Визуализируем исходное бинарное изображение и раскрашенное изображение кластеров
+    fig, ax = plt.subplots(1, 2, figsize=(15, 7))
+
+    ax[0].imshow(d_segmented_image, cmap='gray')
+    ax[0].set_title("Исходное бинарное изображение")
+
+    ax[1].imshow(X)
+    ax[1].set_title(f"Изображение с {best_n_clusters} кластерами (по K-means)")
+
+    plt.show()
+
+
+
+
+def model_method_frames(names_files, new_path, save_folder=None, start=18, end=25, log=False):
+    _zip = False
+    # i = 22
+    # start = 120
+    # end = 127
+    # start = 20
+    # end = 25
+    # start = 354
+    # end = 361
+    # i=359
+
+    min_area_threshold = 1950
+    max_area_threshold = 50000
+    # eps_l = 6.5
+    eps_l = 7.5
+    # min_samples_l = 50
+    min_samples_l = 100
+    pp = 500
+    percent_to_trim = 0.1
+
+    diffs_base = []
+    base = [0, 0, 0]
+    n = 0
+    steep = 0.5
+
+    name_info = []
+
+    for i in range(start, end):
+        data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                        _zip=_zip, type_fits=file.FitsInfo2014)
+
+        diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+        mask = np.ma.masked_equal(diff_resized, 0)
+        small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+        w, h = small_image.shape
+        image_array = small_image.reshape(-1, 1)
+        dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+        labels = dbscan.labels_
+        segmented_image = labels.reshape(w, h)
+        segmented_image[segmented_image != -1] = 0
+        segmented_image[segmented_image == -1] = 1
+        d_segmented_image = segmented_image.copy()
+
+        # Извлечение координат пикселей, имеющих значение 1
+        diffs_base.append(mask)
+        coords = np.column_stack(np.where(d_segmented_image == 1))
+        base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
+        name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+        # plt.imshow(d_segmented_image)
+        # plt.show()
+        diffs_base.append(diff_resized)
+        n += steep
+
+        if not save_folder is None:
+            os.makedirs(save_folder + '\\binMMF', exist_ok=True)
+            file_name = f"{start}-{end}.png"
+            output_path = os.path.join(save_folder, 'binMMF', file_name)
+            plt.savefig(output_path)
+
+    diffs_base = np.array(diffs_base)
+    data = base
+
+    # Найдем оптимальное количество кластеров с использованием коэффициента силуэта
+    range_n_clusters = [i for i in range(3, 20)]
+    best_n_clusters = 2
+    best_silhouette_avg = -1
+
+    for n_clusters in range_n_clusters:
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        cluster_labels = kmeans.fit_predict(coords)
+
+        # Вычисляем силуэт без учета выбросов
+        silhouette_avg = silhouette_score(coords, cluster_labels)
+        #print(f"Для {n_clusters} кластеров средний коэффициент силуэта: {silhouette_avg}")
+
+        if silhouette_avg > best_silhouette_avg:
+            best_silhouette_avg = silhouette_avg
+            best_n_clusters = n_clusters
+    # Проведем окончательную кластеризацию с лучшим количеством кластеров
+    kmeans = KMeans(n_clusters=best_n_clusters, random_state=42)
+    cluster_labels = kmeans.fit_predict(data)
+    unique_labels = set(cluster_labels)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+
+    for label in unique_labels:
+        cluster_data = data[cluster_labels == label]
+        ax.scatter(cluster_data[:, 0], cluster_data[:, 1], cluster_data[:, 2], label=f'Cluster {label}')
+
+    ax.set_title(f"best {best_n_clusters}")
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('T')
+    plt.legend()
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cut3DMMF', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cut3DMMF', file_name)
+        plt.savefig(output_path)
+
+    # Создание подграфиков
+    fig, axes = plt.subplots(1, 7, figsize=(20, 3))
+    n = -0.5
+    for frame, ax in enumerate(axes, start=1):
+        mask = np.ma.masked_equal(diffs_base[frame - 1], 0)
+        ax.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+        ax.set_title(f'{name_info[frame-1]}')
+        # ax.set_title(f'Frame {frame}')
+
+        # Нанесение точек на изображения
+        for label in unique_labels:
+            cluster_data = data[cluster_labels == label]
+            cluster_data_z = cluster_data[cluster_data[:, 0] == (frame - 1) * steep]
+            ax.scatter(cluster_data_z[:, 2] * 2, cluster_data_z[:, 1] * 2, label=f'Cluster {label}')
+
+        # Отображение легенды только на последнем подграфике
+    plt.tight_layout()
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cutMMF', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cutMMF', file_name)
+        plt.savefig(output_path)
+
+    #
+    # for frame in range(1, 6):
+    #     plt.subplot(1, 5, frame)
+    #     mask = np.ma.masked_equal(diffs_base[frame - 1], 0)
+    #     plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    #     plt.colorbar(shrink=0.8, fraction=0.1)
+
+    if log:
+        print(f"create {start}-{end}")
+
+    plt.close()
+    # plt.show(
 
 def find_optimal_dbscan_params(data, eps_range, min_samples_range):
     best_eps = None
@@ -40,17 +478,16 @@ def find_optimal_dbscan_params(data, eps_range, min_samples_range):
 
     return best_eps, best_min_samples, best_silhouette_score
 
-def start(names_files, new_path):
+def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
     _zip = False
     # i = 22
     # start = 120
     # end = 127
-    start = 18
-    end = 25
+    # start = 18
+    # end = 25
     # start = 356
     # end = 363
     # i=359
-
     min_area_threshold = 1950
     max_area_threshold = 50000
     # eps_l = 6.5
@@ -63,7 +500,14 @@ def start(names_files, new_path):
     diffs_base = []
     base = [0, 0, 0]
     n = 0
-    steep = 2
+    steep = 5 #3.5
+
+    # # Определите структурный элемент
+    # kernel = np.ones((3, 3), np.uint8)
+
+    name_info = []
+
+    fig, axes = plt.subplots(2, 7, figsize=(20, 6))
     for i in range(start, end):
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
                                                         _zip=_zip, type_fits=file.FitsInfo2014)
@@ -74,11 +518,19 @@ def start(names_files, new_path):
         w, h = small_image.shape
         image_array = small_image.reshape(-1, 1)
         dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+        # dbscan = DBSCAN(eps=0.2, min_samples=10).fit(image_array)
         labels = dbscan.labels_
         segmented_image = labels.reshape(w, h)
+        axes[1][i - start].imshow(segmented_image)
         segmented_image[segmented_image != -1] = 0
         segmented_image[segmented_image == -1] = 1
         d_segmented_image = segmented_image.copy()
+
+        # d_segmented_image = d_segmented_image.astype(np.uint8)
+        # d_segmented_image = cv2.morphologyEx(d_segmented_image, cv2.MORPH_OPEN, kernel)
+        # d_segmented_image = cv2.morphologyEx(d_segmented_image, cv2.MORPH_CLOSE, kernel)
+
+
 
         # plt.imshow(d_segmented_image)
         # plt.show()
@@ -86,14 +538,25 @@ def start(names_files, new_path):
         coords = np.column_stack(np.where(d_segmented_image == 1))
         base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
 
+        name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+
+        axes[0][i-start].set_title(name_info[-1])
+        axes[0][i-start].imshow(d_segmented_image)
+
         diffs_base.append(diff_resized)
         n += steep
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\bin', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'bin', file_name)
+        plt.savefig(output_path)
 
     # return
     diffs_base = np.array(diffs_base)
     data = base
-    print(data.shape)
-    print(data)
+    # print(data.shape)
+    # print(data)
 
     # Диапазон значений для параметров eps и min_samples
 
@@ -106,8 +569,10 @@ def start(names_files, new_path):
     # labels = dbscan.fit_predict(data)
 
 
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=5,min_samples=80, max_cluster_size=1000)
+    # clusterer = hdbscan.HDBSCAN(min_cluster_size=5,min_samples=80)
     # clusterer = hdbscan.HDBSCAN(min_cluster_size=30)
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=75, max_cluster_size=2000)
+    # clusterer = hdbscan.HDBSCAN(min_cluster_size=75, max_cluster_size=2000)
 
     # Оценка ширины полосы (bandwidth) для Mean Shift
     # bandwidth = estimate_bandwidth(data, quantile=0.2, n_samples=100)
@@ -134,7 +599,7 @@ def start(names_files, new_path):
     labels = clusterer.fit_predict(data)
 
     # Печать результатов
-    print(f"Этикетки кластеров: {labels}")
+    # print(f"Этикетки кластеров: {labels}")
 
     #Визуализация результатов (по желанию)
 
@@ -143,7 +608,7 @@ def start(names_files, new_path):
     # unique_labels.discard(0)
     # unique_labels.discard(2)
 
-    print(unique_labels)
+    # print(unique_labels)
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -157,14 +622,21 @@ def start(names_files, new_path):
     ax.set_zlabel('T')
     plt.legend()
 
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cut3D', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cut3D', file_name)
+        plt.savefig(output_path)
+
 
     # Создание подграфиков
-    fig, axes = plt.subplots(1, 7, figsize=(15, 3))
+    fig, axes = plt.subplots(1, 7, figsize=(20, 3))
     n = -0.5
     for frame, ax in enumerate(axes, start=1):
         mask = np.ma.masked_equal(diffs_base[frame - 1], 0)
         ax.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
-        ax.set_title(f'Frame {frame}')
+        ax.set_title(f'{name_info[frame-1]}')
+        # ax.set_title(f'Frame {frame}')
 
         # Нанесение точек на изображения
         for label in unique_labels:
@@ -173,8 +645,15 @@ def start(names_files, new_path):
             ax.scatter(cluster_data_z[:, 2]*2, cluster_data_z[:, 1]*2, label=f'Cluster {label}')
 
 
+
     # Отображение легенды только на последнем подграфике
     plt.tight_layout()
+
+    if not save_folder is None:
+        os.makedirs(save_folder + '\\cut', exist_ok=True)
+        file_name = f"{start}-{end}.png"
+        output_path = os.path.join(save_folder, 'cut', file_name)
+        plt.savefig(output_path)
 
     #
     # for frame in range(1, 6):
@@ -183,8 +662,11 @@ def start(names_files, new_path):
     #     plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
     #     plt.colorbar(shrink=0.8, fraction=0.1)
 
+    if log:
+        print(f"create {start}-{end}")
 
-    plt.show()
+    plt.close()
+    # plt.show()
 
 
 def start1(names_files, new_path):
@@ -192,8 +674,8 @@ def start1(names_files, new_path):
     # i = 22
     start = 121
     end = 126
-    start = 20
-    end = 25
+    # start = 20
+    # end = 25
     # i=359
 
     min_area_threshold = 1950
