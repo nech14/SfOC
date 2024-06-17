@@ -82,12 +82,11 @@ def create_all_png(frequency="5577", _zip=True):
         print(name)
 
 
-def create_mp4(dates, name="output", flag_info=False, save_folder=""):
+def create_mp4(dates, name="output", flag_info=False, save_folder="", fps=1, frames_s=1, logfun=None):
     # Размеры кадра и частота кадров в видео
     date = dates[0]
     frame_width = date.shape[1]
     frame_height = date.shape[0]
-    fps = 1
 
     if len(save_folder) > 0 and not os.path.exists(save_folder):
         # Если папки не существует, создаем её
@@ -100,24 +99,148 @@ def create_mp4(dates, name="output", flag_info=False, save_folder=""):
     for i in dates:
         # plt.imshow(i)
         # plt.show()
-        out.write(i)
+        for j in range(frames_s):
+            out.write(i)
+
+        count += 1
         if flag_info:
-            count += 1
             print(f"create video: {count}/{len(dates)}")
+        if not logfun is None:
+            logfun("create video", count, len(dates))
 
     # Закрываем объект VideoWriter
     out.release()
 
 
+def get_equal_intervals_integers(a, b, n):
+    if n < 2:
+        return [a] if n == 1 else []
+
+    step = (b - a) // (n - 1)
+    return [a + step * i for i in range(n)]
+
+
+def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_checks=4, bins=2000, cut=False,
+               percent_to_trim=0.1, fit_format=file.FitsInfo, dark=False, dark_name="DARK",
+               n=10000, corr_matrix=None, Rayleigh=False, flag_info=False, check_frame=None, data_index=None):
+    if end_i is None:
+        end_i = len(names_files)-1
+
+    buf_min_x = []
+    buf_max_x = []
+    buf_min_y = []
+    buf_max_y = []
+    buf_min_d = []
+    buf_max_d = []
+    buf_max_dy = []
+
+    count_frame = end_i - start_i
+
+    if check_frame is None:
+        check_frame = []
+    if count_frame > counts_checks:
+        check_frame_buf = set(check_frame).union(get_equal_intervals_integers(start_i, end_i-1, counts_checks))
+        check_frame = list(check_frame_buf)
+    elif len(check_frame) == 0:
+        check_frame = range(start_i, end_i)
+
+    if flag_info:
+        print(f"check_frame: {check_frame}")
+
+    for i in check_frame:
+        name_path = os.path.join(new_path, names_files[i])
+        info, data = file.open_gz(name_path, _zip=_zip)
+
+        name_path1 = os.path.join(new_path, names_files[i + 1])
+        info1, data1 = file.open_gz(name_path1, _zip=_zip)
+
+        if not data_index is None:
+            data = data[data_index]
+            data1 = data1[data_index]
+
+        if dark:
+            dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+            dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip,
+                                        fit_format=fit_format)
+
+
+        if dark:
+            time = fit_format(info).get_datetime()
+            data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+            data = (data - data.min()) / (data.max() - data.min())
+            data = (data * n).astype(int)
+
+            time = fit_format(info).get_datetime()
+            data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
+            data1 = (data1 - data1.min()) / (data1.max() - data1.min())
+            data1 = (data1 * n).astype(int)
+
+        if corr_matrix is not None:
+            data = data * corr_matrix.astype(np.float64)
+            data1 = data1 * corr_matrix.astype(np.float64)
+            data[data < 0] = np.nan
+            data1[data1 < 0] = np.nan
+
+        if Rayleigh:
+            info_f = fit_format(info)
+            info_f1 = fit_format(info1)
+            data = graphics.calculate_frame_Rayleigh(data, info_f, False)
+            data1 = graphics.calculate_frame_Rayleigh(data1, info_f1, False)
+
+
+        if cut:
+            data = graphics.cut_img(data, percent_to_trim)
+            data1 = graphics.cut_img(data1, percent_to_trim)
+
+
+
+
+        diff = data - data1
+
+        min_x, max_x, min_y, max_y, min_d, max_d, max_dy = graphics.get_hist_p(data, data1, diff, bins)
+        if flag_info:
+            print('g', min_x, max_x, min_y, max_y, min_d, max_d, max_dy)
+        buf_min_x.append(min_x)
+        buf_max_x.append(max_x)
+        buf_min_y.append(min_y)
+        buf_max_y.append(max_y)
+        buf_min_d.append(min_d)
+        buf_max_d.append(max_d)
+        buf_max_dy.append(max_dy)
+
+    return (min(buf_min_x), max(buf_max_x),
+            min(buf_min_y), max(buf_max_y),
+            min(buf_min_d), max(buf_max_d), max(buf_max_dy))
+
+
 def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
-                         correct_matrix=None, Rayleigh=False):
+                         correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
+                         data_index=None):
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
+    else: corr_matrix = None
 
     datas = []
+    diff1 = None
+
+    if hists:
+        (xmin_data, xmax_data,
+         ymin_data, ymax_data,
+         xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
+                                                        names_files, new_path,
+                                                        start_i=start_i, end_i=end_i,
+                                                        _zip=_zip, counts_checks=counts_checks, bins=bins,
+                                                        cut=cut, percent_to_trim=percent_to_trim,
+                                                        fit_format=fit_format,
+                                                        dark=dark, dark_name=dark_name,
+                                                        n=n, corr_matrix=corr_matrix, Rayleigh=Rayleigh,
+                                                        flag_info=flag_info, check_frame=check_frame,
+                                                        data_index=data_index
+                                                    )
+
     if dark:
         dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
         dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
@@ -131,9 +254,9 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
         name_path1 = os.path.join(new_path, names_files[i + 1])
         info1, data1 = file.open_gz(name_path1, _zip=_zip)
-        if fit_format == file.FitsInfoAndor:
-            data = data[0]
-            data1 = data1[0]
+        if not data_index is None:
+            data = data[data_index]
+            data1 = data1[data_index]
 
         if remove_single_pixels:
             data = graphics.remove_single_pixels(data, False, False, False)
@@ -177,18 +300,17 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
         # plt.imshow(img)
         # plt.show()
 
+
         if hists:
-            if i == start_i:
-                diff1 = None
             diff = data - data1
             img_hist = graphics.create_hists(data, data1, diff, diff1, figsize_x=(img.shape[1]+0.5)/100,
                                              figsize_y=img.shape[0]/100,
-                                             xmin_data=0, xmax_data=40000, xmin_diff=-10000, xmax_diff=10000,
-                                             ymin_data=0, ymax_data=5000, ymin_diff=0, ymax_diff=14000)
+                                             xmin_data=xmin_data, xmax_data=xmax_data, xmin_diff=xmin_diff, xmax_diff=xmax_diff,
+                                             ymin_data=ymin_data, ymax_data=ymax_data, ymin_diff=0, ymax_diff=ymax_diff,
+                                             bins=bins)
             img_hist_BGR = cv2.cvtColor(img_hist, cv2.COLOR_RGB2BGR)
             img = cv2.vconcat([img, img_hist_BGR])
             diff1 = diff
-
         datas.append(img)
 
         if save_folder is not None:
@@ -199,18 +321,22 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             plt.figure(figsize=figsize, dpi=100)
             plt.imshow(img)
+            plt.axis('off')
             plt.savefig(save_folder + f"/{i}.png")
             plt.close()
 
         if flag_info:
-            print(f"create img: {(i - start_i)}/{end_i - start_i - 1}")
+            print(f"create img: {(i - start_i +1)}/{end_i - start_i}")
+
+        if logfun:
+            logfun("create img", i-start_i+1, end_i-start_i)
     return datas
 
 
 def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
                  name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
-                 correct_matrix=None, Rayleigh=False):
+                 correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None):
 
     if end_i is None:
         end_i = len(names_files) - 2
@@ -220,16 +346,18 @@ def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output
                                      name=name, cut=cut, names=names, save_folder=(save_folder + '/' + name_img_folder),
                                      dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip, hists=hists,
                                      remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
-                                     Rayleigh=Rayleigh)
+                                     Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins, check_frame=check_frame,
+                                     data_index=data_index)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
                                      hists=hists, remove_single_pixels=remove_single_pixels,
-                                     correct_matrix=correct_matrix, Rayleigh=Rayleigh)
+                                     correct_matrix=correct_matrix, Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins,
+                                     check_frame=check_frame, data_index=data_index)
 
     if save_folder_video is None:
         save_folder_video = save_folder + "/" + name_video_folder
-    create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_video)
+    create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_video, fps=fps, frames_s=frames_s, logfun=logfun)
 
 
 

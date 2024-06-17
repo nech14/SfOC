@@ -13,3 +13,4 @@ from .graphics import create_hists
 from .graphics import remove_single_pixels
 from .graphics import create_correct_matrix
 from .graphics import calculate_frame_Rayleigh
+from .graphics import get_hist_p
