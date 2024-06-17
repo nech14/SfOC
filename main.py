@@ -1,5 +1,8 @@
+import time
+
 from scipy.interpolate import interp2d, RegularGridInterpolator
 
+from SfOC.src import clustering
 from src import graphics
 from src import file
 from src import GUI
@@ -20,9 +23,11 @@ current_directory = os.getcwd()
 
 path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 
-#path = os.path.join(current_directory, "data", "KEO", "2014", "30")
+# path = os.path.join(current_directory, "data", "KEO", "2014", "30")
+# path = os.path.join(current_directory, "data", "KEO", "2014", "28")
 
-path = os.path.join(current_directory, "data", "KEO", "20130417")
+# path = os.path.join(current_directory, "data", "KEO", "20130417")
+# path = os.path.join(current_directory, "data", "andor", "20240504")
 
 #path = os.path.join(current_directory, "data", "KEO", "20130416")
 # "data.ASI0.2023.10.11.5577"
@@ -30,9 +35,65 @@ path = os.path.join(current_directory, "data", "KEO", "20130417")
 # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
-new_path = path
+# new_path = path
 
 names = file.get_name_file(new_path)
+
+# clustering.model_method_frames(new_path=new_path, names_files=names)
+# clustering.start(new_path=new_path, names_files=names, start=120, end=127)
+# clustering.start(new_path=new_path, names_files=names, start=120, end=127)
+# clustering.model_method_frame_GaussianMixture(new_path=new_path, names_files=names)
+# clustering.model_method_frames_GaussianMixture(names, new_path, start=19, end=19+7, log=True)
+
+# _zip = False
+# names_files = names
+# i = 123
+# diff1 = None
+# name = "ggg"
+# percent_to_trim = 0.1
+#
+# name_path = os.path.join(new_path, names_files[i])
+# info, data = file.open_gz(name_path, _zip=_zip)
+#
+# name_path1 = os.path.join(new_path, names_files[i + 1])
+# info1, data1 = file.open_gz(name_path1, _zip=_zip)
+#
+#
+# data = graphics.cut_img(data, percent_to_trim)
+# data1 = graphics.cut_img(data1, percent_to_trim)
+#
+# img = graphics.create_img_for_video(data, data1, name=name)
+#
+#
+# diff = data - data1
+# print(graphics.get_hist_p(data, data1, diff))
+
+# print(logics.get_hist_p(names_files=names, new_path=new_path, start_i=20, end_i=200, counts_checks=4))
+
+
+
+# start_time = time.time()
+#
+# # for i in range(len(names)-8):
+# for i in range(0, len(names)-7):
+#     # clustering.start(names, new_path, "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28", i, i+7, log=True)
+#     # clustering.model_method_frames(names, new_path, "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\20130417", i, i+7, log=True)
+#     clustering.model_method_frames_GaussianMixture(names, new_path, "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\30", i, i+7, log=True)
+#     print(f"{i}/{len(names)-7}")
+#
+# # Засеките время окончания
+# end_time = time.time()
+#
+# # Рассчитайте и выведите длительность выполнения
+# execution_time = end_time - start_time
+# print(f"Длительность выполнения программы: {execution_time:.2f} секунд")
+
+
+# clustering.base_lvl(names, new_path)
+#print(clustering.get_clusters(names, new_path, 123))
+
+def logfun(text, i, n):
+    print(f"{text}: {i}/{n}")
 
 path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
 #
@@ -40,12 +101,30 @@ path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN1
 #                     name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
 #                     dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
 #                     remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
-
-#logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.KEO.2014.30.heatmap",
-#                     name="data.KEO.2014.30.heatmap", cut=True, save_folder="result/KEO/2014/30", save_img=True,
-#                     dark=False, fit_format="2014", _zip=False, hists=False, name_img_folder="img_for_video/base")
-
 #
+logics.create_video(names, new_path, start_i=60, end_i=80, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh3",
+                    name="data.KEO.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh", cut=True, save_folder="result/ASI0/2023/10/11/5577/test", save_img=True,
+                    dark=True, fit_format=file.FitsInfo, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod3",
+                    remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True, logfun=None, frames_s=10,
+                    counts_checks=3, check_frame=[63, 75])
+
+
+
+
+# logics.create_video(names, new_path, start_i=4, flag_info=True, names=True, name_file="data.andor.20240504.heatmap.hist",
+#                     name="data.andor.20240504.heatmap.hist", cut=True, save_folder="result/andor/20240504", save_img=True,
+#                     dark=False, dark_name=None, fit_format=file.FitsInfoAndor, _zip=False, hists=True, name_img_folder="img_for_video/hist")
+
+# logics.create_video(names, new_path, start_i=4, flag_info=True, names=True, name_file="data.andor.20240506.heatmap.hist",
+#                     name="data.andor.20240506.heatmap.hist", cut=True, save_folder="result/andor/20240506", save_img=True,
+#                     dark=False, dark_name=None, fit_format="andor", _zip=False, hists=True, name_img_folder="img_for_video/hist")
+#
+# logics.create_video(names, new_path, start_i=20, end_i=50, flag_info=True, names=True, name_file="data.andor.20240504.heatmap.hist",
+#                     name="data.andor.20240504.heatmap.hist.remove_single_pixels.Rayleigh", cut=True, save_folder="result/andor/20240504/test", save_img=True,
+#                     dark=False, fit_format=file.FitsInfoAndor, _zip=False, hists=True, name_img_folder="img_for_video/hists_mod",
+#                     remove_single_pixels=True, correct_matrix=None, Rayleigh=False, logfun=None, frames_s=2, data_index=0)
+
+
 
 
 
@@ -60,401 +139,14 @@ def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Cali
     print(test0[1023, 319])
 
 
-# plt.subplot(132)
-# plt.imshow(uc_1024)
-#
-# plt.subplot(133)
-# plt.imshow(uc_512)
-#
-# plt.show()
-#
 
-# name_path = os.path.join(new_path, names[22])
-# name_path1 = os.path.join(new_path, names[23])
-#
-# info, data = file.open_gz(name_path, _zip=True)
-# info1, data1 = file.open_gz(name_path1, _zip=True)
-#
-# data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
-# data_copy1, label_diff_region, data_copy_del = graphics.remove_single_pixels(data1, True, True, True)
-#
-# print(info)
-#
-#
-# corr_matrix = graphics.create_correct_matrix(2, 2048, path_file_matrix)
-#
-# data_matr = data_copy.copy()
-# data_matr = data_matr * corr_matrix.astype(np.float64)
-# data_matr1 = data_copy1.copy()
-# data_matr1 = data_matr1 * corr_matrix.astype(np.float64)
-#
-# data_matr[data_matr < 0] = np.nan
-# data_matr1[data_matr1 < 0] = np.nan
-#
-# info = file.FitsInfo(info)
-# info1 = file.FitsInfo(info1)
-#
-# data_cadr = graphics.calculate_frame_Rayleigh(data_matr, info, True)
-# data_cadr1 = graphics.calculate_frame_Rayleigh(data_matr1, info1, True)
+# logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
 
 
-# plt.subplot(131)
-# plt.imshow(data, cmap="gray")
-# plt.subplot(132)
-# plt.imshow(data_matr, cmap="gray")
-# plt.subplot(133)
-# plt.imshow(data_cadr, cmap="gray")
-#
-# plt.show()
-
-
-# name_path = os.path.join(new_path, names[22])
-# info, data = file.open_gz(name_path, _zip=False)
-#
-# data[300, 250] = 60000
-#
-# data_copy, label_diff_region, data_copy_del = graphics.remove_single_pixels(data, True, True, True)
-#
-#
-# plt.subplot(231)
-# plt.imshow(data, cmap="gray")
-# plt.subplot(232)
-# plt.imshow(graphics.cut_img(data_copy_del), cmap="gray")
-# plt.subplot(233)
-# plt.imshow(graphics.cut_img(data_copy), cmap="gray")
-#
-# plt.subplot(234)
-# # plt.imshow(cut_diff, cmap="gray")
-# plt.hist(graphics.cut_img(data).flatten(), bins=2000)
-# plt.xlim(xmin=0, xmax=10000)
-#
-# plt.subplot(235)
-# # plt.imshow(cut1_diff, cmap="gray")
-# plt.hist(graphics.cut_img(data_copy).flatten(), bins=2000)
-# plt.xlim(xmin=0, xmax=10000)
-#
-# plt.subplot(236)
-# plt.imshow(label_diff_region)
-#
-# plt.show()
-
-# #
-# #
-# #
-# data_cadr_cut = graphics.cut_img(data_cadr, nan=False)
-# data_cadr_cut1 = graphics.cut_img(data_cadr1, nan=False)
-#
-# # plt.subplot(131)
-# # plt.imshow(data_cadr)
-# # plt.subplot(132)
-# # plt.imshow(data_matr1)
-# # plt.subplot(133)
-# # plt.imshow(data_cadr-data_cadr1)
-# # plt.show()
-#
-
-print("start KMeans")
-
-from sklearn.cluster import KMeans
-
-name_path = os.path.join(new_path, names[21])
-name_path1 = os.path.join(new_path, names[22])
-
-info, data = file.open_gz(name_path, _zip=False)
-info1, data1 = file.open_gz(name_path1, _zip=False)
-
-data_cut = graphics.cut_img(data, nan=False)
-data1_cut = graphics.cut_img(data1, nan=False)
-
-diff = data_cut - data1_cut
-
-data_c, _, _ = auto_contrast_skimage(data)
-data1_c, _, _ = auto_contrast_skimage(data1)
-
-def find_optimal_num_clusters(data, max_clusters=100):
-    # Определение диапазона количества кластеров для проверки
-    num_clusters_range = range(1, max_clusters + 1)
-    inertia_values = []
-
-    # Выполнение кластеризации для разного количества кластеров
-    for num_clusters in num_clusters_range:
-        kmeans = KMeans(n_clusters=num_clusters)
-        kmeans.fit(data)
-        inertia_values.append(kmeans.inertia_)
-
-    # Нахождение "локтя" на графике инерции
-    diff = np.diff(inertia_values)
-    diff_r = np.diff(diff)
-    elbow_index = np.where(diff_r > diff_r.mean())[0][0] + 1
-
-    return elbow_index
-
-# Пример использования функции для определения оптимального количества кластеров
-#optimal_clusters = find_optimal_num_clusters(data)
-optimal_clusters = 200
-print("Optimal number of clusters:", optimal_clusters)
-
-# Выполнение кластеризации с оптимальным количеством кластеров
-kmeans = KMeans(n_clusters=optimal_clusters)
-kmeans.fit(data_cut)
-cluster_labels = kmeans.labels_
-cluster_centers = kmeans.cluster_centers_
-
-# Кластеризация пикселей изображения
-clustered_image = cluster_centers[cluster_labels].reshape(data_cut.shape).astype(np.uint8)
-
-
-kmeans = KMeans(n_clusters=optimal_clusters)
-kmeans.fit(data1_cut)
-cluster_labels = kmeans.labels_
-cluster_centers = kmeans.cluster_centers_
-
-# Кластеризация пикселей изображения
-clustered_image1 = cluster_centers[cluster_labels].reshape(data1_cut.shape).astype(np.uint8)
-
-
-kmeans = KMeans(n_clusters=optimal_clusters)
-kmeans.fit(diff)
-cluster_labels = kmeans.labels_
-cluster_centers = kmeans.cluster_centers_
-
-clustered_image_diff = cluster_centers[cluster_labels].reshape(diff.shape).astype(np.uint8)
-
-
-data_cut = graphics.cut_img(data_c, nan=False)
-data1_cut = graphics.cut_img(data1_c, nan=False)
-
-# Визуализация кластеризованного изображения
-plt.subplot(231)
-plt.imshow(data_cut, cmap="gray")
-plt.title('Image')
-
-plt.subplot(232)
-plt.imshow(clustered_image)
-plt.title('Clustered Image')
-
-plt.subplot(233)
-plt.imshow(diff, cmap="RdBu_r")
-plt.title('Diff')
-
-plt.subplot(234)
-plt.imshow(data1_cut, cmap="gray")
-plt.title('Image1')
-
-plt.subplot(235)
-plt.imshow(clustered_image1)
-plt.title('Clustered Image1')
-
-plt.subplot(236)
-plt.imshow(clustered_image_diff)
-plt.title('Clustered diff')
-
-
-plt.show()
-
-
-
-
-# data_cadr_cut = data_cadr_cut.astype(np.int64)
-# data_cadr_cut1 = data_cadr_cut1.astype(np.int64)
-#
-#
-# graphics.print_graphics_cv2_arr(data_cadr_cut, data_cadr_cut1, data_cadr_cut.max())
-
-
-
-
-#logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
-
-
-#
-# plt.subplot(221)
-# plt.imshow(data, cmap="gray")
-# plt.subplot(222)
-# plt.imshow(blurred_image, cmap="gray")
-# plt.subplot(223)
-# plt.imshow(cut_diff, cmap="gray")
-# plt.subplot(224)
-# plt.imshow(cut1_diff, cmap="gray")
-# plt.show()
-
-
-# data_c = data.copy()
-# c = 0
-# for i in range(label_diff.max()):
-#     #if np.count_nonzero(label_diff == i) == 1:
-#     if np.sum((label_diff == i) & (~np.isnan(label_diff))) == 1:
-#         indices = np.where(label_diff == i)
-#         #print(indices[0], indices[1])
-#         data_c[indices[0], indices[1]] = (data[indices[0]-1, indices[1]] + data[indices[0], indices[1]-1] +
-#                                         data[indices[0]+1, indices[1]] + data[indices[0], indices[1]+1])/4
-#         # label_diff_c = label_diff.copy()
-#         # label_diff_c[label_diff_c != i] = 0
-#         # plt.imshow(label_diff_c)
-#         # plt.show()
-#         c += 1
-
-
-#
-# plt.subplot(141)
-# plt.imshow(data, cmap="gray")
-# plt.subplot(142)
-# plt.imshow(data_c, cmap="gray")
-# plt.subplot(143)
-# plt.imshow(blurred_image, cmap="gray")
-# plt.subplot(144)
-# plt.imshow(diff)
-# plt.show()
-
-
-#
-# dark1, time1 = logics.get_dark_AVG(names, new_path)
-# dark2, time2 = logics.get_dark_AVG(np.flip(names), new_path)
-#
-#
-# name_path = os.path.join(new_path, names[70])
-# info, data = file.open_gz(name_path)
-#
-#
-#
-# time = file.FitsInfo(info).get_datetime()
-# data = logics.subtract_noise_frame(dark1, dark2, time1, time2, data, time)
-# data = (data - data.min()) / (data.max() - data.min())
-# data = (data * 10000).astype(int)
-#
-# data = graphics.cut_img(data)
-# data, _, _ = auto_contrast_skimage(data)
-# data_orig = data.astype(float)
-# data = data_orig.copy()
-#
-
-# from photutils.background import Background2D, MedianBackground
-# bkg_estimator = MedianBackground()
-# bkg = Background2D(data, (50, 50), filter_size=(3, 3),
-#                    bkg_estimator=bkg_estimator)
-# data = data.astype(np.float64)
-# data -= bkg.background  # subtract the background
-#
-# threshold = 1.5 * bkg.background_rms
-#
-# from astropy.convolution import convolve
-# from photutils.segmentation import make_2dgaussian_kernel
-# kernel = make_2dgaussian_kernel(3.0, size=5)  # FWHM = 3.0
-# convolved_data = convolve(data, kernel)
-#
-# from photutils.segmentation import detect_sources
-# segment_map = detect_sources(convolved_data, threshold, npixels=10)
-#
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from astropy.visualization import SqrtStretch
-# from astropy.visualization.mpl_normalize import ImageNormalize
-# norm = ImageNormalize(stretch=SqrtStretch())
-# fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12.5))
-# ax1.imshow(data, origin='lower', cmap='Greys_r', norm=norm)
-# ax1.set_title('Background-subtracted Data')
-# ax2.imshow(segment_map, origin='lower', cmap=segment_map.cmap,
-#            interpolation='nearest')
-# ax2.set_title('Segmentation Image')
-#
-# plt.show()
-
-# print(names[0])
-# name_path = os.path.join(new_path, names[0])
-# info, data = file.open_gz(name_path)
-
-
-#
-# name_path = os.path.join(new_path, names[1])
-# info, data1 = file.open_gz(name_path)
-#
-# name_path = os.path.join(new_path, names[2])
-# info, data2 = file.open_gz(name_path)
-#
-# avg = np.mean([data, data1, data2], axis=0)
-# print(avg)
-
-
-# print(names)
-
-# bins = np.linspace(0, 10000, 101)
-#bins = np.append(bins, 70000)
-# print(bins)
-
-
-
-
-
-# save_folder="result/ASI0/2023/10/11/5577"
-# title = "data.ASI0.2023.10.11.5577.viridis.100bins_limit_10000_0"
-#"ASI0.2023.10.11.5577.viridis_auto_contrast_edges.15"
-# logics.create_heatmap(names, new_path, bins=100, edges=5, log_info=True, auto_contrast=False,
-#                       title="KEO.20130417.viridis_edges_5_limit_5000",
-#                       limit=5000, cmap='viridis', save_folder="result/KEO/20130417", fit_format="2014", zip=False)
-
-# graphics.print_graphics_cv2(combined_image, combined_image.max())
 
 #GUI.start()
 
 
-# input_string = r"C:\\work\\search_for_oxide_cloud\\SfOC/gggg.png"
-#
-# # Преобразование строки в путь
-# path = os.path.normpath(input_string)
-#
-# print(path)
-
-
-# result = create_img_for_video(names, 13, 14, name="GG", cut=True, names=True)
-# plt.imshow(result[0])
-# plt.show()
-#name_file="data.ASI0.2023.10.11.5577.heatmap.test_1
-#"data.KEO.2014.30.heatmap",
-#"data.KEO.20130417.heatmap"
-
-
-#
-# name_path = os.path.join(new_path, names[20])
-# info, data = file.open_gz(name_path, _zip=False)
-#
-# name_path1 = os.path.join(new_path, names[21])
-# info1, data1 = file.open_gz(name_path1, _zip=False)
-#
-# data_c = graphics.cut_img(data, nan=True)
-# data1_c = graphics.cut_img(data1, nan=True)
-#
-# diff1 = data_c - data1_c
-#
-# name_path = os.path.join(new_path, names[21])
-# _, data = file.open_gz(name_path, _zip=False)
-#
-# name_path1 = os.path.join(new_path, names[22])
-# _, data1 = file.open_gz(name_path1, _zip=False)
-#
-# data_c = graphics.cut_img(data, nan=True)
-# data1_c = graphics.cut_img(data1, nan=True)
-# diff = data_c - data1_c
-#
-#
-# graphics.create_hists(data_c, data1_c, diff, diff1, show=True)
-
-# import joypy
-#
-# import pandas as pd
-# import numpy as np
-# from matplotlib import pyplot as plt
-# from matplotlib import cm
-#
-#
-# temp = pd.read_csv("data/daily_temp.csv",comment="%")
-#
-# labels=[y if y%10==0 else None for y in list(temp.Year.unique())]
-# fig, axes = joypy.joyplot(temp, by="Year", column="Anomaly", labels=labels, range_style='own',
-#                           grid="y", linewidth=1, legend=False, figsize=(6,5),
-#                           title="Global daily temperature 1880-2014 \n(°C above 1950-80 average)",
-#                           colormap=cm.autumn_r)
-#
-# plt.show()
 
 
 def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=None, ylim3d_min=0, ylim3d_max=None,
