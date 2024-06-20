@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 
 import cv2
 import hdbscan
@@ -21,11 +22,248 @@ from scipy.spatial.distance import cdist
 from sklearn.mixture import GaussianMixture
 
 
+class BinShow(Enum):
+    NONE = 0
+    ALL = 3
+
+
+def canny_frame_best(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo2014, save_folder=None,
+                     file_name=None, rows=5, cols=5, suptitle=None, nameFile="image", show=False, log=False, _resize=False,
+                     eps_steep=0.5, min_samples_steep=10, eps_steep_start=0., min_samples_start_steep=0, cmap=None):
+
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=False, type_fits=type_fits)
+
+    if _resize:
+        diff = resize(diff, (256, 256), anti_aliasing=True)
+
+    plt.figure(figsize=(12, 12))
+
+    if suptitle is None:
+        suptitle = f"{info.get_datetime()}-{info1.get_datetime()} finding the best value for DBSCAN"
+    plt.suptitle(suptitle)
+
+    plt.subplot(rows, cols, 1)
+    pp = 500
+    plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    plt.title(f'Original')
+    plt.axis('off')
+
+    eps = eps_steep_start + eps_steep
+    min_samples = min_samples_start_steep + min_samples_steep
+    for i in range(1, rows * cols):
+        plt.subplot(rows, cols, i + 1)
+
+        if i%cols == 0:
+            eps = eps_steep_start
+            min_samples += min_samples_steep
+
+        eps += eps_steep
+
+        eps = round(eps, 1)
+
+        # Получение координат и значений серого цвета
+        x_coords, y_coords = np.meshgrid(np.arange(diff.shape[1]), np.arange(diff.shape[0]))
+        features = np.column_stack((diff.ravel(), x_coords.ravel(), y_coords.ravel()))
+
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean').fit(features)
+        labels = dbscan.labels_
+
+        # Преобразование результата кластеризации в изображение
+        clustered_image = np.zeros_like(diff)
+        unique_labels = set(labels)
+        for label in unique_labels:
+            if label == -1:
+                # Обработка шума (контуры)
+                clustered_image[labels.reshape(diff.shape) == label] = 0
+            else:
+                # Обработка кластеров (не-контуры)
+                clustered_image[labels.reshape(diff.shape) == label] = 255
+
+        plt.imshow(clustered_image, cmap=cmap)
+
+        # Добавление заголовка с параметрами eps и min_samples
+        plt.title(f'e={eps}, m={min_samples}')
+
+        # Удаление осей для улучшения читаемости
+        plt.axis('off')
+
+        if log:
+            print(f"create {i + 1}/{rows*cols}")
+
+
+    if not save_folder is None:
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder, file_name)
+        plt.savefig(output_path)
+
+    if show:
+        plt.show()
+    plt.close()
+
+
+
+def canny_frame(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo2014,
+              eps=6, min_samples=10, return_diff=False, _resize=False, origin_diff=False):
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=False, type_fits=type_fits)
+    if origin_diff:
+        origin_diff_return = diff
+    if _resize:
+        diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+        mask = np.ma.masked_equal(diff_resized, 0)
+        diff = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+
+    # Получение координат и значений серого цвета
+    x_coords, y_coords = np.meshgrid(np.arange(diff.shape[1]), np.arange(diff.shape[0]))
+    features = np.column_stack((diff.ravel(), x_coords.ravel(), y_coords.ravel()))
+
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean').fit(features)
+    labels = dbscan.labels_
+
+    # Преобразование результата кластеризации в изображение
+    clustered_image = np.zeros_like(diff)
+    unique_labels = set(labels)
+    for label in unique_labels:
+        if label == -1:
+            # Обработка шума (контуры)
+            clustered_image[labels.reshape(diff.shape) == label] = 0
+        else:
+            # Обработка кластеров (не-контуры)
+            clustered_image[labels.reshape(diff.shape) == label] = 255
+
+    if return_diff and origin_diff:
+        return clustered_image, diff, origin_diff_return
+    elif origin_diff:
+        return clustered_image, origin_diff_return
+    elif return_diff:
+        return clustered_image, diff
+    return clustered_image
+
+
+def bin_frame_best(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo2014, save_folder=None,
+              file_name=None, rows=5, cols=5, suptitle=None, nameFile="image", show=False,
+              eps_steep=0.5, min_samples_steep=10, eps_steep_start=0., min_samples_start_steep=0):
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=_zip, type_fits=type_fits)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+    mask = np.ma.masked_equal(diff_resized, 0)
+    small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+    w, h = small_image.shape
+    image_array = small_image.reshape(-1, 1)
+
+
+    plt.figure(figsize=(12, 12))
+
+    if suptitle is None:
+        suptitle = f"{info.get_datetime()}-{info1.get_datetime()} finding the best value for DBSCAN"
+    plt.suptitle(suptitle)
+
+
+    plt.subplot(rows, cols, 1)
+    pp = 500
+    plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    plt.title(f'Original')
+    plt.axis('off')
+
+    eps = eps_steep_start + eps_steep
+    min_samples = min_samples_start_steep + min_samples_steep
+    for i in range(1, rows*cols):
+        plt.subplot(rows, cols, i+1)
+
+        if i%cols == 0:
+            eps = eps_steep_start
+            min_samples += min_samples_steep
+
+        eps += eps_steep
+
+        eps = round(eps, 1)
+
+        dbscan = DBSCAN(eps=eps, min_samples=min_samples).fit(image_array)
+        labels = dbscan.labels_
+        segmented_image = labels.reshape(w, h)
+        d_segmented_image = segmented_image.copy()
+        d_segmented_image[d_segmented_image != -1] = 0
+        d_segmented_image[d_segmented_image == -1] = 1
+
+        plt.imshow(d_segmented_image)
+
+        # Добавление заголовка с параметрами eps и min_samples
+        plt.title(f'e={eps}, m={min_samples}')
+
+        # Удаление осей для улучшения читаемости
+        plt.axis('off')
+
+
+
+
+    if not save_folder is None:
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder, file_name)
+        plt.savefig(output_path)
+
+    if show:
+        plt.show()
+    plt.close()
+
+def bin_frame(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo2014, save_folder=None,
+              file_name=None, name_bin="bin", bin_time_frame=None, type_print=BinShow.NONE,
+              eps=1.2, min_samples=50):
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=_zip, type_fits=type_fits)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+    mask = np.ma.masked_equal(diff_resized, 0)
+    small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+    w, h = small_image.shape
+    image_array = small_image.reshape(-1, 1)
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    d_segmented_image = segmented_image.copy()
+    d_segmented_image[d_segmented_image != -1] = 0
+    d_segmented_image[d_segmented_image == -1] = 1
+
+
+    coords = np.column_stack(np.where(d_segmented_image == 1))
+    if not bin_time_frame is None:
+        bin_time_frame.append(f'{info.get_norm_time()}')
+        bin_time_frame.append(f'{info1.get_norm_time()}')
+
+
+    if type_print != BinShow.NONE:
+        plt.subplot(131)
+        pp= 500
+        plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+        plt.subplot(132)
+        plt.imshow(segmented_image)
+
+        plt.subplot(133)
+        plt.imshow(d_segmented_image)
+        plt.show()
+
+
+    if not save_folder is None:
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{i}.png"
+        output_path = os.path.join(save_folder, name_bin, file_name)
+        plt.savefig(output_path)
+
+    return coords, f'{info.get_datetime()} \n {info1.get_datetime()}', mask, diff_resized
+
+
 def model_method_frame_GaussianMixture(names_files, new_path):
     _zip = False
     i = 123
-    i = 358
-    i = 21
+    # i = 358
+    # i = 21
     start = 121
     end = 126
     # start = 20
@@ -64,7 +302,7 @@ def model_method_frame_GaussianMixture(names_files, new_path):
     X = d_segmented_image.copy()
 
     # Диапазон возможных значений количества кластеров
-    n_components_range = range(2, 10)
+    n_components_range = range(2, 20)
     silhouette_scores = []
 
     for n_components in n_components_range:
@@ -130,6 +368,7 @@ def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None,
     steep = 2.5
 
     name_info = []
+    name_info2 = []
 
     for i in range(start, end):
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
@@ -152,6 +391,8 @@ def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None,
         coords = np.column_stack(np.where(d_segmented_image == 1))
         base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
         name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+        name_info2.append(f'{info.get_norm_time()}')
+        name_info2.append(f'{info1.get_norm_time()}')
         # plt.imshow(d_segmented_image)
         # plt.show()
         diffs_base.append(diff_resized)
@@ -162,7 +403,6 @@ def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None,
             file_name = f"{start}-{end}.png"
             output_path = os.path.join(save_folder, 'bin_GM', file_name)
             plt.savefig(output_path)
-
     diffs_base = np.array(diffs_base)
     data = base
 
@@ -178,7 +418,7 @@ def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None,
 
     # Определение оптимального количества кластеров
     optimal_n_components = n_components_range[np.argmax(silhouette_scores)]
-    print(f'Оптимальное количество кластеров: {optimal_n_components}')
+    # print(f'Оптимальное количество кластеров: {optimal_n_components}')
 
     # Создание и обучение модели Gaussian Mixture
     gmm = GaussianMixture(n_components=optimal_n_components, random_state=0, covariance_type="spherical")
@@ -237,6 +477,7 @@ def model_method_frames_GaussianMixture(names_files, new_path, save_folder=None,
 
     plt.close()
     # plt.show()
+    return optimal_n_components, name_info2
 
 
 def model_method_frame(names_files, new_path):
@@ -344,6 +585,7 @@ def model_method_frames(names_files, new_path, save_folder=None, start=18, end=2
     steep = 0.5
 
     name_info = []
+    name_info2 = []
 
     for i in range(start, end):
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
@@ -366,6 +608,8 @@ def model_method_frames(names_files, new_path, save_folder=None, start=18, end=2
         coords = np.column_stack(np.where(d_segmented_image == 1))
         base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
         name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+        name_info2.append(f'{info.get_norm_time()}')
+        name_info2.append(f'{info1.get_norm_time()}')
         # plt.imshow(d_segmented_image)
         # plt.show()
         diffs_base.append(diff_resized)
@@ -456,6 +700,7 @@ def model_method_frames(names_files, new_path, save_folder=None, start=18, end=2
 
     plt.close()
     # plt.show(
+    return best_n_clusters, name_info2
 
 def find_optimal_dbscan_params(data, eps_range, min_samples_range):
     best_eps = None
@@ -506,6 +751,7 @@ def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
     # kernel = np.ones((3, 3), np.uint8)
 
     name_info = []
+    name_info2 = []
 
     fig, axes = plt.subplots(2, 7, figsize=(20, 6))
     for i in range(start, end):
@@ -539,6 +785,8 @@ def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
         base = np.vstack((base, np.column_stack((np.full(coords.shape[0], n), coords))))
 
         name_info.append(f'{info.get_datetime()} \n {info1.get_datetime()}')
+        name_info2.append(f'{info.get_norm_time()}')
+        name_info2.append(f'{info1.get_norm_time()}')
 
         axes[0][i-start].set_title(name_info[-1])
         axes[0][i-start].imshow(d_segmented_image)
@@ -564,12 +812,15 @@ def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
     eps = 10.
     min_samples = 100
 
-    # Выполнение кластеризации
+    # # Выполнение кластеризации
     # dbscan = DBSCAN(eps=eps, min_samples=min_samples)
     # labels = dbscan.fit_predict(data)
 
+    # clusterer = hdbscan.HDBSCAN(min_cluster_size=5,min_samples=80, max_cluster_size=1000)
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=10)
+    labels = clusterer.fit_predict(data)
 
-    clusterer = hdbscan.HDBSCAN(min_cluster_size=5,min_samples=80, max_cluster_size=1000)
+
     # clusterer = hdbscan.HDBSCAN(min_cluster_size=5,min_samples=80)
     # clusterer = hdbscan.HDBSCAN(min_cluster_size=30)
     # clusterer = hdbscan.HDBSCAN(min_cluster_size=75, max_cluster_size=2000)
@@ -596,7 +847,6 @@ def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
     #
     #
     # clusterer = DBSCAN(eps=eps, min_samples=min_samples)
-    labels = clusterer.fit_predict(data)
 
     # Печать результатов
     # print(f"Этикетки кластеров: {labels}")
@@ -669,11 +919,13 @@ def start(names_files, new_path, save_folder=None, start=18, end=25, log=False):
     # plt.show()
 
 
+    return max(set(labels)), name_info2
+
 def start1(names_files, new_path):
     _zip = False
     # i = 22
-    start = 121
-    end = 126
+    start = 120
+    end = 127
     # start = 20
     # end = 25
     # i=359
