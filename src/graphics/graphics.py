@@ -122,6 +122,7 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
 
 def save_heat_map(data_heat, pp=500):
     fig, ax = plt.subplots(figsize=(8, 8))
+    #fig, ax = plt.subplots(figsize=(1024 / 100, 1424 / 100))
     #print(f"hsdjhfds:{data_heat.shape}")
     mask = np.ma.masked_equal(data_heat, 0)
     plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
@@ -133,8 +134,8 @@ def save_heat_map(data_heat, pp=500):
         text.set_color('white')
 
     #plt.savefig(buffer, format="png")
-
     canvas = plt.gcf().canvas
+    #canvas = plt.get_current_fig_manager().canvas
     canvas.draw()
     rgb_string = canvas.tostring_rgb()
 
@@ -145,6 +146,9 @@ def save_heat_map(data_heat, pp=500):
     image_array = image_array[144:-144, 114:-54]
     #image_array = image_array[137:-138, 114:-54]
 
+    # print(image_array.shape)
+    # plt.imshow(image_array)
+    # plt.show()
     return image_array
 
 def print_heat_map(data_heat, data_base=None):
@@ -531,6 +535,36 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             return 2
 
 
+def get_hist_p(data, data1, diff, bins=2000):
+    plt.figure(figsize=(10, 10))
+    f_data = data.flatten()
+    f_data1 = data1.flatten()
+    f_diff = diff.flatten()
+
+    clean_data = data.flatten()
+    clean_data = clean_data[np.isfinite(clean_data)]
+    min_x = np.percentile(clean_data, 1) * 2
+    max_x = np.percentile(clean_data, 99) * 2
+
+    clean_data1 = data.flatten()
+    clean_data1 = clean_data1[np.isfinite(clean_data1)]
+    min_x1 = np.percentile(clean_data1, 1) * 2
+    max_x1 = np.percentile(clean_data1, 99) * 2
+
+    clean_diff = diff.flatten()
+    clean_diff = clean_diff[np.isfinite(clean_diff)]
+    min_d = np.percentile(clean_diff, 1) * 2
+    max_d = np.percentile(clean_diff, 99) * 2
+
+    counts, bin_edges, patches = plt.hist(f_data, bins=bins)
+    counts1, bin_edges1, patches1 = plt.hist(f_data1, bins=bins)
+    counts_d, bin_edges_d, patches_d = plt.hist(f_diff, bins=bins)
+
+    plt.close()
+
+    return min(min_x, min_x1, 0), max(max_x, max_x1), 0, max(max(counts*1.5), max(counts1*1.5)), min(0, min_d), max_d, max(counts_d*1.5)
+
+
 def create_hists(data, data1, diff, diff1=None, bins=2000,
                  xmin_data=0, xmax_data=6000, xmin_diff=-1000, xmax_diff=1000, alpha=0.5,
                  ymin_data=0, ymax_data=20000, ymin_diff=0, ymax_diff=30000, show=False,
@@ -583,7 +617,7 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
     dlimit_diff = 0
     cmap = plt.get_cmap('gray')
 
-    combined_image = cv2.hconcat([data, data1])
+    combined_image = cv2.hconcat([ cv2.resize(data,(512, 512)), cv2.resize(data1,(512, 512))])
 
     processed_image, _, _ = auto_contrast_skimage(combined_image)
     cmap_image = np.array(processed_image)
@@ -645,6 +679,12 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
 
 
         mistake = expanded_image_diff.shape[0] - expanded_image.shape[0]
+        #coef = expanded_image.shape[0]/expanded_image_diff[mistake:].shape[0]
+        #img = expanded_image_diff[mistake:]
+        #resized_img = cv2.resize(expanded_image_diff[mistake:], (int(img.shape[1]*coef), int(img.shape[0]*coef)))
+
+        #print(f'fdsafsa {resized_img.shape, expanded_image.shape}')
+        #result = cv2.hconcat([expanded_image, resized_img])
         result = cv2.hconcat([expanded_image, expanded_image_diff[mistake:]])
     else:
         result = cv2.hconcat([cmap_image, diff_cmap])
