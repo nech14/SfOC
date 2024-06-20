@@ -6,3 +6,9 @@ from .clustering import model_method_frames
 from .clustering import model_method_frame_GaussianMixture
 from .clustering import model_method_frame
 from .clustering import model_method_frames_GaussianMixture
+from .clustering import bin_frame
+from .clustering import BinShow
+from .clustering import bin_frame_best
+from .clustering import work_with_date
+from .clustering import canny_frame
+from .clustering import canny_frame_best
