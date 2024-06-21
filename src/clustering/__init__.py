@@ -12,3 +12,5 @@ from .clustering import bin_frame_best
 from .clustering import work_with_date
 from .clustering import canny_frame
 from .clustering import canny_frame_best
+from .clustering import print_canny_with_bin
+from .clustering import print_diff_canny

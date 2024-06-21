@@ -20,11 +20,190 @@ from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.metrics import silhouette_samples, silhouette_score
 from scipy.spatial.distance import cdist
 from sklearn.mixture import GaussianMixture
+from scipy.interpolate import griddata
 
 
 class BinShow(Enum):
     NONE = 0
     ALL = 3
+
+
+def print_diff_canny(names_files, new_path, i, eps=10, min_samples=5, _resize=True, show=False, suptitle=None,
+                         type_fits=file.FitsInfo2014, save_folder=None, nameFile="img", file_name=None):
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=0.1,
+                                                    _zip=False, type_fits=type_fits)
+
+
+    plt.figure(figsize=(24, 6))
+
+    if suptitle is None:
+        suptitle = f"eps={eps}, min_samples={min_samples}"
+    plt.suptitle(suptitle)
+
+    rows = 5
+
+    plt.subplot(1, rows, 1)
+    plt.title("Оригинальное изображение")
+    pp = 500
+    plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    edges = canny_frame(names_files=names_files, new_path=new_path, i=i, eps=eps, min_samples=min_samples)
+
+    plt.subplot(1, rows, 2)
+    plt.title('Edges')
+    plt.imshow(edges, cmap='gray')
+
+    mask_edges = edges.copy()
+    mask_edges[mask_edges == 255] = 1
+    diff_a = diff * mask_edges
+
+    plt.subplot(1, rows, 3)
+    plt.title('Оригинальное изображение - Edges')
+    plt.imshow(diff_a, cmap='gray')
+
+    plt.subplot(1, rows, 4)
+    plt.title('Оригинальное изображение - Edges')
+    plt.imshow(diff_a, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    # Подготовка данных для интерполяции
+    # Получение координат ненулевых пикселей и их значений
+    coords = np.column_stack(np.where(mask_edges > 0))
+    values = diff_a[mask_edges > 0]
+
+    # Создание сетки для интерполяции
+    grid_x, grid_y = np.mgrid[0:diff_a.shape[0], 0:diff_a.shape[1]]
+
+    # Линейная интерполяция
+    interpolated_image = griddata(coords, values, (grid_x, grid_y), method='linear', fill_value=0)
+
+    plt.subplot(1, rows, 5)
+    plt.title('после ЛИ')
+    plt.imshow(interpolated_image, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    if not save_folder is None:
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder, file_name)
+        plt.savefig(output_path)
+
+    if show:
+        plt.show()
+    plt.close()
+
+
+def print_canny_with_bin(names_files, new_path, i, eps=10, min_samples=5, _resize=True, show=False, suptitle=None,
+                         type_fits=file.FitsInfo2014, save_folder=None, nameFile="img", file_name=None):
+
+    clustered_image, diff, origin_diff = canny_frame(names_files=names_files, new_path=new_path, i=i, _resize=_resize,
+                                                     eps=eps, min_samples=min_samples, return_diff=True, type_fits=type_fits,
+                                                     origin_diff=True)
+    rows = 3
+    cols = 3
+
+    plt.figure(figsize=(20, 20))
+
+    if not suptitle is None:
+        plt.suptitle(suptitle)
+
+    plt.subplot(rows, cols, 1)
+    plt.title("Оригинальное изображение")
+    pp = 500
+    plt.imshow(origin_diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    plt.subplot(rows, cols, 2)
+    plt.title("Оригинальное сжатое изображение")
+    plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    plt.subplot(rows, cols, 3)
+    diff_resized = resize(origin_diff, (256, 256), anti_aliasing=True)
+    mask = np.ma.masked_equal(diff_resized, 0)
+    small_image = resize(mask, (mask.shape[0] // 2, mask.shape[1] // 2))
+    w, h = small_image.shape
+    image_array = small_image.reshape(-1, 1)
+    dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    d_segmented_image = segmented_image.copy()
+    d_segmented_image[d_segmented_image != -1] = 0
+    d_segmented_image[d_segmented_image == -1] = 1
+
+    plt.title("Бинарное изображение")
+    plt.imshow(d_segmented_image)
+
+    plt.subplot(rows, cols, 4)
+    plt.title('"Контур"')
+    plt.imshow(clustered_image, cmap="gray")
+
+    clustered_image[clustered_image == 255] = 1
+    diff_a = diff * clustered_image
+
+    plt.subplot(rows, cols, 5)
+    plt.title("Оригинальное сжатое изображение - контур")
+    plt.imshow(diff_a, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    w, h = diff_a.shape
+    image_array = diff_a.reshape(-1, 1)
+    dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    d_segmented_image = segmented_image.copy()
+    d_segmented_image[d_segmented_image != -1] = 0
+    d_segmented_image[d_segmented_image == -1] = 1
+
+    plt.subplot(rows, cols, 6)
+    plt.title("Бинарное изображение")
+    plt.imshow(d_segmented_image)
+
+    plt.subplot(rows, cols, 7)
+    plt.title('"Контур" инвертированный')
+    in_clustered_image = clustered_image.copy()
+    in_clustered_image[in_clustered_image == 0] = 255
+    in_clustered_image[in_clustered_image == 1] = 0
+    plt.imshow(in_clustered_image, cmap="gray")
+
+    # Подготовка данных для интерполяции
+    # Получение координат ненулевых пикселей и их значений
+    coords = np.column_stack(np.where(clustered_image > 0))
+    values = diff_a[clustered_image > 0]
+
+    # Создание сетки для интерполяции
+    grid_x, grid_y = np.mgrid[0:diff_a.shape[0], 0:diff_a.shape[1]]
+
+    # Линейная интерполяция
+    interpolated_image = griddata(coords, values, (grid_x, grid_y), method='linear', fill_value=0)
+
+    # Преобразование к типу uint8
+    # interpolated_image = np.uint8(interpolated_image)
+
+    plt.subplot(rows, cols, 8)
+    plt.title("Оригинальное сжатое изображение - контур + ЛИ")
+    plt.imshow(interpolated_image, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+
+    w, h = interpolated_image.shape
+    image_array = interpolated_image.reshape(-1, 1)
+    dbscan = DBSCAN(eps=1.2, min_samples=50).fit(image_array)
+    labels = dbscan.labels_
+    segmented_image = labels.reshape(w, h)
+    d_segmented_image = segmented_image.copy()
+    d_segmented_image[d_segmented_image != -1] = 0
+    d_segmented_image[d_segmented_image == -1] = 1
+
+    plt.subplot(rows, cols, 9)
+    plt.title("Бинарное изображение")
+    plt.imshow(d_segmented_image)
+
+    if not save_folder is None:
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder, file_name)
+        plt.savefig(output_path)
+
+    if show:
+        plt.show()
+    plt.close()
+
 
 
 def canny_frame_best(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo2014, save_folder=None,
@@ -126,6 +305,7 @@ def canny_frame(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_
     # Преобразование результата кластеризации в изображение
     clustered_image = np.zeros_like(diff)
     unique_labels = set(labels)
+    return_label_1 = np.zeros_like(diff)
     for label in unique_labels:
         if label == -1:
             # Обработка шума (контуры)
