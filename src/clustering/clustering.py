@@ -21,11 +21,261 @@ from sklearn.metrics import silhouette_samples, silhouette_score
 from scipy.spatial.distance import cdist
 from sklearn.mixture import GaussianMixture
 from scipy.interpolate import griddata
+from skimage.measure import label, regionprops
+from skimage import color
+from skimage.segmentation import slic, mark_boundaries
+from skimage.util import img_as_float
+
 
 
 class BinShow(Enum):
     NONE = 0
     ALL = 3
+
+
+def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zip=False):
+    data, data1, diff, info, info1 = work_with_date(names_files=names_files, new_path=new_path, i=i, type_fits=type_fits,
+                                                    _zip=_zip)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+
+    # load the image and convert it to a floating point data type
+    # image = img_as_float(io.imread("C:\\Users\\nech14\Desktop\\nature2.jpg"))
+    image = img_as_float(diff_resized)
+
+    plt.figure()
+    pp = 500
+    plt.imshow(image, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    plt.title("Image before transformation")
+    # define the number of segments
+    numSegments = 300
+    # apply SLIC and extract (approximately) the supplied number of segments
+    segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True,
+                    channel_axis=None)  # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
+    # segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True) # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
+    # show the output of SLIC
+    fig = plt.figure("Superpixels -- %d segments" % (numSegments))
+    ax = fig.add_subplot(1, 1, 1)
+
+    # marked_image = image.copy()
+    # boundaries = mark_boundaries(np.zeros_like(marked_image), segments)
+    # marked_image[boundaries[..., 0] > 0] = 255
+    # ax.imshow(marked_image)
+    ax.imshow(mark_boundaries(image, segments))
+    plt.title("Original image with the sclic superpixels boundaries")
+    plt.axis("off")
+    # show the plots
+
+    # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
+    superpixels = color.label2rgb(segments, image, kind='avg')
+    plt.figure("Superpixel image after sclic algorithm")
+    plt.imshow(superpixels)
+    plt.title("Superpixel image after sclic algorithm")
+
+    # superpixels = resize(superpixels, (256, 256), anti_aliasing=True)
+
+    # Combine DBSCAN to slic algorithm
+
+    # If process stop use a smaller value for eps
+    # If pixel don't fuse use a larger eps
+
+    if len(superpixels.shape) > 2:
+        rows, cols, chs = superpixels.shape
+        feature_image = np.reshape(superpixels, [-1, chs])
+        db = DBSCAN(eps=1.5, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        # db = DBSCAN(eps=0.04, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        db.fit(feature_image)
+        labels = db.labels_
+
+        final_labels = np.reshape(labels, [rows, cols])
+
+        plt.figure("Labels after sclic + DBSCAN algorithm")
+        plt.imshow(final_labels)
+        plt.title("Labels after sclic + DBSCAN algorithm")
+
+        # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
+
+        fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
+        ax = fig.add_subplot(1, 1, 1)
+        ax.imshow(mark_boundaries(image, final_labels))
+        # ax.imshow(mark_boundaries(image, resize(final_labels, (512, 512))))
+        plt.axis("off")
+        plt.title("Original image with the sclic + DBSCAN superpixels boundaries")
+
+        slic_dbscan = color.label2rgb(final_labels, image, kind='avg')
+        plt.figure("Superpixel image after sclic + DBSCAN algorithm")
+        plt.imshow(slic_dbscan)
+        plt.title("Superpixel image after sclic + DBSCAN algorithm")
+
+    else:
+        rows, cols = superpixels.shape
+        feature_image = np.reshape(superpixels, [-1, 1])
+        db = DBSCAN(eps=0.01, min_samples=50, metric='euclidean', algorithm='auto', n_jobs=1)
+        db.fit(feature_image)
+        labels = db.labels_
+
+        final_labels = np.reshape(labels, [rows, cols])
+
+        plt.figure("Labels after sclic + DBSCAN algorithm")
+        plt.imshow(final_labels)
+        plt.title("Labels after sclic + DBSCAN algorithm")
+
+        # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
+
+        fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
+        ax = fig.add_subplot(1, 1, 1)
+        ax.imshow(mark_boundaries(image, final_labels))
+        plt.axis("off")
+        plt.title("Original image with the sclic + DBSCAN superpixels boundaries")
+
+        slic_dbscan = color.label2rgb(final_labels, image, kind='avg')
+        plt.figure("Superpixel image after sclic + DBSCAN algorithm")
+        plt.imshow(slic_dbscan)
+        plt.title("Superpixel image after sclic + DBSCAN algorithm")
+
+    bin_label = final_labels.copy()
+    regions = regionprops(bin_label)
+    # Поиск номеров регионов, площадь которых больше 1000
+    backgraound_labels = [region.label for region in regions if region.area < 128*128]
+    print(f"backgraound_labels: {backgraound_labels}")
+    for region_label in np.unique(bin_label):
+        if not region_label in backgraound_labels:
+            bin_label[bin_label == region_label] = 0
+        else:
+            bin_label[bin_label == region_label] = 1
+    # bin_label[bin_label > 0] = 1
+
+    new_label = label(bin_label)
+
+    # Получение свойств кластеров
+    regions = regionprops(new_label)
+
+    # Вычисление площади каждого кластера
+    areas = [region.area for region in regions]
+
+    print("Количество кластеров:", len(areas))
+    print("Площадь каждого кластера:", areas)
+
+    # Поиск номеров регионов, площадь которых больше 1000
+    large_regions = [region.label for region in regions if region.area > 1000]
+
+    print("Номера регионов с площадью больше 1000:", large_regions)
+
+    plt.figure("New label")
+    plt.imshow(new_label)
+    plt.title("New label")
+
+    answer = new_label.copy()
+    for region_label in np.unique(answer):
+        if region_label not in large_regions:
+            answer[answer == region_label] = 0
+        else:
+            answer[answer == region_label] = 1
+
+    answer_resized = resize(answer, (diff.shape[0], diff.shape[1]), anti_aliasing=True)
+    answer_resized[answer_resized > 0] = int(1)
+    answer_resized = answer_resized.astype(int)
+
+    fig = plt.figure("Result")
+    ax = fig.add_subplot(1, 1, 1)
+    # ax.imshow(answer_resized)
+    ax.imshow(mark_boundaries(diff, answer_resized))
+    plt.axis("off")
+    plt.title("Result")
+
+    plt.show()
+
+
+def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.FitsInfo2014, _zip=False, return_img=False,
+                save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False):
+
+    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                    _zip=_zip, type_fits=type_fits)
+
+    diff_resized = resize(diff, (256, 256), anti_aliasing=True)
+
+    image = img_as_float(diff_resized)
+
+    # define the number of segments
+    numSegments = 300
+    # apply SLIC and extract (approximately) the supplied number of segments
+    segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True, channel_axis=None)
+    # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
+
+    # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
+    superpixels = color.label2rgb(segments, image, kind='avg')
+
+    rows, cols, chs = superpixels.shape
+    feature_image = np.reshape(superpixels, [-1, chs])
+    # db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+    db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+    db.fit(feature_image)
+    labels = db.labels_
+
+    final_labels = np.reshape(labels, [rows, cols])
+
+    bin_label = final_labels.copy()
+    regions = regionprops(bin_label)
+    # Поиск номеров регионов, площадь которых больше 1000
+    backgraound_labels = [region.label for region in regions if region.area < 128 * 128]
+    # print(f"backgraound_labels: {backgraound_labels}")
+    for region_label in np.unique(bin_label):
+        if not region_label in backgraound_labels:
+            bin_label[bin_label == region_label] = 0
+        else:
+            bin_label[bin_label == region_label] = 1
+    # bin_label[bin_label > 0] = 1
+
+    new_label = label(bin_label)
+
+    # Получение свойств кластеров
+    regions = regionprops(new_label)
+
+    # Вычисление площади каждого кластера
+    areas = [region.area for region in regions]
+
+    # print("Количество кластеров:", len(areas))
+    # print("Площадь каждого кластера:", areas)
+
+    # Поиск номеров регионов, площадь которых больше 1000
+    large_regions = [region.label for region in regions if region.area > 1000]
+
+    # print("Номера регионов с площадью больше 1000:", large_regions)
+
+
+    if return_img or all_info:
+        answer = new_label.copy()
+        for region_label in np.unique(answer):
+            if region_label not in large_regions:
+                answer[answer == region_label] = 0
+            else:
+                answer[answer == region_label] = 1
+
+        answer_resized = resize(answer, (diff.shape[0], diff.shape[1]), anti_aliasing=True)
+        answer_resized[answer_resized > 0] = int(1)
+        answer_resized = answer_resized.astype(int)
+
+        if not save_folder is None:
+            plt.figure(figsize=(20, 20))
+            if suptitle is None:
+                suptitle = f"SLIC_DBSCAN:\n{info.get_datetime()} - {info1.get_datetime()}"
+
+            plt.suptitle(suptitle)
+            plt.imshow(mark_boundaries(diff, answer_resized))
+            os.makedirs(save_folder, exist_ok=True)
+            if file_name is None:
+                file_name = f"{nameFile}.png"
+            output_path = os.path.join(save_folder, file_name)
+            plt.savefig(output_path)
+            plt.close()
+
+        if all_info:
+            return large_regions, answer_resized, mark_boundaries(diff, answer_resized), info, info1
+
+        return large_regions, answer_resized, mark_boundaries(diff, answer_resized)
+
+    return large_regions
+
 
 
 def print_diff_canny(names_files, new_path, i, eps=10, min_samples=5, _resize=True, show=False, suptitle=None,

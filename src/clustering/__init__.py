@@ -14,3 +14,5 @@ from .clustering import canny_frame
 from .clustering import canny_frame_best
 from .clustering import print_canny_with_bin
 from .clustering import print_diff_canny
+from .clustering import SLIC_DBSCAN
+from .clustering import print_SLIC_DBSCAN
