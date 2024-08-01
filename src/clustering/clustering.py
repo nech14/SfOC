@@ -25,54 +25,81 @@ from skimage.measure import label, regionprops
 from skimage import color
 from skimage.segmentation import slic, mark_boundaries
 from skimage.util import img_as_float
-
-
+from skimage import io
+from PIL import Image
 
 class BinShow(Enum):
     NONE = 0
     ALL = 3
 
 
-def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zip=False):
+def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zip=False, one_fig=True):
     data, data1, diff, info, info1 = work_with_date(names_files=names_files, new_path=new_path, i=i, type_fits=type_fits,
                                                     _zip=_zip)
-
+    rows_f = 2
+    cols_f = 4
+    num = 0
     diff_resized = resize(diff, (256, 256), anti_aliasing=True)
 
     # load the image and convert it to a floating point data type
-    # image = img_as_float(io.imread("C:\\Users\\nech14\Desktop\\nature2.jpg"))
-    image = img_as_float(diff_resized)
+    # image = img_as_float(io.imread("C:\\Users\\nech14\\Desktop\\nature2.jpg"))
+    image = img_as_float(io.imread("C:\\Users\\nech14\\Desktop\\123.png"))
+    # image = img_as_float(io.imread("C:\\Users\\nech14\\Desktop\\358.png"))
 
-    plt.figure()
+    # Конвертирование изображения в формат, подходящий для сохранения как JPG
+    # Для этого преобразуем его в 8-битное изображение с помощью функции из Pillow
+    image = Image.fromarray((image * 255).astype('uint8'))
+    image = image.convert('RGB')
+    image = np.array(image)
+
+
+    image = resize(image, (256, 256), anti_aliasing=True)
+    # image = img_as_float(diff_resized)
+
+    plt.figure(figsize=(10, 10))
+
+    if one_fig:
+        num += 1
+        plt.subplot(rows_f, cols_f, num)
     pp = 500
     plt.imshow(image, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
     plt.title("Image before transformation")
     # define the number of segments
     numSegments = 300
     # apply SLIC and extract (approximately) the supplied number of segments
-    segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True,
-                    channel_axis=None)  # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
+    segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True)  # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
     # segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True) # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
     # show the output of SLIC
-    fig = plt.figure("Superpixels -- %d segments" % (numSegments))
-    ax = fig.add_subplot(1, 1, 1)
+
+
+    if one_fig:
+        num += 1
+        plt.subplot(rows_f, cols_f, num)
+        plt.imshow(mark_boundaries(image, segments))
+    else:
+        fig = plt.figure("Superpixels -- %d segments" % (numSegments))
+        ax = fig.add_subplot(1, 1, 1)
+        ax.imshow(mark_boundaries(image, segments))
 
     # marked_image = image.copy()
     # boundaries = mark_boundaries(np.zeros_like(marked_image), segments)
     # marked_image[boundaries[..., 0] > 0] = 255
     # ax.imshow(marked_image)
-    ax.imshow(mark_boundaries(image, segments))
     plt.title("Original image with the sclic superpixels boundaries")
     plt.axis("off")
     # show the plots
 
     # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
     superpixels = color.label2rgb(segments, image, kind='avg')
-    plt.figure("Superpixel image after sclic algorithm")
+    if one_fig:
+        num += 1
+        plt.subplot(rows_f, cols_f, num)
+    else:
+        plt.figure("Superpixel image after sclic algorithm")
     plt.imshow(superpixels)
     plt.title("Superpixel image after sclic algorithm")
 
-    # superpixels = resize(superpixels, (256, 256), anti_aliasing=True)
+    superpixels = resize(superpixels, (256, 256), anti_aliasing=True)
 
     # Combine DBSCAN to slic algorithm
 
@@ -82,28 +109,40 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
     if len(superpixels.shape) > 2:
         rows, cols, chs = superpixels.shape
         feature_image = np.reshape(superpixels, [-1, chs])
-        db = DBSCAN(eps=1.5, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
-        # db = DBSCAN(eps=0.04, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        # db = DBSCAN(eps=1.5, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        db = DBSCAN(eps=0.004, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
         db.fit(feature_image)
         labels = db.labels_
 
         final_labels = np.reshape(labels, [rows, cols])
 
-        plt.figure("Labels after sclic + DBSCAN algorithm")
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+        else:
+            plt.figure("Labels after sclic + DBSCAN algorithm")
         plt.imshow(final_labels)
         plt.title("Labels after sclic + DBSCAN algorithm")
 
         # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
-
-        fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
-        ax = fig.add_subplot(1, 1, 1)
-        ax.imshow(mark_boundaries(image, final_labels))
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+            plt.imshow(mark_boundaries(image, final_labels))
+        else:
+            fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
+            ax = fig.add_subplot(1, 1, 1)
+            ax.imshow(mark_boundaries(image, final_labels))
         # ax.imshow(mark_boundaries(image, resize(final_labels, (512, 512))))
         plt.axis("off")
         plt.title("Original image with the sclic + DBSCAN superpixels boundaries")
 
         slic_dbscan = color.label2rgb(final_labels, image, kind='avg')
-        plt.figure("Superpixel image after sclic + DBSCAN algorithm")
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+        else:
+            plt.figure("Superpixel image after sclic + DBSCAN algorithm")
         plt.imshow(slic_dbscan)
         plt.title("Superpixel image after sclic + DBSCAN algorithm")
 
@@ -116,20 +155,33 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 
         final_labels = np.reshape(labels, [rows, cols])
 
-        plt.figure("Labels after sclic + DBSCAN algorithm")
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+        else:
+            plt.figure("Labels after sclic + DBSCAN algorithm")
         plt.imshow(final_labels)
         plt.title("Labels after sclic + DBSCAN algorithm")
 
         # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
 
-        fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
-        ax = fig.add_subplot(1, 1, 1)
-        ax.imshow(mark_boundaries(image, final_labels))
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+            plt.imshow(mark_boundaries(image, final_labels))
+        else:
+            fig = plt.figure("Original image with the sclic + DBSCAN superpixels boundaries")
+            ax = fig.add_subplot(1, 1, 1)
+            ax.imshow(mark_boundaries(image, final_labels))
         plt.axis("off")
         plt.title("Original image with the sclic + DBSCAN superpixels boundaries")
 
         slic_dbscan = color.label2rgb(final_labels, image, kind='avg')
-        plt.figure("Superpixel image after sclic + DBSCAN algorithm")
+        if one_fig:
+            num += 1
+            plt.subplot(rows_f, cols_f, num)
+        else:
+            plt.figure("Superpixel image after sclic + DBSCAN algorithm")
         plt.imshow(slic_dbscan)
         plt.title("Superpixel image after sclic + DBSCAN algorithm")
 
@@ -161,7 +213,11 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 
     print("Номера регионов с площадью больше 1000:", large_regions)
 
-    plt.figure("New label")
+    if one_fig:
+        num += 1
+        plt.subplot(rows_f, cols_f, num)
+    else:
+        plt.figure("New label")
     plt.imshow(new_label)
     plt.title("New label")
 
@@ -176,10 +232,15 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
     answer_resized[answer_resized > 0] = int(1)
     answer_resized = answer_resized.astype(int)
 
-    fig = plt.figure("Result")
-    ax = fig.add_subplot(1, 1, 1)
+    if one_fig:
+        num += 1
+        plt.subplot(rows_f, cols_f, num)
+        plt.imshow(mark_boundaries(diff, answer_resized))
+    else:
+        fig = plt.figure("Result")
+        ax = fig.add_subplot(1, 1, 1)
+        ax.imshow(mark_boundaries(diff, answer_resized))
     # ax.imshow(answer_resized)
-    ax.imshow(mark_boundaries(diff, answer_resized))
     plt.axis("off")
     plt.title("Result")
 
@@ -187,10 +248,20 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 
 
 def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.FitsInfo2014, _zip=False, return_img=False,
-                save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False):
+                save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False, image_file=None):
 
-    data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
-                                                    _zip=_zip, type_fits=type_fits)
+    if image_file is None:
+        data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
+                                                        _zip=_zip, type_fits=type_fits)
+    else:
+        image = img_as_float(io.imread(image_file))
+        # Конвертирование изображения в формат, подходящий для сохранения как JPG
+        # Для этого преобразуем его в 8-битное изображение с помощью функции из Pillow
+        image = Image.fromarray((image * 255).astype('uint8'))
+        image = image.convert('RGB')
+        diff = np.array(image)
+
+
 
     diff_resized = resize(diff, (256, 256), anti_aliasing=True)
 
@@ -199,7 +270,10 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
     # define the number of segments
     numSegments = 300
     # apply SLIC and extract (approximately) the supplied number of segments
-    segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True, channel_axis=None)
+    if image_file is None:
+        segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True, channel_axis=None)
+    else:
+        segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True)
     # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
 
     # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
@@ -208,7 +282,10 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
     rows, cols, chs = superpixels.shape
     feature_image = np.reshape(superpixels, [-1, chs])
     # db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
-    db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+    if image_file is None:
+        db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+    else:
+        db = DBSCAN(eps=0.004, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
     db.fit(feature_image)
     labels = db.labels_
 

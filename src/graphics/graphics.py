@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
@@ -5,7 +7,7 @@ from skimage.measure import label, regionprops
 from skimage import exposure
 from matplotlib import cm
 from matplotlib.colors import Normalize
-
+from PIL import Image
 from src import file
 
 
@@ -120,18 +122,20 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
             print_hist_and_graphics(image, dlimit, ulimit)
 
 
-def save_heat_map(data_heat, pp=500):
+def save_heat_map(data_heat, pp=500, save_folder=None, file_name=None, nameFile="diff", color_bar=True):
     fig, ax = plt.subplots(figsize=(8, 8))
     #fig, ax = plt.subplots(figsize=(1024 / 100, 1424 / 100))
     #print(f"hsdjhfds:{data_heat.shape}")
     mask = np.ma.masked_equal(data_heat, 0)
     plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
-    cbar = plt.colorbar(shrink=0.8, fraction=0.1)
+    if color_bar:
+        cbar = plt.colorbar(shrink=0.8, fraction=0.1)
+        for text in cbar.ax.get_yticklabels():
+            text.set_color('white')
     plt.axis('off')
     fig.set_facecolor('black')
 
-    for text in cbar.ax.get_yticklabels():
-        text.set_color('white')
+
 
     #plt.savefig(buffer, format="png")
     canvas = plt.gcf().canvas
@@ -143,12 +147,39 @@ def save_heat_map(data_heat, pp=500):
     image_array = image_array.reshape(canvas.get_width_height()[::-1] + (3,))
 
     plt.close()
-    image_array = image_array[144:-144, 114:-54]
+
+    if color_bar:
+        image_array = image_array[144:-144, 114:-54]
+    else:
+        image_array = image_array[80:-80, 80:-80]
     #image_array = image_array[137:-138, 114:-54]
 
     # print(image_array.shape)
     # plt.imshow(image_array)
     # plt.show()
+
+    if not save_folder is None:
+        # Преобразование массива numpy в изображение PIL
+        image = Image.fromarray(image_array)
+
+
+        os.makedirs(save_folder, exist_ok=True)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder, file_name)
+        # Сохранение изображения
+        image.save(output_path)
+        image.close()
+        # plt.figure()
+        # plt.imshow(image_array)
+        # os.makedirs(save_folder, exist_ok=True)
+        # if file_name is None:
+        #     file_name = f"{nameFile}.png"
+        # output_path = os.path.join(save_folder, file_name)
+        # plt.savefig(output_path)
+        # plt.close()
+
+
     return image_array
 
 def print_heat_map(data_heat, data_base=None):
