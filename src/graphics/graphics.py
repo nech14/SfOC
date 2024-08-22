@@ -8,6 +8,7 @@ from skimage import exposure
 from matplotlib import cm
 from matplotlib.colors import Normalize
 from PIL import Image
+from datetime import datetime
 from src import file
 
 
@@ -640,7 +641,6 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
     return image_array[:, :, :3]
 
 
-
 def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1):
     ulimit = 10000
     dlimit = 5000
@@ -869,6 +869,7 @@ def create_correct_matrix(
 
     return new_matrix
 
+
 def calculate_frame_Rayleigh(data, info, log=False):
     A = np.float64(file.get_A(info.CCDGAIN, info.ROSPEED, info.DEVICEID))
     B = np.float64(info.BINNING*info.BINNING)
@@ -882,3 +883,211 @@ def calculate_frame_Rayleigh(data, info, log=False):
     data = A * data / B * t_exp * G
 
     return data
+
+
+def time_to_seconds(time_str):
+    t = datetime.strptime(time_str, '%H:%M:%S')
+    return t.hour * 3600 + t.minute * 60 + t.second
+
+
+# Функция для форматирования времени
+def format_time(seconds):
+    return str(datetime.utcfromtimestamp(seconds).strftime('%H:%M:%S'))
+
+
+def data_analysis(path, filename, i_start, i_end, start=0, last_i_start=1, count=3, count_max=5, rgb=True,
+                  log=False, x_label="Frame", y_label='Count clusters', title='SLIC DBSCAN'):
+    filename = path + filename
+    data = []
+
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines[:-1]:  # Пропустить последнюю строку
+            parts = line.strip().split()
+            y = float(parts[0])
+            i0 = parts[1]
+            i1 = parts[2]
+            if not rgb:
+                i0 = int(parts[3])
+                i1 = int(parts[4])
+            data.append((y, i0, i1))
+
+    # Преобразование данных в numpy массив
+    data = np.array(data)
+
+    # Разделение данных на соответствующие столбцы
+    y = data[:, 0].astype(float)
+    i0 = data[:, 1].astype(int)
+    i1 = data[:, 2].astype(int)
+    # i0 = data[:, 3].astype(int)
+    # i1 = data[:, 4].astype(int)
+
+    # Построение графика
+    plt.figure(figsize=(10, 5))
+
+    if log:
+        print(f"y = {y}")
+
+    buf_answer = []
+    start_up = 0
+    n_up = 0
+    last_i = last_i_start
+
+    for i in range(1, len(y)):
+        if y[i] >= last_i:
+            if n_up == 0:
+                start_up = i
+            n_up += 1
+            last_i = y[i]
+        else:
+            if n_up >= count and n_up < count_max:
+                plt.scatter(start_up + start, y[start_up], color="red", s=50, zorder=2)
+                plt.scatter(i + start - 1, last_i, color="pink", s=50, zorder=2)
+                buf_answer.append(start_up + start)
+            n_up = 0
+            last_i = last_i_start
+
+    if log:
+        print(f"answer: {buf_answer}")
+        print(f"count answer: {len(buf_answer)}")
+
+    # Формирование строк для оси x
+    x_labels = [f"{i0[i]}-{i1[i]}" for i in range(len(i0))]
+
+    # Преобразование x_labels в числовые индексы для оси x
+    x_indices = np.arange(len(x_labels))
+
+    plt.plot(i0, y, marker='o', linestyle='-', zorder=1)
+
+    # Настройка графика
+    # plt.xlabel('time')
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.grid(True)
+
+    # Установка меток только для каждой 5-й засечки
+    indices = np.arange(0, len(x_labels), 10)
+    plt.xticks(i0[indices], [x_labels[i] for i in indices], rotation=45)
+
+    # plt.xticks(i0, x_labels, rotation=45)
+
+    # Форматирование оси x как числовой
+    plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: int(x)))
+
+    # Закрашивание области, где i0 > 120 и i0 < 125
+    for idx in range(len(i0)):
+        if i_start < i0[idx] < i_end:
+            plt.axvspan(idx - 0.5, idx + 0.5, color='yellow', alpha=0.3)
+
+    # Показать график
+    plt.tight_layout()  # Для лучшего размещения меток осей
+
+    plt.show()
+
+
+def datas_analysis(
+        path, i_start=120, i_end=125,
+        files=[
+            'count_GM.txt', 'count_DBSCAN.txt', 'count_Kmean.txt',
+            'count_HDBSCAN.txt', 'count_SLIC_DBSCAN.txt'
+        ],
+        rgb=True, x_label='time', y_label='count clusters', title='Comparison of algorithms'
+):
+    # Функция для чтения данных из файла
+    def read_data(filename):
+        data = []
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+            for line in lines[:-1]:  # Пропустить последнюю строку
+                parts = line.strip().split()
+                y = float(parts[0])
+                x0 = parts[1]
+                x1 = parts[2]
+                i0 = float(parts[3])
+                i1 = float(parts[4])
+                data.append((y, x0, x1, i0, i1))
+        return np.array(data)
+
+    # Чтение данных из каждого файла
+    all_data = []
+    for file in files[:-1]:
+        data = read_data(path + file)
+        all_data.append(data)
+
+    # Построение графиков для каждого набора данных
+    plt.figure(figsize=(12, 6))
+
+    for idx, data in enumerate(all_data):
+        # Разделение данных на соответствующие столбцы
+        y = data[:, 0].astype(float)
+        x0 = data[:, 1]
+        x1 = data[:, 2]
+        i0 = data[:, 3].astype(float)
+        i1 = data[:, 4].astype(float)
+
+        # Формирование строк для оси x
+        x_labels = [f"{x0[i]}-{x1[i]}" for i in range(len(x0))]
+
+        # Построение графика
+        plt.plot(i0, y, marker='o', linestyle='-', label=f'{files[idx][6:-4]}')
+
+        # Закрашивание области, где i0 > 120 и i1 < 125
+        for idx in range(len(i0)):
+            if i_start < i0[idx] < i_end:
+                plt.axvspan(i0[idx] - 0.5, i0[idx] + 0.5, color='yellow', alpha=0.3)
+
+    # Установка меток оси x по данным i0 и подписей относительно x0 с шагом 5 по i0
+    # Определим шаг для меток оси x
+    step = 5
+    # Создадим список индексов для меток оси x
+    ticks = np.arange(0, len(x_labels), step)
+    # Создадим список подписей для оси x, используя x0
+    labels = [x0[i] for i in ticks]
+    # Установим метки и подписи оси x
+    plt.xticks(ticks, labels, rotation=45)
+
+    # Показать график
+    plt.tight_layout()
+
+    path = "C:\\work\\search_for_oxide_cloud\SfOC\\result\\KEO\\2014\\30"
+    # filename =  path + '\\count_SLIC_DBSCAN.txt'
+    filename = path + '\\' + files[-1]
+    data = []
+
+    with open(filename, 'r') as file:
+        lines = file.readlines()
+        for line in lines[:-1]:  # Пропустить последнюю строку
+            parts = line.strip().split()
+            y = float(parts[0])
+            i0 = parts[1]
+            i1 = parts[2]
+            if not rgb:
+                i0 = int(parts[3])
+                i1 = int(parts[4])
+            data.append((y, i0, i1))
+
+    # Преобразование данных в numpy массив
+    data = np.array(data)
+
+    # Разделение данных на соответствующие столбцы
+    y = data[:, 0].astype(float)
+    i0 = data[:, 1].astype(int)
+    i1 = data[:, 2].astype(int)
+
+    # Формирование строк для оси x
+    x_labels = [f"{i0[i]}-{i1[i]}" for i in range(len(i0))]
+
+    # Преобразование x_labels в числовые индексы для оси x
+    x_indices = np.arange(len(x_labels))
+
+    plt.plot(i0, y, marker='o', linestyle='-', zorder=4, label=f'SLIC_DBSCAN')
+
+    # Настройка графика
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.title(title)
+    plt.grid(True)
+    plt.legend()
+
+    plt.show()
