@@ -341,12 +341,12 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
                 answer[answer == region_label] = 1
             # else:
             #     answer[answer == region_label] = 0
-        # plt.imshow(answer)
-        # plt.show()
+
 
         answer_resized = resize(answer, (diff.shape[0], diff.shape[1]), anti_aliasing=True)
-        answer_resized[answer_resized > 0] = int(1)
-        answer_resized = answer_resized.astype(int)
+        # answer_resized[answer_resized > 0] = int(1)
+        answer_resized = (answer_resized* 10**20).astype(int)
+
 
         if not save_folder_clusters is None:
             if not os.path.exists(save_folder_clusters):
@@ -364,7 +364,7 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
 
             plt.suptitle(suptitle)
             plt.imshow(mark_boundaries(diff, answer_resized, color=color_outline))
-            plt.imshow(answer_resized_np, cmap=None, alpha=0.5)
+            plt.imshow(answer_resized, cmap="viridis", alpha=0.35)
             os.makedirs(save_folder, exist_ok=True)
             if file_name is None:
                 file_name = f"{nameFile}.png"
