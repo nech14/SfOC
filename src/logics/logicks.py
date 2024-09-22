@@ -546,7 +546,7 @@ def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
                        image_folder=None, with_time=False, name_file='slic_dbscan_RGB',
                        time_measurement=False, log_fun=base_log,
                        save_folder_clusters=None, logs=False, type_fits=file.FitsInfo2014,
-                       _zip=False, save_folder_slic=None, eps=1.2):
+                       _zip=False, save_folder_slic=None, eps=1.2, bin_result=False, min_clustering_area=0):
     if logs:
         log_fun("Start", "write_data_in_file", f"{new_path}")
 
@@ -570,14 +570,16 @@ def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
                                                                    save_folder_clusters=save_folder_clusters,
                                                                    log_fun=log_fun, logs=logs, type_fits=type_fits,
                                                                    _zip=_zip, save_folder_slic=save_folder_slic,
-                                                                   eps=eps)
+                                                                   eps=eps, bin_result=bin_result,
+                                                                   min_clustering_area=min_clustering_area)
         else:
             buf, labels, img = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True,
                                                       all_info=False, save_folder=save_folder+"\\"+name_file,
                                                       nameFile=f"{i}", image_file=image_file, suptitle=f"Frame {i}",
                                                       save_folder_clusters=save_folder_clusters, log_fun=log_fun,
                                                       logs=logs, type_fits=type_fits, _zip=_zip,
-                                                      save_folder_slic=save_folder_slic, eps=eps)
+                                                      save_folder_slic=save_folder_slic, eps=eps, bin_result=bin_result,
+                                                      min_clustering_area=min_clustering_area)
 
         # plt.imshow(img)
         # plt.show()

@@ -250,7 +250,8 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.FitsInfo2014, _zip=False, return_img=False,
                 save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False, image_file=None,
                 save_folder_clusters=None, log_fun=base_log, numSegments = 300, sigma=5, compactness=5,
-                eps=1.2, min_samples=5, color_outline=(0, 0.6, 0), logs=False, save_folder_slic=None):
+                eps=1.2, min_samples=5, color_outline=(0, 0.6, 0), logs=False, save_folder_slic=None,
+                bin_result=False, min_clustering_area=0):
 
     if image_file is None:
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
@@ -331,7 +332,7 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
     # print("Площадь каждого кластера:", areas)
 
     # Поиск номеров регионов, площадь которых больше 1000
-    large_regions = [region.label for region in regions if region.area > 0]
+    large_regions = [region.label for region in regions if region.area > min_clustering_area]
 
 
     if return_img or all_info:
@@ -339,8 +340,8 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
         for region_label in np.unique(answer):
             if region_label not in large_regions:
                 answer[answer == region_label] = 1
-            # else:
-            #     answer[answer == region_label] = 0
+            elif bin_result:
+                answer[answer == region_label] = 0
 
 
         answer_resized = resize(answer, (diff.shape[0], diff.shape[1]), anti_aliasing=True)
