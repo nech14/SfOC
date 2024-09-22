@@ -1,7 +1,10 @@
 import datetime
+import time
 
-from src import graphics
-from src import file
+from SfOC.src import graphics
+from SfOC.src import file
+from SfOC.src import clustering
+from SfOC.src.logging import base_log
 import os
 
 import cv2
@@ -504,3 +507,99 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
     # plt.show()
     if log_info:
         print(f"create heatmap: {title}")
+
+
+def save_heat_map(names, new_path, save_folder, type_fits:file.FitsInfo=file.FitsInfo2014, _zip=False,
+                  start_i=0, end_i=None ,name_operation="Create diff", log_fun=base_log, logs=False):
+
+    if end_i is None:
+        end_i = len(names)-1
+
+    if logs:
+        log_fun("Start", "save_heat_map", f"start_i={start_i}/end_i={end_i}")
+
+    if not os.path.exists(save_folder):
+        os.makedirs(save_folder)
+        if logs:
+            log_fun("Create dir", save_folder, f"{new_path}")
+
+    for i in range(start_i, end_i):
+        data, data1, diff, info, info1 = clustering.work_with_date(names, new_path, i, percent_to_trim=0.1,
+                                                        _zip=_zip, type_fits=type_fits)
+
+
+        diff = data.astype(float) - data1.astype(float)
+        if logs:
+            log_fun(name_operation, i, end_i)
+
+        graphics.save_heat_map(diff, save_folder=save_folder, nameFile=i, color_bar=False)
+
+    if logs:
+        log_fun("End", "save_heat_map", "")
+
+
+
+
+
+
+def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
+                       image_folder=None, with_time=False, name_file='slic_dbscan_RGB',
+                       time_measurement=False, log_fun=base_log,
+                       save_folder_clusters=None, logs=False, type_fits=file.FitsInfo2014,
+                       _zip=False, save_folder_slic=None, eps=1.2):
+    if logs:
+        log_fun("Start", "write_data_in_file", f"{new_path}")
+
+    if end_i is None:
+        end_i = len(names)-1
+
+    if time_measurement:
+        start_time = time.time()
+
+    for i in range(start_i, end_i):
+        if not image_folder is None:
+            image_file = os.path.join(image_folder, f"{i}.png")
+        else:
+            image_file = None
+        if with_time:
+            buf, labels, img, info, info1 = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i,
+                                                                   return_img=True, all_info=False,
+                                                                   save_folder=save_folder+"\\"+name_file,
+                                                                   nameFile=f"{i}", image_file=image_file,
+                                                                   suptitle=f"Frame {i}",
+                                                                   save_folder_clusters=save_folder_clusters,
+                                                                   log_fun=log_fun, logs=logs, type_fits=type_fits,
+                                                                   _zip=_zip, save_folder_slic=save_folder_slic,
+                                                                   eps=eps)
+        else:
+            buf, labels, img = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True,
+                                                      all_info=False, save_folder=save_folder+"\\"+name_file,
+                                                      nameFile=f"{i}", image_file=image_file, suptitle=f"Frame {i}",
+                                                      save_folder_clusters=save_folder_clusters, log_fun=log_fun,
+                                                      logs=logs, type_fits=type_fits, _zip=_zip,
+                                                      save_folder_slic=save_folder_slic, eps=eps)
+
+        # plt.imshow(img)
+        # plt.show()
+        # print(buf, info.get_norm_time(), info1.get_norm_time())
+        if logs:
+            log_fun("Create cluster img", i, end_i)
+
+        # Открытие файла в режиме добавления (append)
+        with open(f"{save_folder}\\count_{name_file}.txt", "a", encoding="utf-8") as f:
+            # Запись дополнительного текста в файл
+            if with_time:
+                f.write(f"{len(buf)}   {info.get_norm_time()}   {info1.get_norm_time()}   {i}   {i+1}\n")
+            else:
+                f.write(f"{len(buf)}   {i}   {i+1}\n")
+
+
+    # Засеките время окончания
+    if time_measurement:
+        end_time = time.time()
+        with open(f"{save_folder}\\count_{name_file}.txt", "a", encoding="utf-8") as file:
+            # Запись дополнительного текста в файл
+            file.write(f"{end_time-start_time}\n")
+
+    if logs:
+        log_fun("End", "write_data_in_file", f"files: {start_i}/{end_i}")

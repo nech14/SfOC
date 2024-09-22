@@ -1,10 +1,10 @@
 import os
 from enum import Enum
-
+from SfOC.src.logging import base_log
 import cv2
 import hdbscan
 import numpy as np
-
+import os
 from SfOC.src import graphics, file
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, OPTICS, AgglomerativeClustering
@@ -248,7 +248,9 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 
 
 def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.FitsInfo2014, _zip=False, return_img=False,
-                save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False, image_file=None):
+                save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False, image_file=None,
+                save_folder_clusters=None, log_fun=base_log, numSegments = 300, sigma=5, compactness=5,
+                eps=1.2, min_samples=5, color_outline=(0, 0.6, 0), logs=False, save_folder_slic=None):
 
     if image_file is None:
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
@@ -261,31 +263,43 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
         image = image.convert('RGB')
         diff = np.array(image)
 
-
-
     diff_resized = resize(diff, (256, 256), anti_aliasing=True)
 
     image = img_as_float(diff_resized)
 
-    # define the number of segments
-    numSegments = 300
     # apply SLIC and extract (approximately) the supplied number of segments
     if image_file is None:
-        segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True, channel_axis=None)
+        segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=True, channel_axis=None)
     else:
-        segments = slic(image, n_segments=numSegments, sigma=5, compactness=5, convert2lab=True)
+        segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=True)
     # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
 
     # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
     superpixels = color.label2rgb(segments, image, kind='avg')
+    # plt.imshow(superpixels)
+    # plt.show()
+    if not save_folder_slic is None:
+        if not os.path.exists(save_folder_slic):
+            os.makedirs(save_folder_slic)
+            if logs:
+                log_fun("Create dir", save_folder_slic, "")
+        plt.imshow(superpixels)
+        if file_name is None:
+            file_name = f"{nameFile}.png"
+        output_path = os.path.join(save_folder_slic, file_name)
+        plt.savefig(output_path)
+        plt.close()
+        if logs:
+            log_fun("Craate img slic", file_name, "")
 
     rows, cols, chs = superpixels.shape
     feature_image = np.reshape(superpixels, [-1, chs])
     # db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
     if image_file is None:
-        db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        db = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', algorithm='auto', n_jobs=1)
     else:
-        db = DBSCAN(eps=0.004, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+        # eps = 0.004
+        db = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', algorithm='auto', n_jobs=1)
     db.fit(feature_image)
     labels = db.labels_
 
@@ -294,43 +308,54 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
     bin_label = final_labels.copy()
     regions = regionprops(bin_label)
     # Поиск номеров регионов, площадь которых больше 1000
-    backgraound_labels = [region.label for region in regions if region.area < 128 * 128]
-    # print(f"backgraound_labels: {backgraound_labels}")
-    for region_label in np.unique(bin_label):
-        if not region_label in backgraound_labels:
-            bin_label[bin_label == region_label] = 0
-        else:
-            bin_label[bin_label == region_label] = 1
-    # bin_label[bin_label > 0] = 1
+    # backgraound_labels = [region.label for region in regions if region.area < 128 * 128]
+    # for region_label in np.unique(bin_label):
+    #     if not region_label in backgraound_labels:
+    #         bin_label[bin_label == region_label] = 0
+    #     else:
+    #         bin_label[bin_label == region_label] = 1
 
-    new_label = label(bin_label)
+
+
+    # new_label = label(bin_label)
+    new_label = final_labels.copy()
+    # new_label = regionprops(bin_label)
 
     # Получение свойств кластеров
     regions = regionprops(new_label)
 
     # Вычисление площади каждого кластера
-    areas = [region.area for region in regions]
+    # areas = [region.area for region in regions]
 
     # print("Количество кластеров:", len(areas))
     # print("Площадь каждого кластера:", areas)
 
     # Поиск номеров регионов, площадь которых больше 1000
-    large_regions = [region.label for region in regions if region.area > 1000]
-
-    # print("Номера регионов с площадью больше 1000:", large_regions)
+    large_regions = [region.label for region in regions if region.area > 0]
 
 
     if return_img or all_info:
         answer = new_label.copy()
         for region_label in np.unique(answer):
             if region_label not in large_regions:
-                answer[answer == region_label] = 0
-            else:
                 answer[answer == region_label] = 1
+            # else:
+            #     answer[answer == region_label] = 0
+        # plt.imshow(answer)
+        # plt.show()
 
         answer_resized = resize(answer, (diff.shape[0], diff.shape[1]), anti_aliasing=True)
         answer_resized[answer_resized > 0] = int(1)
         answer_resized = answer_resized.astype(int)
+
+        if not save_folder_clusters is None:
+            if not os.path.exists(save_folder_clusters):
+                os.makedirs(save_folder_clusters)
+                if logs:
+                    log_fun("Create dir", save_folder_clusters, "")
+
+            answer_resized_np = np.array(answer_resized)
+            np.savetxt(os.path.join(save_folder_clusters, f"cluster{i}.txt"), answer_resized_np, fmt="%d")
 
         if not save_folder is None:
             plt.figure(figsize=(20, 20))
@@ -338,13 +363,16 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
                 suptitle = f"SLIC_DBSCAN:\n{info.get_datetime()} - {info1.get_datetime()}"
 
             plt.suptitle(suptitle)
-            plt.imshow(mark_boundaries(diff, answer_resized))
+            plt.imshow(mark_boundaries(diff, answer_resized, color=color_outline))
+            plt.imshow(answer_resized_np, cmap=None, alpha=0.5)
             os.makedirs(save_folder, exist_ok=True)
             if file_name is None:
                 file_name = f"{nameFile}.png"
             output_path = os.path.join(save_folder, file_name)
             plt.savefig(output_path)
             plt.close()
+            if logs:
+                log_fun("Craate label img", file_name, "")
 
         if all_info:
             return large_regions, answer_resized, mark_boundaries(diff, answer_resized), info, info1

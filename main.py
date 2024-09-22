@@ -1,16 +1,19 @@
 import time
 
-
-
+from SfOC.src.logging.logging import log_operation
 from src import clustering
 from src import graphics
 from src import file
+from SfOC.src.logics import write_data_in_file
+from SfOC.src.logics import save_heat_map
+
 import os
 
 import cv2
 import numpy as np
 
 import matplotlib.pyplot as plt
+from SfOC.src.logging import base_log
 from skimage.transform import resize
 from scipy.interpolate import griddata
 from src.graphics import auto_contrast_skimage
@@ -141,64 +144,72 @@ save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\te
 save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\20130417"
 image_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\20130417\\diff"
 # save_folder = None
-name = "SLIC_DBSCAN_RGB"
-
-# buf, labels, img, info, info1 = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True, all_info=True,
-#                                               save_folder=f"C:\\Users\\nech14\\Desktop", nameFile=f"{i}")
-
-# clustering.print_SLIC_DBSCAN(names_files=names, new_path=new_path, i=i)
-
-# for i in range(len(names)-1):
-#     data, data1, diff, info, info1 = clustering.work_with_date(names, new_path, i, percent_to_trim=0.1,
-#                                                     _zip=False, type_fits=file.FitsInfo2014)
-#
-#
-#     diff = data.astype(float) - data1.astype(float)
-#     print(f"{i}/{len(names)-1}")
-#
-#     graphics.save_heat_map(diff, save_folder=save_folder, nameFile=i, color_bar=False)
-
-
-start_i = 0
-end_i = len(names)-1
-for i in range(start_i, end_i):
-    image_file = os.path.join(image_folder, f"{i}.png")
-    buf, labels, img = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True, all_info=False,
-    # buf, labels, img, info, info1 = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True, all_info=False,
-                                                           save_folder=save_folder+"\\slic_dbscan_RGB", nameFile=f"{i}", image_file=image_file,
-                                                           suptitle=f"Frame {i}")
-
-    # plt.imshow(img)
-    # plt.show()
-    # print(buf, info.get_norm_time(), info1.get_norm_time())
-
-    print(f"{i}/{end_i}")
-    # print(name_info)
-    # Открытие файла в режиме добавления (append)
-    with open(f"{save_folder}\\count_{name}.txt", "a", encoding="utf-8") as file:
-        # Запись дополнительного текста в файл
-        # file.write(f"{len(buf)}   {info.get_norm_time()}   {info1.get_norm_time()}   {i}   {i+1}\n")
-        file.write(f"{len(buf)}   {i}   {i+1}\n")
-
-    # Засеките время окончания
-end_time = time.time()
-with open(f"{save_folder}\\count_{name}.txt", "a", encoding="utf-8") as file:
-    # Запись дополнительного текста в файл
-    file.write(f"{end_time}\n")
 
 
 
-#
-
-start_time = time.time()
-
-# for i in range(len(names)-8):
-# for i in range(0, len(names)-7):
 save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test"
-start_i = 0
-end_i = len(names)-7
 
-#
+
+
+
+image_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\diff1"
+save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test_test"
+save_cluster_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test_test\\clusters"
+
+
+name_data = "ASI1\\2024\\03"
+# name_data = "KEO\\2014"
+# name_data = "KEO"
+filter_d = "5577"
+# filter_d = "6300"
+# filter_d = None
+path = os.path.join(current_directory, "data", name_data)
+
+save_folder_b = "C:\\data"
+logs = True
+
+fit_format = file.FitsInfo
+# fit_format = file.FitsInfo2014
+_zip = True
+# _zip = False
+# name = "SLIC_DBSCAN_RGB"
+
+start_i = 0
+end_i = None
+
+n_p = np.array(["03", "04", "05"])
+# n_p = np.array(["30"])
+# n_p = np.array(["20130417"])
+
+eps = 0.025
+
+log_fun = base_log
+
+for n in n_p:
+
+    if not filter_d is None:
+        new_path = os.path.join(path, n, filter_d)
+        save_folder = os.path.join(save_folder_b, name_data, n, filter_d)
+    else:
+        new_path = os.path.join(path, n)
+        save_folder = os.path.join(save_folder_b, name_data, n)
+    print(save_folder)
+    image_folder = os.path.join(save_folder, "image_diff")
+    # image_folder = None
+    save_cluster_folder = os.path.join(save_folder, "clusters")
+    save_folder_slic = os.path.join(save_folder, "slic")
+    # save_folder_slic = None
+    names = file.get_name_file(new_path)
+
+
+    save_heat_map(names, new_path, image_folder, logs=logs, start_i=start_i, end_i=end_i, _zip=_zip,
+                  type_fits=fit_format, log_fun=log_fun)
+    write_data_in_file(names, new_path, save_folder, image_folder=image_folder, save_folder_clusters=save_cluster_folder,
+                       logs=logs, start_i=start_i, end_i=end_i, type_fits=fit_format, _zip=_zip,
+                       save_folder_slic =save_folder_slic, eps=eps, log_fun=log_fun)
+
+
+
 #
 # name = "GM"
 # for i in range(start_i, end_i):
@@ -217,19 +228,10 @@ end_i = len(names)-7
 #     # Запись дополнительного текста в файл
 #     file.write(f"{end_time}\n")
 #
-#
-
-#
-# # Рассчитайте и выведите длительность выполнения
-# execution_time = end_time - start_time
-# print(f"Длительность выполнения программы: {execution_time:.2f} секунд")
 
 
 # clustering.base_lvl(names, new_path)
 #print(clustering.get_clusters(names, new_path, 123))
-
-def logfun(text, i, n):
-    print(f"{text}: {i}/{n}")
 
 # path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
 #
@@ -262,20 +264,6 @@ def logfun(text, i, n):
 
 
 
-
-
-def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/client_test_unifmap_1024x320.dat'):
-    test0 = np.fromfile(path_file, dtype='float32')
-    print(test0)
-
-    test0 = np.reshape(test0, (1024, 320), order='F')
-    print(test0[0, 0])
-    print(test0[0, 319])
-    print(test0[1023, 0])
-    print(test0[1023, 319])
-
-
-
 # logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
 
 
@@ -285,179 +273,6 @@ def test_matrix(path_file = 'C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Cali
 
 
 
-def hist_3d(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=None, ylim3d_min=0, ylim3d_max=None,
-            rotate=False, x_agnes_end=130, y_agnes_end=90, start_folder="result", save_folder="img"):
-    # histogram = plt.hist(data_cut.flatten(), bins='auto')
-    # print(histogram)
-    # plt.show()
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(projection="3d")
-    my_cmap = plt.cm.inferno
-
-    count_files = len(names) - end
-
-    for i in range(file_number, count_files):
-        # we create evenly spaced bins between the minimum and maximum of the entire dataframe
-        name_path = os.path.join(new_path, names[i])
-        info, data = file.open_gz(name_path)
-        data_cut = graphics.cut_img(data)
-
-        # non_zero_data_cut = data_cut[data_cut != 0]
-
-        histvals, _ = np.histogram(data_cut.flatten(), bins="auto")
-        histvals = histvals[1:]
-
-        xbins = np.linspace(data_cut.flatten().min().min(), data_cut.flatten().max().max(), len(histvals) + 1)
-        # and calculate the center and widths of the bars
-        xcenter = np.convolve(xbins, np.ones(2), "valid") / 2
-        xwidth = np.diff(xbins)
-
-        # print(xbins)
-        # print(xcenter)
-
-        ax.bar(left=xcenter, height=histvals, width=xwidth, zs=(i - file_number) / 100, zdir="y", alpha=0.666,
-               linewidth=0.3, color=my_cmap((i - file_number) / (count_files - file_number)))
-
-        print(f"{i - file_number}/{count_files - file_number}")
-
-    ax.set_xlabel("value")
-    ax.set_ylabel("column")
-    ax.set_zlabel("count")
-
-    # label every other column number
-    if not ylim3d_max is None:
-        ax.set_ylim3d(ylim3d_max, ylim3d_min)
-    if not xlim3d_max is None:
-        ax.set_xlim3d(xlim3d_min, xlim3d_max)
-
-    plt.title(name_g)
-
-    if rotate:
-        if not os.path.exists(start_folder + '/' + save_folder):
-            # Если не существует, создаем папку
-            os.makedirs(start_folder + '/' + save_folder)
-        for angle in range(0, x_agnes_end):
-            ax.view_init(0, angle)
-            print(f"rotate_x: {angle}/{x_agnes_end}")
-            # plt.draw()
-            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle) + '.png')
-            # plt.pause(.001)
-
-        for angle in range(0, y_agnes_end):
-            ax.view_init(angle, x_agnes_end)
-            print(f"rotate_y: {angle}/{y_agnes_end}")
-            # plt.draw()
-            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle + x_agnes_end) + '.png')
-            # plt.pause(.001)
-
-    # plt.show()
-
-
-def hist_3d_diff(names, file_number, end=10, name_g="", xlim3d_min=0, xlim3d_max=None, ylim3d_min=0, ylim3d_max=None,
-                 rotate=False, x_agnes_end=130, y_agnes_end=90, start_folder="result", save_folder="diff"):
-    # histogram = plt.hist(data_cut.flatten(), bins='auto')
-    # print(histogram)
-    # plt.show()
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = fig.add_subplot(projection="3d")
-    my_cmap = plt.cm.inferno
-
-    count_files = len(names) - end - 1
-
-    for i in range(file_number, count_files):
-        # we create evenly spaced bins between the minimum and maximum of the entire dataframe
-        name_path = os.path.join(new_path, names[i])
-        info, data = file.open_gz(name_path)
-        data_cut = graphics.cut_img(data)
-
-        name_path1 = os.path.join(new_path, names[i + 1])
-        info1, data1 = file.open_gz(name_path1)
-        data_cut1 = graphics.cut_img(data1)
-
-        h_diff = data_cut.astype(float) - data_cut1.astype(float)
-        # non_zero_data_cut = data_cut[data_cut != 0]
-
-        h_diff = h_diff[h_diff != 0]
-
-        histvals, _ = np.histogram(h_diff.flatten(), bins="auto")
-        histvals = histvals[1:]
-
-        xbins = np.linspace(data_cut.flatten().min().min(), data_cut.flatten().max().max(), len(histvals) + 1)
-        # and calculate the center and widths of the bars
-        xcenter = np.convolve(xbins, np.ones(2), "valid") / 2
-        xwidth = np.diff(xbins)
-
-        # print(xbins)
-        # print(xcenter)
-
-        ax.bar(left=xcenter, height=histvals, width=xwidth, zs=(i - file_number) / 100, zdir="y", alpha=0.666,
-               linewidth=0.3, color=my_cmap((i - file_number) / (count_files - file_number)))
-
-        print(f"{i - file_number}/{count_files - file_number}")
-
-    ax.set_xlabel("value")
-    ax.set_ylabel("column")
-    ax.set_zlabel("count")
-
-    # label every other column number
-    if not ylim3d_max is None:
-        ax.set_ylim3d(ylim3d_max, ylim3d_min)
-    if not xlim3d_max is None:
-        ax.set_xlim3d(xlim3d_min, xlim3d_max)
-
-    plt.title(name_g)
-
-    if rotate:
-        if not os.path.exists(start_folder + '/' + save_folder):
-            # Если не существует, создаем папку
-            os.makedirs(start_folder + '/' + save_folder)
-        for angle in range(0, x_agnes_end):
-            ax.view_init(0, angle)
-            print(f"rotate_x: {angle}/{x_agnes_end}")
-            # plt.draw()
-            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle) + '.png')
-            # plt.pause(.001)
-
-        for angle in range(0, y_agnes_end):
-            ax.view_init(angle, x_agnes_end)
-            print(f"rotate_y: {angle}/{y_agnes_end}")
-            # plt.draw()
-            plt.savefig(start_folder + '/' + save_folder + '/rotanim_' + str(angle + x_agnes_end) + '.png')
-            # plt.pause(.001)
-
-    # plt.show()
-
-
-def create_video_hist_3d(name_file=None, folder_name="result/ASI0/2023/10/11/OH1", save_folder='video'):
-    if name_file is None:
-        name_file = folder_name
-
-    if not os.path.exists(folder_name + '/' + save_folder):
-        # Если не существует, создаем папку
-        os.makedirs(folder_name + '/../' + save_folder)
-
-    # Размеры кадра и частота кадров в видео
-    date1 = plt.imread(folder_name + f'/rotanim_{0}.png')
-    frame_width = date1.shape[1]
-    frame_height = date1.shape[0]
-    fps = 5
-    # Создаем объект VideoWriter для записи видео в формате MP4
-    fourcc1 = cv2.VideoWriter_fourcc(*'mp4v')
-    out1 = cv2.VideoWriter(folder_name + '/../' + save_folder + '/' + name_file + ".mp4", fourcc1, fps,
-                           (frame_width, frame_height))
-
-    count = 0
-    for i in range(1, 220):
-        frame = cv2.imread(folder_name + f'/rotanim_{i}.png')
-        out1.write(frame)
-        if True:
-            count += 1
-            print(f"create video: {count}/221")
-
-    # Закрываем объект VideoWriter
-    out1.release()
 
 
 # hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5, rotate=True)

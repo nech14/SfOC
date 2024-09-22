@@ -7,3 +7,5 @@ from .logicks import create_heatmap
 from .logicks import viewing_pictures
 from .logicks import create_img_for_video
 from .logicks import get_hist_p
+from .logicks import write_data_in_file
+from .logicks import save_heat_map

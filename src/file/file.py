@@ -6,7 +6,6 @@ from astropy.io import fits
 
 class FitsInfoBase:
 
-
     def __init__(self, info):
         self.EXPOTIME = info[0]
 
