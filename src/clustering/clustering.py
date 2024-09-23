@@ -284,12 +284,15 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
             os.makedirs(save_folder_slic)
             if logs:
                 log_fun("Create dir", save_folder_slic, "")
+        fig, ax = plt.subplots(figsize=(8, 8))
         plt.imshow(superpixels)
         if file_name is None:
             file_name = f"{nameFile}.png"
         output_path = os.path.join(save_folder_slic, file_name)
+        plt.axis('off')
+        fig.set_facecolor('black')
         plt.savefig(output_path)
-        plt.close()
+        plt.close(fig)
         if logs:
             log_fun("Craate img slic", file_name, "")
 
@@ -359,10 +362,10 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
             np.savetxt(os.path.join(save_folder_clusters, f"cluster{i}.txt"), answer_resized_np, fmt="%d")
 
         if not save_folder is None:
-            plt.figure(figsize=(20, 20))
             if suptitle is None:
                 suptitle = f"SLIC_DBSCAN:\n{info.get_datetime()} - {info1.get_datetime()}"
 
+            fig = plt.figure(figsize=(20, 20))
             plt.suptitle(suptitle)
             plt.imshow(mark_boundaries(diff, answer_resized, color=color_outline))
             plt.imshow(answer_resized, cmap="viridis", alpha=0.35)
@@ -370,8 +373,10 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
             if file_name is None:
                 file_name = f"{nameFile}.png"
             output_path = os.path.join(save_folder, file_name)
+            plt.axis('off')
+            fig.set_facecolor('black')
             plt.savefig(output_path)
-            plt.close()
+            plt.close(fig)
             if logs:
                 log_fun("Craate label img", file_name, "")
 

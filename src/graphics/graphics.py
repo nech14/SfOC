@@ -147,7 +147,7 @@ def save_heat_map(data_heat, pp=500, save_folder=None, file_name=None, nameFile=
     image_array = np.frombuffer(rgb_string, dtype=np.uint8)
     image_array = image_array.reshape(canvas.get_width_height()[::-1] + (3,))
 
-    plt.close()
+    plt.close(fig)
 
     if color_bar:
         image_array = image_array[144:-144, 114:-54]
