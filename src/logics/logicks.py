@@ -510,7 +510,8 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
 
 
 def save_heat_map(names, new_path, save_folder, type_fits:file.FitsInfo=file.FitsInfo2014, _zip=False,
-                  start_i=0, end_i=None ,name_operation="Create diff", log_fun=base_log, logs=False):
+                  start_i=0, end_i=None ,name_operation="Create diff", log_fun=base_log, logs=False,
+                  use_names=True):
 
     if end_i is None:
         end_i = len(names)-1
@@ -532,7 +533,11 @@ def save_heat_map(names, new_path, save_folder, type_fits:file.FitsInfo=file.Fit
         if logs:
             log_fun(name_operation, i, end_i)
 
-        graphics.save_heat_map(diff, save_folder=save_folder, nameFile=i, color_bar=False)
+        if use_names:
+            name_file = names[i+1]
+        else :
+            name_file = i
+        graphics.save_heat_map(diff, save_folder=save_folder, nameFile=name_file, color_bar=False)
 
     if logs:
         log_fun("End", "save_heat_map", "")
@@ -546,7 +551,8 @@ def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
                        image_folder=None, with_time=False, name_file='slic_dbscan_RGB',
                        time_measurement=False, log_fun=base_log,
                        save_folder_clusters=None, logs=False, type_fits=file.FitsInfo2014,
-                       _zip=False, save_folder_slic=None, eps=1.2, bin_result=False, min_clustering_area=0):
+                       _zip=False, save_folder_slic=None, eps=1.2, bin_result=False, min_clustering_area=0,
+                       use_names=True):
     if logs:
         log_fun("Start", "write_data_in_file", f"{new_path}")
 
@@ -558,15 +564,23 @@ def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
 
     for i in range(start_i, end_i):
         if not image_folder is None:
-            image_file = os.path.join(image_folder, f"{i}.png")
+            if use_names:
+                image_file = os.path.join(image_folder, f"{names[i+1]}.png")
+            else:
+                image_file = os.path.join(image_folder, f"{i}.png")
         else:
             image_file = None
+
+        if use_names:
+            name_img = f"{names[i]}"
+        else:
+            name_img = f"{i}"
         if with_time:
             buf, labels, img, info, info1 = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i,
                                                                    return_img=True, all_info=False,
                                                                    save_folder=save_folder+"\\"+name_file,
                                                                    nameFile=f"{i}", image_file=image_file,
-                                                                   suptitle=f"Frame {i}",
+                                                                   suptitle=name_img,
                                                                    save_folder_clusters=save_folder_clusters,
                                                                    log_fun=log_fun, logs=logs, type_fits=type_fits,
                                                                    _zip=_zip, save_folder_slic=save_folder_slic,
@@ -575,7 +589,7 @@ def write_data_in_file(names, new_path, save_folder, start_i=0, end_i=None,
         else:
             buf, labels, img = clustering.SLIC_DBSCAN(names_files=names, new_path=new_path, i=i, return_img=True,
                                                       all_info=False, save_folder=save_folder+"\\"+name_file,
-                                                      nameFile=f"{i}", image_file=image_file, suptitle=f"Frame {i}",
+                                                      nameFile=name_img, image_file=image_file, suptitle=f"Frame {i}",
                                                       save_folder_clusters=save_folder_clusters, log_fun=log_fun,
                                                       logs=logs, type_fits=type_fits, _zip=_zip,
                                                       save_folder_slic=save_folder_slic, eps=eps, bin_result=bin_result,
