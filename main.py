@@ -165,7 +165,7 @@ filter_d = "5577"
 # filter_d = None
 path = os.path.join(current_directory, "data", name_data)
 
-save_folder_b = "C:\\data"
+save_folder_b = "C:\\data2"
 logs = True
 
 fit_format = file.FitsInfo
@@ -174,8 +174,8 @@ _zip = True
 # _zip = False
 # name = "SLIC_DBSCAN_RGB"
 
-start_i = 0
-end_i = None
+start_i = 20
+end_i = 25
 
 n_p = np.array(["03", "04", "05"])
 # n_p = np.array(["30"])
@@ -185,6 +185,7 @@ eps = 0.025
 
 log_fun = base_log
 
+
 for n in n_p:
 
     if not filter_d is None:
@@ -193,7 +194,6 @@ for n in n_p:
     else:
         new_path = os.path.join(path, n)
         save_folder = os.path.join(save_folder_b, name_data, n)
-    print(save_folder)
     image_folder = os.path.join(save_folder, "image_diff")
     # image_folder = None
     save_cluster_folder = os.path.join(save_folder, "clusters")
