@@ -3,7 +3,6 @@ import gzip
 import datetime
 from astropy.io import fits
 
-
 class FitsInfoBase:
 
     def __init__(self, info):
@@ -185,6 +184,13 @@ def get_A(CCDGAIN, ROSPEED, DEVICEID="ASI0"):
         elif "100kHz" in ROSPEED:
             A = [0.253, 0.503, 1.]
             return A[CCDGAIN-1]
+
+
+class_registry = {}
+class_registry["FitsInfoBase"] = FitsInfoBase
+class_registry["FitsInfo"] = FitsInfo
+class_registry["FitsInfo2014"] = FitsInfo2014
+class_registry["FitsInfoAndor"] = FitsInfoAndor
 
 
 def get_name_file(folder_path="/"):
