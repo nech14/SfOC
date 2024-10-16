@@ -9,7 +9,7 @@ from matplotlib import cm
 from matplotlib.colors import Normalize
 from PIL import Image
 from datetime import datetime
-from SfOC.src import file
+from src import file
 
 
 def print_graphics(data):

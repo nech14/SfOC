@@ -1,10 +1,11 @@
 import datetime
+import io
 import time
 
-from SfOC.src import graphics
-from SfOC.src import file
-from SfOC.src import clustering
-from SfOC.src.logging import base_log
+from src import graphics
+from src import file
+from src import clustering
+from src.logging import base_log
 import os
 
 import cv2
@@ -216,11 +217,14 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             min(buf_min_d), max(buf_max_d), max(buf_max_dy))
 
 
-def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info=False, name=None, cut=False,
+def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
                          data_index=None):
+
+    if names_files is None:
+        names_files = file.get_name_file(new_path)
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
@@ -229,7 +233,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
     datas = []
     diff1 = None
 
-    if hists:
+    if hists and counts_checks>1:
         (xmin_data, xmax_data,
          ymin_data, ymax_data,
          xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
@@ -243,6 +247,8 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
                                                         flag_info=flag_info, check_frame=check_frame,
                                                         data_index=data_index
                                                     )
+    else:
+        xmin_data, xmax_data, ymin_data, ymax_data,xmin_diff, xmax_diff, ymax_diff = [None for _ in range(7)]
 
     if dark:
         dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
@@ -316,6 +322,7 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
             diff1 = diff
         datas.append(img)
 
+
         if save_folder is not None:
 
             if not os.path.exists(save_folder):
@@ -333,13 +340,16 @@ def create_img_for_video(names_files, new_path, start_i=0, end_i=None, flag_info
 
         if logfun:
             logfun("create img", i-start_i+1, end_i-start_i)
-    return datas
+    return save_folder + f"/{start_i}.png"
 
 
-def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
+def create_video(names_files=None, new_path="", start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
                  name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
                  correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None):
+
+    if names_files is None:
+        names_files = file.get_name_file(new_path)
 
     if end_i is None:
         end_i = len(names_files) - 2
@@ -362,6 +372,7 @@ def create_video(names_files, new_path, start_i=6, end_i=None, name_file="output
         save_folder_video = save_folder + "/" + name_video_folder
     create_mp4(dates=datas, name=name_file, flag_info=flag_info, save_folder=save_folder_video, fps=fps, frames_s=frames_s, logfun=logfun)
 
+    return f"Video create: {save_folder}"
 
 
 

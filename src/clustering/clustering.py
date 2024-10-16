@@ -1,11 +1,11 @@
 import os
 from enum import Enum
-from SfOC.src.logging import base_log
+from src.logging import base_log
 import cv2
 import hdbscan
 import numpy as np
 import os
-from SfOC.src import graphics, file
+from src import graphics, file
 import matplotlib.pyplot as plt
 from sklearn.cluster import DBSCAN, OPTICS, AgglomerativeClustering
 from sklearn.neighbors import NearestNeighbors
@@ -249,13 +249,15 @@ def print_SLIC_DBSCAN(names_files, new_path, i, type_fits=file.FitsInfo2014, _zi
 
 def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.FitsInfo2014, _zip=False, return_img=False,
                 save_folder=None, nameFile="img", file_name=None, suptitle=None, all_info=False, image_file=None,
-                save_folder_clusters=None, log_fun=base_log, numSegments = 300, sigma=5, compactness=5,
+                save_folder_clusters=None, log_fun=base_log, numSegments = 1000, sigma=5, compactness=5,
                 eps=1.2, min_samples=5, color_outline=(0, 0.6, 0), logs=False, save_folder_slic=None,
                 bin_result=False, min_clustering_area=0):
 
     if image_file is None:
         data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
                                                         _zip=_zip, type_fits=type_fits)
+
+        diff = np.array(abs(data-data1))
     else:
         image = img_as_float(io.imread(image_file))
         # Конвертирование изображения в формат, подходящий для сохранения как JPG
@@ -270,13 +272,38 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
 
     # apply SLIC and extract (approximately) the supplied number of segments
     if image_file is None:
-        segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=True, channel_axis=None)
+        # segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=True, channel_axis=None)
+        segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=False, channel_axis=None)
+
+        # Создание изображения суперпикселей
+        superpixels = np.zeros_like(image)  # Создание массива с теми же размерами, что и изображение
+
+        # Усреднение значений для каждого суперпикселя
+        for seg_val in np.unique(segments):
+            mask = segments == seg_val
+            superpixels[mask] = image[mask].mean()
+
+        rows, cols = superpixels.shape
+
+        # Создаем сетки координат для строк и столбцов
+        row_coords, col_coords = np.meshgrid(np.arange(rows), np.arange(cols), indexing='ij')
+        # Развернем superpixels, row_coords и col_coords в плоские массивы
+        flat_pixels = np.reshape(superpixels, [-1, 1])
+        flat_row_coords = np.reshape(row_coords, [-1, 1])
+        flat_col_coords = np.reshape(col_coords, [-1, 1])
+
+        # Теперь объединяем все это в один массив, добавляя координаты
+        feature_image = np.concatenate([flat_pixels, flat_row_coords/10000, flat_col_coords/10000], axis=1)
+
+
+        # feature_image = np.reshape(superpixels, [-1, 1])
     else:
         segments = slic(image, n_segments=numSegments, sigma=sigma, compactness=compactness, convert2lab=True)
-    # a higher value of compactness leads to squared regions, a higher value of sigma leads to rounded delimitations
+        superpixels = color.label2rgb(segments, image, kind='avg')
+        rows, cols, chs = superpixels.shape
+        feature_image = np.reshape(superpixels, [-1, chs])
 
-    # Transforming the labels into superpixels, we attribute to each one the average color of the pixels composing it
-    superpixels = color.label2rgb(segments, image, kind='avg')
+
     # plt.imshow(superpixels)
     # plt.show()
     if not save_folder_slic is None:
@@ -296,13 +323,27 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
         if logs:
             log_fun("Craate img slic", file_name, "")
 
-    rows, cols, chs = superpixels.shape
-    feature_image = np.reshape(superpixels, [-1, chs])
+
+    # # Создаем сетки координат для строк и столбцов
+    # row_coords, col_coords = np.meshgrid(np.arange(rows), np.arange(cols), indexing='ij')
+    # # Развернем superpixels, row_coords и col_coords в плоские массивы
+    # flat_pixels = np.reshape(superpixels, [-1, chs])
+    # flat_row_coords = np.reshape(row_coords, [-1, 1])
+    # flat_col_coords = np.reshape(col_coords, [-1, 1])
+    #
+    # # Теперь объединяем все это в один массив, добавляя координаты
+    # feature_image_with_coords = np.concatenate([flat_pixels, flat_row_coords/1000, flat_col_coords/1000], axis=1)
+    # feature_image = np.reshape(superpixels, [-1, chs])
+
+    # print(feature_image)
+    # feature_image = feature_image_with_coords
+    # print(feature_image)
     # db = DBSCAN(eps=1.2, min_samples=5, metric='euclidean', algorithm='auto', n_jobs=1)
+
     if image_file is None:
+        # eps = 0.005
         db = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', algorithm='auto', n_jobs=1)
     else:
-        # eps = 0.004
         db = DBSCAN(eps=eps, min_samples=min_samples, metric='euclidean', algorithm='auto', n_jobs=1)
     db.fit(feature_image)
     labels = db.labels_
@@ -319,7 +360,16 @@ def SLIC_DBSCAN(names_files, new_path, i, percent_to_trim=0.1, type_fits=file.Fi
     #     else:
     #         bin_label[bin_label == region_label] = 1
 
-
+    plt.subplot(121)
+    plt.title("Label")
+    plt.imshow(final_labels)
+    plt.subplot(122)
+    plt.title("SLIC")
+    plt.imshow(superpixels)
+    os.makedirs(os.path.join(save_folder, "..", "label"), exist_ok=True)
+    plt.savefig(os.path.join(save_folder, "..", "label", f"{names_files[i]}.png"))
+    # plt.show()
+    plt.close()
 
     # new_label = label(bin_label)
     new_label = final_labels.copy()
