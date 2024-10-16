@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 name_bd = 'logs.db'
+filet_name = "logs.txt"
 
 # Получаем путь к текущему файлу
 current_file_path = os.path.abspath(__file__)
@@ -21,7 +22,6 @@ def base_log(mes, i, all):
 
 
 def txt_log(mes, i="", all=""):
-    filet_name = "log.txt"
 
     # Открываем файл для записи, если файла нет — создаём его
     with open(filet_name, "a") as file:
