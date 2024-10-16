@@ -142,7 +142,7 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
 
     if check_frame is None:
         check_frame = []
-    if count_frame > counts_checks:
+    if count_frame > counts_checks and counts_checks > 0:
         check_frame_buf = set(check_frame).union(get_equal_intervals_integers(start_i, end_i-1, counts_checks))
         check_frame = list(check_frame_buf)
     elif len(check_frame) == 0:
@@ -223,6 +223,7 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
                          data_index=None):
 
+    plt.rcParams.update({"font.size": 14})
     if names_files is None:
         names_files = file.get_name_file(new_path)
 
@@ -247,8 +248,21 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
                                                         flag_info=flag_info, check_frame=check_frame,
                                                         data_index=data_index
                                                     )
-    else:
-        xmin_data, xmax_data, ymin_data, ymax_data,xmin_diff, xmax_diff, ymax_diff = [None for _ in range(7)]
+    elif hists:
+        (xmin_data, xmax_data,
+         ymin_data, ymax_data,
+         xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
+            names_files, new_path,
+            start_i=start_i, end_i=start_i+1,
+            _zip=_zip, counts_checks=1, bins=bins,
+            cut=cut, percent_to_trim=percent_to_trim,
+            fit_format=fit_format,
+            dark=dark, dark_name=dark_name,
+            n=n, corr_matrix=corr_matrix, Rayleigh=Rayleigh,
+            flag_info=flag_info, check_frame=check_frame,
+            data_index=data_index
+        )
+
 
     if dark:
         dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
@@ -340,7 +354,7 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
 
         if logfun:
             logfun("create img", i-start_i+1, end_i-start_i)
-    return save_folder + f"/{start_i}.png"
+    return datas
 
 
 def create_video(names_files=None, new_path="", start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
