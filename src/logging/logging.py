@@ -20,6 +20,17 @@ def base_log(mes, i, all):
     print(f"{mes}: {i}/{all}")
 
 
+def txt_log(mes, i="", all=""):
+    filet_name = "log.txt"
+
+    # Открываем файл для записи, если файла нет — создаём его
+    with open(filet_name, "a") as file:
+        if all == "":
+            file.write(f"{mes}: {i}" + "\n")
+        else:
+            file.write(f"{mes}: {i}/{all}" + "\n")
+
+
 def log_operation(operation, tag1, tag2):
     # Соединяемся с базой данных (если файла нет, он будет создан)
     conn = sqlite3.connect(main_path)
