@@ -578,7 +578,7 @@ def get_hist_p(data, data1, diff, bins=2000):
     min_x = np.percentile(clean_data, 1) * 2
     max_x = np.percentile(clean_data, 99) * 2
 
-    clean_data1 = data.flatten()
+    clean_data1 = data1.flatten()
     clean_data1 = clean_data1[np.isfinite(clean_data1)]
     min_x1 = np.percentile(clean_data1, 1) * 2
     max_x1 = np.percentile(clean_data1, 99) * 2
