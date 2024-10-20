@@ -29,47 +29,27 @@ img_executor = ProcessPoolExecutor(max_workers=3)
 
 class_registry = file.class_registry
 
+running_tasks_name = []
+running_tasks = []
+
+@app.get("/tasks")
+async def get_tasks():
+    # Получаем список активных задач
+    active_tasks = [task for task in running_tasks_name]
+    return {
+        "active_tasks": len(active_tasks),
+        "task_status": [{"task": str(task)} for task in active_tasks]
+    }
+
 
 @app.get("/", description="Получить привет")
 async def root():
     return {"message": "Hello World"}
 
 
-@app.get("/items/")
-async def read_items(
-    q: str = Query(default="default_value", description="Параметр запроса", example="example_value"),
-    limit: int = Query(default=10, description="Лимит на количество результатов", example=5)
-):
-    return {"q": q, "limit": limit}
-
-# Модель для JSON с примером
-class Item(BaseModel):
-    name: str
-    description: str = None
-    price: float
-    tax: float = None
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "Laptop",
-                "description": "A gaming laptop",
-                "price": 1500.99,
-                "tax": 0.2
-            }
-        }
-
-# Эндпоинт для обработки JSON
-@app.post("/itemss/")
-async def create_item(item: Item):
-    return {"message": "Item created", "item": item}
-
-
-
-
 # Создаём модель для входных данных
 class CreateVideoRequest(BaseModel):
-    names_files: List[str]|None = None
+    names_files: List[str] = []
     new_path: str
     start_i: Optional[int] = 6
     end_i: Optional[int] = None
@@ -91,20 +71,22 @@ class CreateVideoRequest(BaseModel):
     remove_single_pixels: Optional[bool] = False
     correct_matrix: Optional[str] = None
     Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    type_diff: Optional[int] = 1
     logfun: Optional[str] = None
     counts_checks: Optional[int] = 4
-    check_frame: List[int]|None = None
+    check_frame: List[int] = None
     bins: Optional[int] = 5000
     fps: Optional[int] = 1
     frames_s: Optional[int] = 1
-    data_index: List[int]|None = None
+    data_index: Optional[int] = None
 
 
 # Пример функции, которая выполняет тяжелую операцию по созданию видео
 def create_video_logic(request: CreateVideoRequest):
     return logics.create_video(
         names_files=request.names_files,
-        new_path=request.new_path,
+        new_path=rf"{request.new_path}",
         start_i=request.start_i,
         end_i=request.end_i,
         name_file=request.name_file,
@@ -112,7 +94,7 @@ def create_video_logic(request: CreateVideoRequest):
         name=request.name,
         cut=request.cut,
         names=request.names,
-        save_folder=request.save_folder,
+        save_folder=fr"{request.save_folder}",
         save_folder_video=request.save_folder_video,
         save_img=request.save_img,
         name_img_folder=request.name_img_folder,
@@ -125,6 +107,8 @@ def create_video_logic(request: CreateVideoRequest):
         remove_single_pixels=request.remove_single_pixels,
         correct_matrix=request.correct_matrix,
         Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        type_diff=request.type_diff,
         counts_checks=request.counts_checks,
         check_frame=request.check_frame,
         bins=request.bins,
@@ -133,13 +117,23 @@ def create_video_logic(request: CreateVideoRequest):
         data_index=request.data_index
     )
 
+
+
 # Создаём POST-эндпоинт
 @app.post("/create_video/")
 async def create_video_endpoint(request: CreateVideoRequest):
     async with video_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
-        # Передаем функцию, которая не зависит от несериализуемых объектов
-        result = await loop.run_in_executor(video_executor, create_video_logic, request)
+
+        task = loop.run_in_executor(video_executor, create_video_logic, request)
+        running_tasks_name.append(f"create_video {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_video {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
         return result
 
 
@@ -149,7 +143,7 @@ async def create_video_endpoint(request: CreateVideoRequest):
 
 # Модель запроса
 class CreateImageForVideoRequest(BaseModel):
-    names_files: List[str]|None = None
+    names_files: List[str] = []
     new_path: str
     frame_id: Optional[int] = 0
     flag_info: Optional[bool] = False
@@ -168,11 +162,14 @@ class CreateImageForVideoRequest(BaseModel):
     remove_single_pixels: Optional[bool] = False
     correct_matrix: Optional[str] = None  # Замените тип на нужный
     Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    type_diff: Optional[int] = 1
     bins: Optional[int] = 5000
     counts_checks: Optional[int] = 4
     check_frame: Optional[int] = None
     logfun: Optional[str] = None  # Или замените на нужный тип
-    data_index: Optional[int] = None
+    data_index: Optional[int] = None,
+    file_name: Optional[str] = "buf"
 
 
 def create_img_logic(request: CreateImageForVideoRequest):
@@ -197,13 +194,17 @@ def create_img_logic(request: CreateImageForVideoRequest):
         remove_single_pixels=request.remove_single_pixels,
         correct_matrix=request.correct_matrix,
         Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        type_diff = request.type_diff,
         bins=request.bins,
         counts_checks=request.counts_checks,
         check_frame=request.check_frame,
         logfun=None,
-        data_index=request.data_index)
+        data_index=request.data_index,
+        file_name=request.file_name
+    )
 
-    return  os.path.join(request.save_folder, f'{request.frame_id}.png')
+    return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
 # Модель для ответа с изображениями
@@ -217,16 +218,32 @@ async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
-        # Передаем функцию, которая не зависит от несериализуемых объектов
-        result = await loop.run_in_executor(img_executor, create_img_logic, request)
 
+        task = loop.run_in_executor(img_executor, create_img_logic, request)
+        running_tasks_name.append(f"create_image {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
 
         # Читаем файл изображения в бинарном режиме
         with open(result, "rb") as image_file:
             img_data = image_file.read()
 
+
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
 
+
+
+@app.post("/remove/task")
+async def remove_task(task_id: str):
+    if len(running_tasks_name)>0 and len(running_tasks) > int(task_id):
+        running_tasks[int(task_id)].cancel()
+        return {"status": f"Task {running_tasks_name[int(task_id)]} has been cancelled"}
+    else:
+        return {"status": f"Running_tasks: {len(running_tasks)}"}
 
 
 
