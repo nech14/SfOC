@@ -123,12 +123,12 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
             print_hist_and_graphics(image, dlimit, ulimit)
 
 
-def save_heat_map(data_heat, pp=500, save_folder=None, file_name=None, nameFile="diff", color_bar=True):
+def save_heat_map(data_heat, limit=500, save_folder=None, file_name=None, nameFile="diff", color_bar=True):
     fig, ax = plt.subplots(figsize=(8, 8))
     #fig, ax = plt.subplots(figsize=(1024 / 100, 1424 / 100))
     #print(f"hsdjhfds:{data_heat.shape}")
     mask = np.ma.masked_equal(data_heat, 0)
-    plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
+    plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-limit, vmax=limit)
     if color_bar:
         cbar = plt.colorbar(shrink=0.8, fraction=0.1)
         for text in cbar.ax.get_yticklabels():
@@ -150,9 +150,9 @@ def save_heat_map(data_heat, pp=500, save_folder=None, file_name=None, nameFile=
     plt.close(fig)
 
     if color_bar:
-        image_array = image_array[144:-144, 114:-54]
+        image_array = image_array[144:-144, :]
     else:
-        image_array = image_array[80:-80, 80:-80]
+        image_array = image_array[80:-80, :]
     #image_array = image_array[137:-138, 114:-54]
 
     # print(image_array.shape)
@@ -672,6 +672,11 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
         # print(f'gg1: {cmap_image.shape}')
         #cmap_image = np.hstack((combined_image, diff_cmap))
 
+    elif _type == 2: #abs heat map
+        diff = data.astype(float) - data1.astype(float)
+
+        diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+
     # cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
 
     if names:
@@ -1050,7 +1055,7 @@ def datas_analysis(
     # Показать график
     plt.tight_layout()
 
-    path = "C:\\work\\search_for_oxide_cloud\SfOC\\result\\KEO\\2014\\30"
+    path = r"C:\\work\\search_for_oxide_cloud\SfOC\\result\\KEO\\2014\\30"
     # filename =  path + '\\count_SLIC_DBSCAN.txt'
     filename = path + '\\' + files[-1]
     data = []
