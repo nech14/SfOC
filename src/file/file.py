@@ -201,6 +201,7 @@ def get_name_file(folder_path="/"):
     # Выводим имена файлов
     for file in files:
         names.append(file)
+    names.sort()
     return names
 
 
@@ -214,3 +215,12 @@ def open_gz(gz_file_path, _zip=True):
     else:
         with fits.open(gz_file_path) as f:
             return f[0].header, f[0].data
+
+
+def remove_extensions(file_path):
+    # Удаляем расширения, пока они есть
+    while True:
+        file_path, ext = os.path.splitext(file_path)
+        if not ext:  # Когда расширений больше нет, завершаем
+            break
+    return file_path
