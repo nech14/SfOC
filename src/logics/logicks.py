@@ -12,6 +12,7 @@ import cv2
 import numpy as np
 
 import matplotlib.pyplot as plt
+import pickle
 
 
 def get_names(path, _zip=True):
@@ -217,14 +218,14 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             min(buf_min_d), max(buf_max_d), max(buf_max_dy))
 
 
-def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
+def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
-                         data_index=None):
+                         data_index=None, result_matrix_safe_folder=None, type_diff=1, file_name=None):
 
     plt.rcParams.update({"font.size": 14})
-    if names_files is None:
+    if names_files is None or len(names_files)==0:
         names_files = file.get_name_file(new_path)
 
     if correct_matrix is not None:
@@ -309,6 +310,7 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
             data = graphics.calculate_frame_Rayleigh(data, info_f, False)
             data1 = graphics.calculate_frame_Rayleigh(data1, info_f1, False)
 
+
         if cut:
             data = graphics.cut_img(data, percent_to_trim)
             data1 = graphics.cut_img(data1, percent_to_trim)
@@ -317,9 +319,9 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
             info_f = fit_format(info)
             info_f1 = fit_format(info1)
             img = graphics.create_img_for_video(data, data1, name=name,
-                                                names=[info_f.get_norm_time(), info_f1.get_norm_time()])
+                                                names=[info_f.get_norm_time(), info_f1.get_norm_time()], _type=type_diff)
         else:
-            img = graphics.create_img_for_video(data, data1, name=name)
+            img = graphics.create_img_for_video(data, data1, name=name, _type=type_diff)
         # plt.imshow(img)
         # plt.show()
 
@@ -336,6 +338,27 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
             diff1 = diff
         datas.append(img)
 
+        if not result_matrix_safe_folder is None:
+            if result_matrix_safe_folder == "" and not save_folder is None and save_folder != "":
+                result_matrix_safe_folder = os.path.join(save_folder, "result_matrix")
+
+            if not os.path.exists(result_matrix_safe_folder):
+                # Если папки не существует, создаем её
+                os.makedirs(result_matrix_safe_folder)
+
+            dir_name = file.remove_extensions(names_files[i])
+            result_matrix_safe_folder_frame = os.path.join(result_matrix_safe_folder, f"{dir_name}")
+            if not os.path.exists(result_matrix_safe_folder_frame):
+                # Если папки не существует, создаем её
+                os.makedirs(result_matrix_safe_folder_frame)
+
+            result_matrix_safe_folder_data = os.path.join(result_matrix_safe_folder_frame, f"{names_files[i]}.pkl")
+            with open(result_matrix_safe_folder_data, 'wb') as f:
+                pickle.dump(data, f)
+
+            result_matrix_safe_folder_data1 = os.path.join(result_matrix_safe_folder_frame, f"{names_files[i + 1]}.pkl")
+            with open(result_matrix_safe_folder_data1, 'wb') as f:
+                pickle.dump(data1, f)
 
         if save_folder is not None:
 
@@ -346,7 +369,12 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
             plt.figure(figsize=figsize, dpi=100)
             plt.imshow(img)
             plt.axis('off')
-            plt.savefig(save_folder + f"/{i}.png")
+            # plt.savefig(save_folder + f"/{i}.png", bbox_inches='tight')
+            if file_name is None:
+                file_name_buf = names_files[i]
+            else:
+                file_name_buf = file_name
+            plt.savefig(save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
             plt.close()
 
         if flag_info:
@@ -357,13 +385,17 @@ def create_img_for_video(names_files=None, new_path="", start_i=0, end_i=None, f
     return datas
 
 
-def create_video(names_files=None, new_path="", start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
+def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="output", flag_info=False, name=None, cut=False,
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
                  name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
-                 correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None):
+                 correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None,
+                 result_matrix_safe_folder=None, type_diff=1):
 
-    if names_files is None:
-        names_files = file.get_name_file(new_path)
+    if not result_matrix_safe_folder is None and result_matrix_safe_folder != "":
+        result_matrix_safe_folder = os.path.join(save_folder, result_matrix_safe_folder)
+
+    if result_matrix_safe_folder == "" and not save_folder is None and not save_folder == "":
+        result_matrix_safe_folder = os.path.join(save_folder, "result_matrix")
 
     if end_i is None:
         end_i = len(names_files) - 2
@@ -374,13 +406,15 @@ def create_video(names_files=None, new_path="", start_i=6, end_i=None, name_file
                                      dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip, hists=hists,
                                      remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
                                      Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins, check_frame=check_frame,
-                                     data_index=data_index)
+                                     data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
+                                     type_diff=type_diff)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
                                      hists=hists, remove_single_pixels=remove_single_pixels,
                                      correct_matrix=correct_matrix, Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins,
-                                     check_frame=check_frame, data_index=data_index)
+                                     check_frame=check_frame, data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
+                                     type_diff=type_diff)
 
     if save_folder_video is None:
         save_folder_video = save_folder + "/" + name_video_folder
@@ -473,7 +507,6 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
         max_value = np.max(data_c[~np.isnan(data_c)])
 
         if type(bins) == int:
-            print("ggg")
             bins = np.linspace(0, max_value, bins+1)
 
         data_for_heatmap[count] = graphics.get_bins_hist(data_c, bins=bins)
