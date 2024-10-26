@@ -661,6 +661,8 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
         diff = cv2.absdiff(data, data1)
 
         diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+        diff_cmap = cv2.cvtColor(diff_cmap, cv2.COLOR_RGB2BGR)
+        cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2BGR)
 
 
     elif _type == 1: #heat map
@@ -676,6 +678,14 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
         diff = data.astype(float) - data1.astype(float)
 
         diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
+
+        diff_cmap = cv2.cvtColor(diff_cmap, cv2.COLOR_RGB2BGR)
+        cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2BGR)
+
+    else:
+        return
+
+
 
     # cmap_image = drive_to_color_palette(combined_image, dlimit, ulimit, cmap)
 

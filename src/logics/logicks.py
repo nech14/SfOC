@@ -5,6 +5,7 @@ import time
 from src import graphics
 from src import file
 from src import clustering
+from src.graphics.graphics import drive_to_color_palette, auto_contrast_skimage
 from src.logging import base_log
 import os
 
@@ -216,6 +217,105 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
     return (min(buf_min_x), max(buf_max_x),
             min(buf_min_y), max(buf_max_y),
             min(buf_min_d), max(buf_max_d), max(buf_max_dy))
+
+def create_image(
+        names_files=[], new_path="", number=1, flag_info=False, name=None, cut=False,
+        percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
+        fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, remove_single_pixels=False,
+        correct_matrix=None, Rayleigh=False, logfun=None,
+        data_index=None, result_matrix_safe_folder=None, file_name=None
+):
+    plt.rcParams.update({"font.size": 14})
+    if names_files is None or len(names_files) == 0:
+        names_files = file.get_name_file(new_path)
+
+    if correct_matrix is not None:
+        corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
+    else:
+        corr_matrix = None
+
+
+    if dark:
+        dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip,
+                                    fit_format=fit_format)
+
+
+
+    name_path = os.path.join(new_path, names_files[number])
+    info, data = file.open_gz(name_path, _zip=_zip)
+
+    if not data_index is None:
+        data = data[data_index]
+
+    if remove_single_pixels:
+        data = graphics.remove_single_pixels(data, False, False, False)
+
+    if dark:
+        time = fit_format(info).get_datetime()
+        data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+        data = (data - data.min()) / (data.max() - data.min())
+        data = (data * n).astype(int)
+
+    if correct_matrix is not None:
+        data = data * corr_matrix.astype(np.float64)
+        data[data < 0] = np.nan
+
+    if Rayleigh:
+        info_f = fit_format(info)
+        data = graphics.calculate_frame_Rayleigh(data, info_f, False)
+
+    if cut:
+        data = graphics.cut_img(data, percent_to_trim)
+
+    # plt.imshow(img)
+    # plt.show()
+
+    if not result_matrix_safe_folder is None:
+        if result_matrix_safe_folder == "" and not save_folder is None and save_folder != "":
+            result_matrix_safe_folder = os.path.join(save_folder, "result_matrix")
+
+        if not os.path.exists(result_matrix_safe_folder):
+            # Если папки не существует, создаем её
+            os.makedirs(result_matrix_safe_folder)
+
+        result_matrix_safe_folder_data = os.path.join(result_matrix_safe_folder, f"{names_files[number]}.pkl")
+        with open(result_matrix_safe_folder_data, 'wb') as f:
+            pickle.dump(data, f)
+
+
+    if save_folder is not None:
+
+        if not os.path.exists(save_folder):
+            # Если папки не существует, создаем её
+            os.makedirs(save_folder)
+
+        cmap = plt.get_cmap('gray')
+        ulimit_diff = 900
+        dlimit_diff = 0
+
+        processed_image, _, _ = auto_contrast_skimage(data)
+        # data_cmap = drive_to_color_palette(data, dlimit_diff, ulimit_diff, cmap)
+        # image = cv2.cvtColor(data_cmap, cv2.COLOR_GRAY2RGB)
+
+        plt.figure(figsize=figsize, dpi=100)
+        plt.imshow(processed_image, cmap="gray")
+        plt.axis('off')
+        # plt.savefig(save_folder + f"/{i}.png", bbox_inches='tight')
+        if file_name is None:
+            file_name_buf = names_files[number]
+        else:
+            file_name_buf = file_name
+        plt.savefig(save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
+        plt.close()
+
+    if flag_info:
+        print(f"create img: {number}")
+
+    if logfun:
+        logfun("create img", number, "")
+
+
 
 
 def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,

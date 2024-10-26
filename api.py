@@ -248,6 +248,88 @@ async def remove_task(task_id: str):
 
 
 
+# Модель запроса
+class CreateImageRequest(BaseModel):
+    names_files: List[str] = []
+    new_path: str
+    frame_id: Optional[int] = 0
+    flag_info: Optional[bool] = False
+    name: Optional[str] = None
+    cut: Optional[bool] = False
+    percent_to_trim: Optional[float] = 0.1
+    names: Optional[bool] = False
+    save_folder: Optional[str] = None
+    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
+    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    n: Optional[int] = 10000
+    zip: Optional[bool] = True
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None  # Замените тип на нужный
+    Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    check_frame: Optional[int] = None
+    logfun: Optional[str] = None  # Или замените на нужный тип
+    data_index: Optional[int] = None,
+    file_name: Optional[str] = "buf"
+
+
+
+def create_image_logic(request: CreateImageRequest):
+    logics.create_image(
+        names_files=request.names_files,
+        new_path=request.new_path,
+        number=request.frame_id,
+        flag_info=request.flag_info,
+        name=request.name,
+        cut=request.cut,
+        percent_to_trim=request.percent_to_trim,
+        names=request.names,
+        save_folder=request.save_folder,
+        figsize=request.figsize,
+        fit_format=class_registry[request.fit_format],
+        dark=request.dark,
+        dark_name=request.dark_name,
+        n=request.n,
+        _zip=request.zip,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        logfun=None,
+        data_index=request.data_index,
+        file_name=request.file_name
+    )
+
+    return  os.path.join(request.save_folder, f'{request.file_name}.png')
+
+
+@app.post("/create_img")
+async def create_img(request: CreateImageRequest):
+
+    async with img_task_semaphore:  # Ограничиваем количество одновременных задач
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(img_executor, create_image_logic, request)
+        running_tasks_name.append(f"create_image {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
+    pass
+
+
 async def get_diff():
     pass
 
