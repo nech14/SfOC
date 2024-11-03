@@ -34,7 +34,9 @@ class_registry = file.class_registry
 running_tasks_name = []
 running_tasks = []
 
-@app.get("/tasks")
+rout_root = ""
+
+@app.get(f"{rout_root}/tasks")
 async def get_tasks():
     # Получаем список активных задач
     active_tasks = [task for task in running_tasks_name]
@@ -44,7 +46,7 @@ async def get_tasks():
     }
 
 
-@app.get("/", description="Получить привет")
+@app.get(f"{rout_root}/", description="Получить привет")
 async def root():
     return {"message": "Hello World"}
 
@@ -128,7 +130,7 @@ def create_video_logic(request: CreateVideoRequest):
 
 
 # Создаём POST-эндпоинт
-@app.post("/create_video")
+@app.post(f"{rout_root}/create_video")
 async def create_video_endpoint(request: CreateVideoRequest):
     async with video_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
@@ -221,7 +223,7 @@ class ImagesResponse(BaseModel):
 
 
 # Эндпоинт
-@app.post("/create_image_for_video")
+@app.post(f"{rout_root}/create_image_for_video")
 async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -245,7 +247,7 @@ async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
 
 
-@app.post("/remove/task")
+@app.post(f"{rout_root}/remove/task")
 async def remove_task(task_id: str):
     if len(running_tasks_name)>0 and len(running_tasks) > int(task_id):
         running_tasks[int(task_id)].cancel()
@@ -311,7 +313,7 @@ def create_image_logic(request: CreateImageRequest):
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
-@app.post("/create_img")
+@app.post(f"{rout_root}/create_img")
 async def create_img(request: CreateImageRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -399,7 +401,7 @@ def create_heatmap_logic(request: CreateHeatmapRequest):
     return os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
-@app.post("/create_heatmap")
+@app.post(f"{rout_root}/create_heatmap")
 async def create_heatmap(request: CreateHeatmapRequest):
     async with video_task_semaphore:
         loop = asyncio.get_event_loop()
@@ -419,25 +421,3 @@ async def create_heatmap(request: CreateHeatmapRequest):
 
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
 
-
-async def create_video():
-    pass
-
-
-async def get_hist_p():
-    pass
-
-async def slic_dbscan():
-    pass
-
-
-async def get_fits_format():
-    pass
-
-
-async def get_logging_fun():
-    pass
-
-
-async def canny_frame():
-    pass
