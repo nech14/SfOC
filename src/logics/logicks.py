@@ -144,6 +144,8 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
 
     if check_frame is None:
         check_frame = []
+    elif isinstance(check_frame, int):
+        check_frame = [check_frame]
     if count_frame > counts_checks and counts_checks > 0:
         check_frame_buf = set(check_frame).union(get_equal_intervals_integers(start_i, end_i-1, counts_checks))
         check_frame = list(check_frame_buf)
@@ -174,12 +176,10 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
             data = (data - data.min()) / (data.max() - data.min())
-            data = (data * n).astype(int)
 
             time = fit_format(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
             data1 = (data1 - data1.min()) / (data1.max() - data1.min())
-            data1 = (data1 * n).astype(int)
 
         if corr_matrix is not None:
             data = data * corr_matrix.astype(np.float64)
@@ -199,6 +199,8 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             data1 = graphics.cut_img(data1, percent_to_trim)
 
 
+        # data = (data * n).astype(int)
+        # data1 = (data1 * n).astype(int)
 
 
         diff = data - data1
@@ -220,10 +222,10 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
 
 def create_image(
         names_files=[], new_path="", number=1, flag_info=False, name=None, cut=False,
-        percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
+        percent_to_trim=0.1, save_folder=None, figsize=(1920 / 100, 1080 / 100),
         fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, remove_single_pixels=False,
         correct_matrix=None, Rayleigh=False, logfun=None,
-        data_index=None, result_matrix_safe_folder=None, file_name=None
+        data_index=None, result_matrix_safe_folder=None, file_name=None, multiplication_on_correct_matrix=True
 ):
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files) == 0:
@@ -255,10 +257,15 @@ def create_image(
         time = fit_format(info).get_datetime()
         data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
         data = (data - data.min()) / (data.max() - data.min())
-        data = (data * n).astype(int)
+
+        visual_data = (data * n).astype(int)
 
     if correct_matrix is not None:
-        data = data * corr_matrix.astype(np.float64)
+        if multiplication_on_correct_matrix:
+            data = data * corr_matrix.astype(np.float64)
+        else:
+            data = data / corr_matrix.astype(np.float64)
+
         data[data < 0] = np.nan
 
     if Rayleigh:
@@ -290,18 +297,14 @@ def create_image(
             # Если папки не существует, создаем её
             os.makedirs(save_folder)
 
-        cmap = plt.get_cmap('gray')
-        ulimit_diff = 900
-        dlimit_diff = 0
 
         processed_image, _, _ = auto_contrast_skimage(data)
-        # data_cmap = drive_to_color_palette(data, dlimit_diff, ulimit_diff, cmap)
-        # image = cv2.cvtColor(data_cmap, cv2.COLOR_GRAY2RGB)
+
+        plt.title(f"{name}")
 
         plt.figure(figsize=figsize, dpi=100)
         plt.imshow(processed_image, cmap="gray")
         plt.axis('off')
-        # plt.savefig(save_folder + f"/{i}.png", bbox_inches='tight')
         if file_name is None:
             file_name_buf = names_files[number]
         else:
@@ -322,7 +325,8 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
-                         data_index=None, result_matrix_safe_folder=None, type_diff=1, file_name=None):
+                         data_index=None, result_matrix_safe_folder=None, type_diff=1, file_name=None, multiplication_on_correct_matrix=True,
+                         upper_limit=500., lower_limit=None):
 
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files)==0:
@@ -391,16 +395,19 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
             data = (data - data.min()) / (data.max() - data.min())
-            data = (data * n).astype(int)
 
             time = fit_format(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
             data1 = (data1 - data1.min()) / (data1.max() - data1.min())
-            data1 = (data1 * n).astype(int)
 
         if correct_matrix is not None:
-            data = data * corr_matrix.astype(np.float64)
-            data1 = data1 * corr_matrix.astype(np.float64)
+            if multiplication_on_correct_matrix:
+                data = data * corr_matrix.astype(np.float64)
+                data1 = data1 * corr_matrix.astype(np.float64)
+            else:
+                data = data / corr_matrix.astype(np.float64)
+                data1 = data1 / corr_matrix.astype(np.float64)
+
             data[data < 0] = np.nan
             data1[data1 < 0] = np.nan
 
@@ -415,13 +422,20 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
             data = graphics.cut_img(data, percent_to_trim)
             data1 = graphics.cut_img(data1, percent_to_trim)
 
+        # visual_data = (data * n).astype(int)
+        visual_data = data
+        # visual_data1 = (data1 * n).astype(int)
+        visual_data1 = data1
+
         if names:
             info_f = fit_format(info)
             info_f1 = fit_format(info1)
             img = graphics.create_img_for_video(data, data1, name=name,
-                                                names=[info_f.get_norm_time(), info_f1.get_norm_time()], _type=type_diff)
+                                                names=[info_f.get_norm_time(), info_f1.get_norm_time()], _type=type_diff,
+                                                upper_limit=upper_limit, lower_limit=lower_limit)
         else:
-            img = graphics.create_img_for_video(data, data1, name=name, _type=type_diff)
+            img = graphics.create_img_for_video(data, data1, name=name, _type=type_diff,
+                                                upper_limit=upper_limit, lower_limit=lower_limit)
         # plt.imshow(img)
         # plt.show()
 
@@ -489,7 +503,7 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
                  name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
                  correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None,
-                 result_matrix_safe_folder=None, type_diff=1):
+                 result_matrix_safe_folder=None, type_diff=1, multiplication_on_correct_matrix=True, upper_limit=500., lower_limit=None):
 
     if not result_matrix_safe_folder is None and result_matrix_safe_folder != "":
         result_matrix_safe_folder = os.path.join(save_folder, result_matrix_safe_folder)
@@ -507,14 +521,16 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                                      remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
                                      Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins, check_frame=check_frame,
                                      data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
-                                     type_diff=type_diff)
+                                     type_diff=type_diff, multiplication_on_correct_matrix=multiplication_on_correct_matrix,
+                                     upper_limit=upper_limit, lower_limit=lower_limit)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
                                      hists=hists, remove_single_pixels=remove_single_pixels,
                                      correct_matrix=correct_matrix, Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins,
                                      check_frame=check_frame, data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
-                                     type_diff=type_diff)
+                                     type_diff=type_diff, multiplication_on_correct_matrix=multiplication_on_correct_matrix,
+                                     upper_limit=upper_limit, lower_limit=lower_limit)
 
     if save_folder_video is None:
         save_folder_video = save_folder + "/" + name_video_folder

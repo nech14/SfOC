@@ -49,15 +49,15 @@ async def root():
 
 # Создаём модель для входных данных
 class CreateVideoRequest(BaseModel):
-    names_files: List[str] = []
-    new_path: str
+    data_path: str
+    files_list: List[str] = []
     start_i: Optional[int] = 6
     end_i: Optional[int] = None
     name_file: Optional[str] = "output"
     flag_info: Optional[bool] = False
-    name: Optional[str] = None
-    cut: Optional[bool] = False
-    names: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
+    frame_title: Optional[bool] = False
     save_folder: Optional[str] = ""
     save_folder_video: Optional[str] = None
     save_img: Optional[bool] = False
@@ -70,9 +70,12 @@ class CreateVideoRequest(BaseModel):
     hists: Optional[bool] = False
     remove_single_pixels: Optional[bool] = False
     correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
     Rayleigh: Optional[bool] = False
     result_matrix_safe_folder: Optional[str] = None
     type_diff: Optional[int] = 1
+    upper_limit: Optional[float] = 500.
+    lower_limit: Optional[float] = None
     logfun: Optional[str] = None
     counts_checks: Optional[int] = 4
     check_frame: List[int] = None
@@ -85,15 +88,15 @@ class CreateVideoRequest(BaseModel):
 # Пример функции, которая выполняет тяжелую операцию по созданию видео
 def create_video_logic(request: CreateVideoRequest):
     return logics.create_video(
-        names_files=request.names_files,
-        new_path=rf"{request.new_path}",
+        names_files=request.files_list,
+        new_path=rf"{request.data_path}",
         start_i=request.start_i,
         end_i=request.end_i,
         name_file=request.name_file,
         flag_info=request.flag_info,
-        name=request.name,
-        cut=request.cut,
-        names=request.names,
+        name=request.general_title,
+        cut=request.mask,
+        names=request.frame_title,
         save_folder=fr"{request.save_folder}",
         save_folder_video=request.save_folder_video,
         save_img=request.save_img,
@@ -114,7 +117,10 @@ def create_video_logic(request: CreateVideoRequest):
         bins=request.bins,
         fps=request.fps,
         frames_s=request.frames_s,
-        data_index=request.data_index
+        data_index=request.data_index,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        upper_limit=request.upper_limit,
+        lower_limit=request.lower_limit
     )
 
 
@@ -139,18 +145,16 @@ async def create_video_endpoint(request: CreateVideoRequest):
 
 
 
-
-
 # Модель запроса
 class CreateImageForVideoRequest(BaseModel):
-    names_files: List[str] = []
-    new_path: str
+    data_path: str
+    files_list: List[str] = []
     frame_id: Optional[int] = 0
     flag_info: Optional[bool] = False
-    name: Optional[str] = None
-    cut: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
     percent_to_trim: Optional[float] = 0.1
-    names: Optional[bool] = False
+    frame_title: Optional[bool] = False
     save_folder: Optional[str] = None
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
     fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
@@ -160,13 +164,14 @@ class CreateImageForVideoRequest(BaseModel):
     zip: Optional[bool] = True
     hists: Optional[bool] = True
     remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None  # Замените тип на нужный
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
     Rayleigh: Optional[bool] = False
     result_matrix_safe_folder: Optional[str] = None
     type_diff: Optional[int] = 1
+    upper_limit: Optional[float] = 500.
+    lower_limit: Optional[float] = None
     bins: Optional[int] = 5000
-    counts_checks: Optional[int] = 4
-    check_frame: Optional[int] = None
     logfun: Optional[str] = None  # Или замените на нужный тип
     data_index: Optional[int] = None,
     file_name: Optional[str] = "buf"
@@ -174,15 +179,15 @@ class CreateImageForVideoRequest(BaseModel):
 
 def create_img_logic(request: CreateImageForVideoRequest):
     logics.create_img_for_video(
-        names_files=request.names_files,
-        new_path=request.new_path,
+        names_files=request.files_list,
+        new_path=request.data_path,
         start_i=request.frame_id,
         end_i=request.frame_id + 1,
         flag_info=request.flag_info,
-        name=request.name,
-        cut=request.cut,
+        name=request.general_title,
+        cut=request.mask,
         percent_to_trim=request.percent_to_trim,
-        names=request.names,
+        names=request.frame_title,
         save_folder=request.save_folder,
         figsize=request.figsize,
         fit_format=class_registry[request.fit_format],
@@ -197,11 +202,14 @@ def create_img_logic(request: CreateImageForVideoRequest):
         result_matrix_safe_folder=request.result_matrix_safe_folder,
         type_diff = request.type_diff,
         bins=request.bins,
-        counts_checks=request.counts_checks,
-        check_frame=request.check_frame,
+        counts_checks=1,
+        check_frame=None,
         logfun=None,
         data_index=request.data_index,
-        file_name=request.file_name
+        file_name=request.file_name,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        upper_limit=request.upper_limit,
+        lower_limit=request.lower_limit
     )
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
@@ -250,14 +258,13 @@ async def remove_task(task_id: str):
 
 # Модель запроса
 class CreateImageRequest(BaseModel):
-    names_files: List[str] = []
-    new_path: str
+    data_path: str
+    files_list: List[str] = []
     frame_id: Optional[int] = 0
     flag_info: Optional[bool] = False
-    name: Optional[str] = None
-    cut: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
     percent_to_trim: Optional[float] = 0.1
-    names: Optional[bool] = False
     save_folder: Optional[str] = None
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
     fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
@@ -266,7 +273,8 @@ class CreateImageRequest(BaseModel):
     n: Optional[int] = 10000
     zip: Optional[bool] = True
     remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None  # Замените тип на нужный
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
     Rayleigh: Optional[bool] = False
     result_matrix_safe_folder: Optional[str] = None
     check_frame: Optional[int] = None
@@ -278,14 +286,13 @@ class CreateImageRequest(BaseModel):
 
 def create_image_logic(request: CreateImageRequest):
     logics.create_image(
-        names_files=request.names_files,
-        new_path=request.new_path,
+        names_files=request.files_list,
+        new_path=request.data_path,
         number=request.frame_id,
         flag_info=request.flag_info,
-        name=request.name,
-        cut=request.cut,
+        name=request.general_title,
+        cut=request.mask,
         percent_to_trim=request.percent_to_trim,
-        names=request.names,
         save_folder=request.save_folder,
         figsize=request.figsize,
         fit_format=class_registry[request.fit_format],
@@ -299,7 +306,8 @@ def create_image_logic(request: CreateImageRequest):
         result_matrix_safe_folder=request.result_matrix_safe_folder,
         logfun=None,
         data_index=request.data_index,
-        file_name=request.file_name
+        file_name=request.file_name,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix
     )
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')

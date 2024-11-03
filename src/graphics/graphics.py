@@ -123,12 +123,15 @@ def print_graphics_cv2(data, max_limit=255, dlimit=0):
             print_hist_and_graphics(image, dlimit, ulimit)
 
 
-def save_heat_map(data_heat, limit=500, save_folder=None, file_name=None, nameFile="diff", color_bar=True):
+def save_heat_map(data_heat, upper_limit=500., lower_limit=None, save_folder=None, file_name=None, nameFile="diff", color_bar=True):
+    if lower_limit is None:
+        lower_limit = -upper_limit
+
     fig, ax = plt.subplots(figsize=(8, 8))
     #fig, ax = plt.subplots(figsize=(1024 / 100, 1424 / 100))
     #print(f"hsdjhfds:{data_heat.shape}")
     mask = np.ma.masked_equal(data_heat, 0)
-    plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=-limit, vmax=limit)
+    plt.imshow(mask, cmap="RdBu_r", interpolation='nearest', vmin=lower_limit, vmax=upper_limit)
     if color_bar:
         cbar = plt.colorbar(shrink=0.8, fraction=0.1)
         for text in cbar.ax.get_yticklabels():
@@ -641,7 +644,7 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
     return image_array[:, :, :3]
 
 
-def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1):
+def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1, upper_limit=500., lower_limit=None):
     ulimit = 10000
     dlimit = 5000
     ulimit_diff = 900
@@ -666,8 +669,9 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
 
 
     elif _type == 1: #heat map
-        diff = data.astype(float) - data1.astype(float)
-        diff_cmap = save_heat_map(diff)
+        # diff = data.astype(float) - data1.astype(float)
+        diff = data - data1
+        diff_cmap = save_heat_map(diff, upper_limit=upper_limit, lower_limit=lower_limit)
         diff_cmap = cv2.cvtColor(diff_cmap, cv2.COLOR_RGB2BGR)
         cmap_image = cv2.cvtColor(cmap_image, cv2.COLOR_GRAY2BGR)
         # print(f'gg: {diff_cmap.shape}')
@@ -675,7 +679,8 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
         #cmap_image = np.hstack((combined_image, diff_cmap))
 
     elif _type == 2: #abs heat map
-        diff = data.astype(float) - data1.astype(float)
+        # diff = data.astype(float) - data1.astype(float)
+        diff = data - data1
 
         diff_cmap = drive_to_color_palette(diff, dlimit_diff, ulimit_diff, cmap)
 
