@@ -128,7 +128,8 @@ def get_equal_intervals_integers(a, b, n):
 
 def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_checks=4, bins=2000, cut=False,
                percent_to_trim=0.1, fit_format=file.FitsInfo, dark=False, dark_name="DARK",
-               n=10000, corr_matrix=None, Rayleigh=False, flag_info=False, check_frame=None, data_index=None):
+               n=10000, corr_matrix=None, Rayleigh=False, flag_info=False, check_frame=None, data_index=None,
+               remove_single_pixels=False, multiplication_on_correct_matrix=True):
     if end_i is None:
         end_i = len(names_files)-1
 
@@ -166,11 +167,14 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             data = data[data_index]
             data1 = data1[data_index]
 
+        if remove_single_pixels:
+            data = graphics.remove_single_pixels(data, False, False, False)
+            data1 = graphics.remove_single_pixels(data1, False, False, False)
+
         if dark:
             dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
             dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip,
                                         fit_format=fit_format)
-
 
         if dark:
             time = fit_format(info).get_datetime()
@@ -182,8 +186,13 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             data1 = (data1 - data1.min()) / (data1.max() - data1.min())
 
         if corr_matrix is not None:
-            data = data * corr_matrix.astype(np.float64)
-            data1 = data1 * corr_matrix.astype(np.float64)
+            if multiplication_on_correct_matrix:
+                data = data * corr_matrix.astype(np.float64)
+                data1 = data1 * corr_matrix.astype(np.float64)
+            else:
+                data = data / corr_matrix.astype(np.float64)
+                data1 = data1 / corr_matrix.astype(np.float64)
+
             data[data < 0] = np.nan
             data1[data1 < 0] = np.nan
 
@@ -349,9 +358,11 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
                                                         cut=cut, percent_to_trim=percent_to_trim,
                                                         fit_format=fit_format,
                                                         dark=dark, dark_name=dark_name,
-                                                        n=n, corr_matrix=corr_matrix, Rayleigh=Rayleigh,
+                                                        corr_matrix=corr_matrix, Rayleigh=Rayleigh,
                                                         flag_info=flag_info, check_frame=check_frame,
-                                                        data_index=data_index
+                                                        data_index=data_index,
+                                                        remove_single_pixels=remove_single_pixels,
+                                                        multiplication_on_correct_matrix=multiplication_on_correct_matrix
                                                     )
     elif hists:
         (xmin_data, xmax_data,
@@ -363,9 +374,10 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
             cut=cut, percent_to_trim=percent_to_trim,
             fit_format=fit_format,
             dark=dark, dark_name=dark_name,
-            n=n, corr_matrix=corr_matrix, Rayleigh=Rayleigh,
+            corr_matrix=corr_matrix, Rayleigh=Rayleigh,
             flag_info=flag_info, check_frame=check_frame,
-            data_index=data_index
+            data_index=data_index,
+            multiplication_on_correct_matrix=multiplication_on_correct_matrix
         )
 
 
@@ -590,9 +602,129 @@ def viewing_pictures(names, file_number, new_path, dark=True, n = 120000, _zip=T
                                                names=[names[file_number][:-8], names[file_number + 1][:-8]])
 
 
-def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
+def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
+                   auto_contrast=True, cmap="viridis", save_folder=None, fit_format=file.FitsInfo, _zip=True,
+                   counts_checks=4, check_frame=None, remove_single_pixels=False, correct_matrix=None, Rayleigh=False,
+                   dark=False, dark_name="DARK", cut=False, percent_to_trim=0.1, data_index=None, flag_info=None,
+                   multiplication_on_correct_matrix=True, q=[2, 50], name_file=None, result_auto_contrast=True):
+
+    if names is None or len(names)==0:
+        names = file.get_name_file(new_path)
+
+    if end_file is None:
+        end_file = len(names)
+
+    if correct_matrix is not None:
+        corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
+    else:
+        corr_matrix = None
+
+    if dark:
+        dark1, time1 = get_dark_AVG(names, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark2, time2 = get_dark_AVG(np.flip(names), new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+
+    (xmin_data, xmax_data,
+     ymin_data, ymax_data,
+     _, _, _) = get_hist_p(
+        names, new_path,
+        start_i=start_file, end_i=end_file,
+        _zip=_zip, counts_checks=counts_checks, bins=bins,
+        cut=cut, percent_to_trim=percent_to_trim,
+        fit_format=fit_format,
+        dark=dark, dark_name=dark_name,
+        corr_matrix=corr_matrix, Rayleigh=Rayleigh,
+        flag_info=flag_info, check_frame=check_frame,
+        data_index=data_index,
+        remove_single_pixels=remove_single_pixels,
+        multiplication_on_correct_matrix=multiplication_on_correct_matrix
+    )
+
+
+    data_for_heatmap = []
+    info_for_heatmap = []
+
+
+    for frame in range(start_file+edges, end_file-edges):
+        name_path = os.path.join(new_path, names[frame])
+        info, data = file.open_gz(name_path, _zip=_zip)
+
+        if not data_index is None:
+            data = data[data_index]
+
+        if remove_single_pixels:
+            data = graphics.remove_single_pixels(data, False, False, False)
+
+        if dark:
+            time = fit_format(info).get_datetime()
+            data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
+            data = (data - data.min()) / (data.max() - data.min())
+
+        if correct_matrix is not None:
+            if multiplication_on_correct_matrix:
+                data = data * corr_matrix.astype(np.float64)
+            else:
+                data = data / corr_matrix.astype(np.float64)
+
+            data[data < 0] = np.nan
+
+        if Rayleigh:
+            info_f = fit_format(info)
+            data = graphics.calculate_frame_Rayleigh(data, info_f, False)
+
+        if cut:
+            data = graphics.cut_img(data, percent_to_trim)
+
+        if auto_contrast:
+            data, _, _ = graphics.auto_contrast_skimage(data, q=q)
+
+        result_hist = graphics.create_hists(data, data, data,
+                                                     xmin_data=xmin_data, xmax_data=xmax_data,
+                                                     ymin_data=ymin_data, ymax_data=ymax_data, ymin_diff=0, bins=bins,
+                                                     return_data=True)
+        result_hist, _, _ = result_hist
+        data_for_heatmap.append(result_hist)
+        info_for_heatmap.append(fit_format(info).get_datetime().time())
+
+    data_for_heatmap = np.array(data_for_heatmap)
+    transposed_data = np.transpose(data_for_heatmap)
+    # transposed_data = data_for_heatmap
+
+    if not title is None:
+        plt.title(title)
+
+    if result_auto_contrast:
+        transposed_data, _, _ = graphics.auto_contrast_skimage(transposed_data)
+
+    plt.imshow(transposed_data, cmap=cmap, aspect='auto')
+    colorbar = plt.colorbar()
+    colorbar.set_label('n in bin')
+    if type(bins) != int:
+        plt.ylabel(f"bins ({bins.max()})")
+    else:
+        plt.ylabel(f"bins")
+
+    plt.xlabel("time")
+    plt.xticks(np.arange(0, len(info_for_heatmap), 10), info_for_heatmap[::10], rotation=45, ha='right', fontsize=8)
+
+    if name_file is None:
+        name_file = title
+
+    if save_folder is None:
+        plt.savefig(f'{name_file}.png')
+    else:
+        plt.savefig(save_folder + f'/{name_file}.png')
+    # plt.show()
+    if log_info:
+        print(f"create heatmap: {title}")
+    plt.close()
+
+
+
+def create_heatmap1(names=None, new_path=r"", edges=0, start_file=0, end_file=None, log_info=False, title=None, bins=100,
                    auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=file.FitsInfo, _zip=True):
 
+    if names is None or len(names)==0:
+        names = file.get_name_file(new_path)
 
     if end_file is None:
         end_file = len(names)
@@ -615,8 +747,8 @@ def create_heatmap(names, new_path, edges=0, start_file=0, end_file=None, log_in
         print(f"max: {np.max(data_cut[~np.isnan(data_cut)])}")
 
         _, p2, p98 = graphics.auto_contrast_skimage(data_cut)
-        p2 -= 2000-500
-        p98 += 1000
+        # p2 -= 2000-500
+        # p98 += 1000
 
         data_c, _, _ = graphics.auto_contrast_skimage(data_cut, p2, p98)
 

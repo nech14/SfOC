@@ -254,11 +254,11 @@ def auto_contrast(data):
     cv2.destroyAllWindows()
 
 
-def auto_contrast_skimage(data, p2=None, p98=None):
+def auto_contrast_skimage(data, p2=None, p98=None, q=[2, 98]):
     image = data.copy()
     non_zero_values = image[image > 0]
     if p2 is None or p98 is None:
-        p2, p98 = np.percentile(non_zero_values, (2, 98))
+        p2, p98 = np.percentile(non_zero_values, (q[0], q[1]))
     result = exposure.rescale_intensity(image, in_range=(p2, p98))
     return result, p2, p98
 
@@ -603,14 +603,19 @@ def get_hist_p(data, data1, diff, bins=2000):
 def create_hists(data, data1, diff, diff1=None, bins=2000,
                  xmin_data=0, xmax_data=6000, xmin_diff=-1000, xmax_diff=1000, alpha=0.5,
                  ymin_data=0, ymax_data=20000, ymin_diff=0, ymax_diff=30000, show=False,
-                 figsize_x=16.54, figsize_y=5.12):
+                 figsize_x=16.54, figsize_y=5.12, return_data=False):
     #15.36
     fig = plt.figure(figsize=(figsize_x, figsize_y))
     gs = fig.add_gridspec(1, 2, width_ratios=[1.65, 1])
 
     ax1 = fig.add_subplot(gs[0, 0])
-    ax1.hist(data.flatten(), bins=bins)
-    ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
+    result_hist = ax1.hist(data.flatten(), bins=bins)
+
+    if return_data:
+        plt.close()
+        return result_hist
+
+    result_hist1 = ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
 
     if xmin_data is not None and xmax_data is not None:
         ax1.set_xlim(xmin=xmin_data, xmax=xmax_data)
@@ -619,10 +624,13 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
 
     ax2 = fig.add_subplot(gs[0, 1])
     if diff1 is not None:
-        ax2.hist(diff1.flatten(), bins=bins)
+        result_hist_diff = ax2.hist(diff1.flatten(), bins=bins)
     else:
         alpha = 1
-    ax2.hist(diff.flatten(), bins=bins, alpha=alpha, color="orange")
+        result_hist_diff = None
+    result_hist_diff1 = ax2.hist(diff.flatten(), bins=bins, alpha=alpha, color="orange")
+
+
     if xmin_diff is not None and xmax_diff is not None:
         ax2.set_xlim(xmin=xmin_diff, xmax=xmax_diff)
     if ymin_diff is not None and ymax_diff is not None:

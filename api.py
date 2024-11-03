@@ -5,6 +5,7 @@ import io
 import os
 
 from fastapi import FastAPI, Query, BackgroundTasks
+from httpx import request
 from pydantic import BaseModel
 from rich.emoji import NoEmoji
 from starlette.responses import StreamingResponse
@@ -15,6 +16,7 @@ from src import file
 from src.file import FitsInfo
 from concurrent.futures import ProcessPoolExecutor
 
+from src.graphics.graphics import auto_contrast
 from src.logics import write_data_in_file
 
 app = FastAPI()
@@ -51,7 +53,7 @@ async def root():
 class CreateVideoRequest(BaseModel):
     data_path: str
     files_list: List[str] = []
-    start_i: Optional[int] = 6
+    start_i: Optional[int] = 0
     end_i: Optional[int] = None
     name_file: Optional[str] = "output"
     flag_info: Optional[bool] = False
@@ -126,7 +128,7 @@ def create_video_logic(request: CreateVideoRequest):
 
 
 # Создаём POST-эндпоинт
-@app.post("/create_video/")
+@app.post("/create_video")
 async def create_video_endpoint(request: CreateVideoRequest):
     async with video_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
@@ -160,7 +162,6 @@ class CreateImageForVideoRequest(BaseModel):
     fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
     dark: Optional[bool] = False
     dark_name: Optional[str] = "DARK"
-    n: Optional[int] = 10000
     zip: Optional[bool] = True
     hists: Optional[bool] = True
     remove_single_pixels: Optional[bool] = False
@@ -193,7 +194,6 @@ def create_img_logic(request: CreateImageForVideoRequest):
         fit_format=class_registry[request.fit_format],
         dark=request.dark,
         dark_name=request.dark_name,
-        n=request.n,
         _zip=request.zip,
         hists=request.hists,
         remove_single_pixels=request.remove_single_pixels,
@@ -221,7 +221,7 @@ class ImagesResponse(BaseModel):
 
 
 # Эндпоинт
-@app.post("/create_image_for_video/")
+@app.post("/create_image_for_video")
 async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -270,7 +270,6 @@ class CreateImageRequest(BaseModel):
     fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
     dark: Optional[bool] = False
     dark_name: Optional[str] = "DARK"
-    n: Optional[int] = 10000
     zip: Optional[bool] = True
     remove_single_pixels: Optional[bool] = False
     correct_matrix: Optional[str] = None
@@ -298,7 +297,6 @@ def create_image_logic(request: CreateImageRequest):
         fit_format=class_registry[request.fit_format],
         dark=request.dark,
         dark_name=request.dark_name,
-        n=request.n,
         _zip=request.zip,
         remove_single_pixels=request.remove_single_pixels,
         correct_matrix=request.correct_matrix,
@@ -335,17 +333,96 @@ async def create_img(request: CreateImageRequest):
 
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
 
-    pass
 
 
-async def get_diff():
-    pass
+
+class CreateHeatmapRequest(BaseModel):
+    data_path: str
+    files_list: List[str] = []
+    start_i: Optional[int] = 0
+    end_i: Optional[int] = None
+    edges: Optional[int] = 0
+    flag_info: Optional[bool] = False
+    title: Optional[str] = None
+    mask: Optional[bool] = False
+    percent_to_trim: Optional[float] = 0.1
+    save_folder: Optional[str] = None
+    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
+    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    zip: Optional[bool] = True
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
+    Rayleigh: Optional[bool] = False
+    counts_checks: Optional[int] = 4
+    check_frame: Optional[int] = None
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
+    result_auto_contrast: Optional[bool] = True
+    bins: Optional[int] = 500
+    cmap: Optional[str] = "viridis"
+    logfun: Optional[str] = None  # Или замените на нужный тип
+    data_index: Optional[int] = None,
+    file_name: Optional[str] = "buf"
+
+
+def create_heatmap_logic(request: CreateHeatmapRequest):
+    logics.create_heatmap(
+        names=request.files_list,
+        new_path=request.data_path,
+        start_file=request.start_i,
+        end_file=request.end_i,
+        edges=request.edges,
+        title=request.title,
+        bins=request.bins,
+        cmap=request.cmap,
+        save_folder=request.save_folder,
+        _zip=request.zip,
+        counts_checks=request.counts_checks,
+        check_frame=request.check_frame,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        Rayleigh=request.Rayleigh,
+        dark=request.dark,
+        dark_name=request.dark_name,
+        cut=request.mask,
+        percent_to_trim=request.percent_to_trim,
+        data_index=request.data_index,
+        q=request.auto_contrast_percentiles,
+        name_file=request.file_name,
+        result_auto_contrast=request.result_auto_contrast,
+        auto_contrast=request.auto_contrast
+    )
+    return os.path.join(request.save_folder, f'{request.file_name}.png')
+
+
+@app.post("/create_heatmap")
+async def create_heatmap(request: CreateHeatmapRequest):
+    async with video_task_semaphore:
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(video_executor, create_heatmap_logic, request)
+        running_tasks_name.append(f"create_heatmap {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_heatmap {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
 
 async def create_video():
     pass
 
-async def create_img_for_video():
-    pass
 
 async def get_hist_p():
     pass
