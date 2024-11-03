@@ -1,11 +1,15 @@
 import time
 
-from SfOC.src.logging.logging import log_operation
+import plotly.graph_objects as go
+from skimage.color import label2rgb
+
+from src.logging.logging import log_operation
 from src import clustering
 from src import graphics
+from src import logics
 from src import file
-from SfOC.src.logics import write_data_in_file
-from SfOC.src.logics import save_heat_map
+from src.logics import write_data_in_file
+from src.logics import save_heat_map
 
 import os
 
@@ -13,7 +17,7 @@ import cv2
 import numpy as np
 
 import matplotlib.pyplot as plt
-from SfOC.src.logging import base_log
+from src.logging import base_log
 from skimage.transform import resize
 from scipy.interpolate import griddata
 from src.graphics import auto_contrast_skimage
@@ -21,6 +25,7 @@ from skimage import color
 from skimage.segmentation import slic, mark_boundaries
 from skimage.util import img_as_float
 from skimage import io
+from PIL import Image
 import argparse
 
 from sklearn.cluster import DBSCAN
@@ -35,7 +40,7 @@ path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
 # path = os.path.join(current_directory, "data", "KEO", "2014", "30")
 # path = os.path.join(current_directory, "data", "KEO", "2014", "28")
 
-path = os.path.join(current_directory, "data", "KEO", "20130417")
+# path = os.path.join(current_directory, "data", "KEO", "20130417")
 # path = os.path.join(current_directory, "data", "andor", "20240504")
 
 # path = os.path.join(current_directory, "data", "KEO", "20130416")
@@ -44,10 +49,11 @@ path = os.path.join(current_directory, "data", "KEO", "20130417")
 # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
 new_path = os.path.join(path, "5577")
 
-new_path = path
+print(new_path)
+# new_path = path
 
 names = file.get_name_file(new_path)
-
+print(names)
 # clustering.model_method_frames(new_path=new_path, names_files=names)
 # clustering.start(new_path=new_path, names_files=names, start=120, end=127)
 # clustering.start(new_path=new_path, names_files=names, start=120, end=127)
@@ -157,37 +163,39 @@ save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\te
 save_cluster_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test_test\\clusters"
 
 
-name_data = "ASI1\\2024\\03"
+# name_data = "ASI1\\2024\\03"
 # name_data = "KEO\\2014"
-# name_data = "KEO"
-filter_d = "5577"
+name_data = "KEO"
+# filter_d = "5577"
 # filter_d = "6300"
-# filter_d = None
+filter_d = None
 path = os.path.join(current_directory, "data", name_data)
 
-save_folder_b = "C:\\data2"
+save_folder_b = "C:\\data_gray_abs_1k"
 logs = True
 
-fit_format = file.FitsInfo
-# fit_format = file.FitsInfo2014
-_zip = True
-# _zip = False
+# fit_format = file.FitsInfo
+fit_format = file.FitsInfo2014
+# _zip = True
+_zip = False
 # name = "SLIC_DBSCAN_RGB"
 
 start_i = 20
-end_i = 25
+end_i = 24
 
-n_p = np.array(["03", "04", "05"])
+# n_p = np.array(["03", "04", "05"])
+# n_p = np.array(["03"])
 # n_p = np.array(["30"])
-# n_p = np.array(["20130417"])
+n_p = np.array(["20130417"])
 
-eps = 0.025
+eps = 0.01
+eps = 0.01
 
 log_fun = base_log
 
+diff_buf = []
 
 for n in n_p:
-
     if not filter_d is None:
         new_path = os.path.join(path, n, filter_d)
         save_folder = os.path.join(save_folder_b, name_data, n, filter_d)
@@ -195,20 +203,88 @@ for n in n_p:
         new_path = os.path.join(path, n)
         save_folder = os.path.join(save_folder_b, name_data, n)
     image_folder = os.path.join(save_folder, "image_diff")
-    # image_folder = None
+
+    image_folder = None
     save_cluster_folder = os.path.join(save_folder, "clusters")
     save_folder_slic = os.path.join(save_folder, "slic")
     # save_folder_slic = None
     names = file.get_name_file(new_path)
 
+    print(names)
 
-    save_heat_map(names, new_path, image_folder, logs=logs, start_i=start_i, end_i=end_i, _zip=_zip,
-                  type_fits=fit_format, log_fun=log_fun)
+    #
+    # save_heat_map(names, new_path, image_folder, logs=logs, start_i=start_i, end_i=end_i, _zip=_zip,
+    #               type_fits=fit_format, log_fun=log_fun)
     write_data_in_file(names, new_path, save_folder, image_folder=image_folder, save_folder_clusters=save_cluster_folder,
                        logs=logs, start_i=start_i, end_i=end_i, type_fits=fit_format, _zip=_zip,
                        save_folder_slic =save_folder_slic, eps=eps, log_fun=log_fun)
 
+    # for i in range(start_i, end_i):
+    #     image_file = os.path.join(image_folder, f"{names[i + 1]}.png")
+    #     image = img_as_float(io.imread(image_file))
+    #     # Конвертирование изображения в формат, подходящий для сохранения как JPG
+    #     # Для этого преобразуем его в 8-битное изображение с помощью функции из Pillow
+    #     image = Image.fromarray((image * 255).astype('uint8'))
+    #     image = image.convert('RGB')
+    #     diff = np.array(image)
+    #     diff = diff / 255.0
+    #     diff_buf.append(diff)
 
+    # Создание 3D графика
+    # fig = go.Figure()
+    #
+    # # Цикл по каждому изображению (слою)
+    # for i, img in enumerate(diff_buf):
+    #     fig.add_trace(go.Surface(z=np.ones_like(img[:, :, 0]) * i, surfacecolor=img[:, :, 0], showscale=False))
+
+    # # Настройки осей
+    # fig.update_layout(scene=dict(
+    #     xaxis_title='X',
+    #     yaxis_title='Y',
+    #     zaxis_title='Layer'),
+    #     width=700, height=700)
+    #
+    # fig.show()
+
+    # diff_buf = np.array(diff_buf)
+    # num_frames, height, width, channels = diff_buf.shape
+    #
+    # # Конкатенация кадров в один массив
+    # frames_reshaped = diff_buf.reshape(-1, height, width, channels)
+    #
+    # # Применение SLIC
+    # segments = slic(diff_buf, n_segments=1000, compactness=10, start_label=1)
+    #
+    # # Преобразование сегментов обратно в форму (num_frames, height, width)
+    # segments_reshaped = segments.reshape(num_frames, height, width)
+
+
+    # Пример визуализации одного кадра
+    #
+    # plt.imshow(label2rgb(segments_reshaped[0], diff_buf[0]))
+    # plt.show()
+
+    # # Создание 3D графика
+    # fig = go.Figure()
+    #
+    # # Цикл по каждому изображению (слою)
+    # for i, img in enumerate(segments_reshaped):
+    #     superpixels = color.label2rgb(img, diff_buf[i], kind='avg')
+    #
+    #     # Извлекаем цветные значения (RGB) для визуализации
+    #     color_surface = superpixels[:, :, :3]  # Получаем только RGB каналы
+    #
+    #     # Создаём 2D поверхность для каждого слоя
+    #     fig.add_trace(go.Surface(z=np.ones_like(superpixels[:, :, 0]) * i,
+    #                              surfacecolor=color_surface[:, :, 0],  # Используйте первый канал для цвета
+    #                              showscale=False))
+    # # Настройки внешнего вида графика
+    # fig.update_layout(scene=dict(zaxis=dict(range=[0, len(diff_buf)])),
+    #                   title='Colored Superpixels Visualization',
+    #                   scene_camera_eye=dict(x=1.5, y=1.5, z=1.5))
+    #
+    #
+    # fig.show()
 
 #
 # name = "GM"
@@ -233,12 +309,19 @@ for n in n_p:
 # clustering.base_lvl(names, new_path)
 #print(clustering.get_clusters(names, new_path, 123))
 
-# path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
-#
+path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+
 # logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
 #                     name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
 #                     dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
 #                     remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
+
+logics.create_video(None, r"C:\work\search_for_oxide_cloud\SfOC\data\ASI0\2023\10\11\5577", start_i=0, end_i=10, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
+                    name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder=r"F:\data", save_img=True,
+                    dark=False, fit_format=file.FitsInfo, _zip=True, hists=False, name_img_folder="img_for_video/diff",
+                    remove_single_pixels=True, correct_matrix=None, Rayleigh=False)
+
+
 #
 # logics.create_video(names, new_path, start_i=60, end_i=80, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh3",
 #                     name="data.KEO.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh", cut=True, save_folder="result/ASI0/2023/10/11/5577/test", save_img=True,
