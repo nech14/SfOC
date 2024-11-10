@@ -86,6 +86,8 @@ class CreateVideoRequest(BaseModel):
     bins: Optional[int] = 5000
     fps: Optional[int] = 1
     frames_s: Optional[int] = 1
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
     data_index: Optional[int] = None
 
 
@@ -124,7 +126,9 @@ def create_video_logic(request: CreateVideoRequest):
         data_index=request.data_index,
         multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
         upper_limit=request.upper_limit,
-        lower_limit=request.lower_limit
+        lower_limit=request.lower_limit,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
     )
 
 
@@ -175,6 +179,8 @@ class CreateImageForVideoRequest(BaseModel):
     upper_limit: Optional[float] = 500.
     lower_limit: Optional[float] = None
     bins: Optional[int] = 5000
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
     logfun: Optional[str] = None  # Или замените на нужный тип
     data_index: Optional[int] = None,
     file_name: Optional[str] = "buf"
@@ -211,7 +217,9 @@ def create_img_logic(request: CreateImageForVideoRequest):
         file_name=request.file_name,
         multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
         upper_limit=request.upper_limit,
-        lower_limit=request.lower_limit
+        lower_limit=request.lower_limit,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
     )
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
@@ -279,6 +287,8 @@ class CreateImageRequest(BaseModel):
     Rayleigh: Optional[bool] = False
     result_matrix_safe_folder: Optional[str] = None
     check_frame: Optional[int] = None
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
     logfun: Optional[str] = None  # Или замените на нужный тип
     data_index: Optional[int] = None,
     file_name: Optional[str] = "buf"
@@ -307,7 +317,9 @@ def create_image_logic(request: CreateImageRequest):
         logfun=None,
         data_index=request.data_index,
         file_name=request.file_name,
-        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
     )
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
@@ -366,7 +378,7 @@ class CreateHeatmapRequest(BaseModel):
     bins: Optional[int] = 500
     cmap: Optional[str] = "viridis"
     logfun: Optional[str] = None  # Или замените на нужный тип
-    data_index: Optional[int] = None,
+    data_index: Optional[int] = None
     file_name: Optional[str] = "buf"
 
 

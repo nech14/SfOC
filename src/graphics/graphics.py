@@ -652,7 +652,10 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
     return image_array[:, :, :3]
 
 
-def create_img_for_video(data, data1, name=None, names=None, text_place="t", _type=1, upper_limit=500., lower_limit=None):
+def create_img_for_video(
+        data, data1, name=None, names=None, text_place="t", _type=1, upper_limit=500.,
+        lower_limit=None, auto_contrast=True, auto_contrast_percentiles=[2, 98]
+):
     ulimit = 10000
     dlimit = 5000
     ulimit_diff = 900
@@ -661,7 +664,10 @@ def create_img_for_video(data, data1, name=None, names=None, text_place="t", _ty
 
     combined_image = cv2.hconcat([ cv2.resize(data,(512, 512)), cv2.resize(data1,(512, 512))])
 
-    processed_image, _, _ = auto_contrast_skimage(combined_image)
+    if auto_contrast:
+        processed_image, _, _ = auto_contrast_skimage(combined_image, q=auto_contrast_percentiles)
+    else:
+        processed_image = combined_image
     cmap_image = np.array(processed_image)
 
     cmap_image_max = np.max(cmap_image[~np.isnan(cmap_image)])

@@ -234,7 +234,8 @@ def create_image(
         percent_to_trim=0.1, save_folder=None, figsize=(1920 / 100, 1080 / 100),
         fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, remove_single_pixels=False,
         correct_matrix=None, Rayleigh=False, logfun=None,
-        data_index=None, result_matrix_safe_folder=None, file_name=None, multiplication_on_correct_matrix=True
+        data_index=None, result_matrix_safe_folder=None, file_name=None, multiplication_on_correct_matrix=True,
+        auto_contrast=True, auto_contrast_percentiles=[2, 98]
 ):
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files) == 0:
@@ -306,8 +307,10 @@ def create_image(
             # Если папки не существует, создаем её
             os.makedirs(save_folder)
 
-
-        processed_image, _, _ = auto_contrast_skimage(data)
+        if auto_contrast:
+            processed_image, _, _ = auto_contrast_skimage(data, q=auto_contrast_percentiles)
+        else:
+            processed_image = data
 
         plt.title(f"{name}")
 
@@ -335,7 +338,7 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
                          data_index=None, result_matrix_safe_folder=None, type_diff=1, file_name=None, multiplication_on_correct_matrix=True,
-                         upper_limit=500., lower_limit=None):
+                         upper_limit=500., lower_limit=None, auto_contrast=True, auto_contrast_percentiles=[2, 98]):
 
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files)==0:
@@ -444,10 +447,12 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
             info_f1 = fit_format(info1)
             img = graphics.create_img_for_video(data, data1, name=name,
                                                 names=[info_f.get_norm_time(), info_f1.get_norm_time()], _type=type_diff,
-                                                upper_limit=upper_limit, lower_limit=lower_limit)
+                                                upper_limit=upper_limit, lower_limit=lower_limit, auto_contrast=auto_contrast,
+                                                auto_contrast_percentiles=auto_contrast_percentiles)
         else:
             img = graphics.create_img_for_video(data, data1, name=name, _type=type_diff,
-                                                upper_limit=upper_limit, lower_limit=lower_limit)
+                                                upper_limit=upper_limit, lower_limit=lower_limit, auto_contrast=auto_contrast,
+                                                auto_contrast_percentiles=auto_contrast_percentiles)
         # plt.imshow(img)
         # plt.show()
 
@@ -515,7 +520,8 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                  names=False, save_folder="", save_folder_video=None, save_img=False, name_img_folder="img_for_video",
                  name_video_folder="video", dark=False, dark_name="DARK", fit_format=file.FitsInfo, _zip=True, hists=False, remove_single_pixels=False,
                  correct_matrix=None, Rayleigh=False, logfun=None, counts_checks=4, check_frame=None, bins=5000, fps=1, frames_s=1, data_index=None,
-                 result_matrix_safe_folder=None, type_diff=1, multiplication_on_correct_matrix=True, upper_limit=500., lower_limit=None):
+                 result_matrix_safe_folder=None, type_diff=1, multiplication_on_correct_matrix=True, upper_limit=500., lower_limit=None,
+                 auto_contrast=True, auto_contrast_percentiles=[2, 98]):
 
     if not result_matrix_safe_folder is None and result_matrix_safe_folder != "":
         result_matrix_safe_folder = os.path.join(save_folder, result_matrix_safe_folder)
@@ -534,7 +540,8 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                                      Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins, check_frame=check_frame,
                                      data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
                                      type_diff=type_diff, multiplication_on_correct_matrix=multiplication_on_correct_matrix,
-                                     upper_limit=upper_limit, lower_limit=lower_limit)
+                                     upper_limit=upper_limit, lower_limit=lower_limit, auto_contrast=auto_contrast,
+                                     auto_contrast_percentiles=auto_contrast_percentiles)
     else:
         datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
@@ -542,7 +549,8 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                                      correct_matrix=correct_matrix, Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins,
                                      check_frame=check_frame, data_index=data_index, result_matrix_safe_folder=result_matrix_safe_folder,
                                      type_diff=type_diff, multiplication_on_correct_matrix=multiplication_on_correct_matrix,
-                                     upper_limit=upper_limit, lower_limit=lower_limit)
+                                     upper_limit=upper_limit, lower_limit=lower_limit, auto_contrast=auto_contrast,
+                                     auto_contrast_percentiles=auto_contrast_percentiles)
 
     if save_folder_video is None:
         save_folder_video = save_folder + "/" + name_video_folder
@@ -698,10 +706,17 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
     plt.imshow(transposed_data, cmap=cmap, aspect='auto')
     colorbar = plt.colorbar()
     colorbar.set_label('n in bin')
-    if type(bins) != int:
-        plt.ylabel(f"bins ({bins.max()})")
-    else:
-        plt.ylabel(f"bins")
+    # if type(bins) != int:
+    #     plt.ylabel(f"bins ({bins.max()})")
+    # else:
+    #     plt.ylabel(f"bins")
+
+
+    y_positions = np.linspace(0, transposed_data.shape[0] - 1, 10)  # Позиции меток на графике
+    y_labels = np.linspace(ymin_data, ymax_data, 10)  # Значения меток от 0 до 1243
+
+    plt.yticks(y_positions, [int(label) for label in y_labels], fontsize=8)  # Устанавливаем метки
+    plt.ylabel("y")
 
     plt.xlabel("time")
     plt.xticks(np.arange(0, len(info_for_heatmap), 10), info_for_heatmap[::10], rotation=45, ha='right', fontsize=8)
