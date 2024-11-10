@@ -709,6 +709,12 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
     if name_file is None:
         name_file = title
 
+    if save_folder is not None:
+
+        if not os.path.exists(save_folder):
+            # Если папки не существует, создаем её
+            os.makedirs(save_folder)
+
     if save_folder is None:
         plt.savefig(f'{name_file}.png')
     else:
