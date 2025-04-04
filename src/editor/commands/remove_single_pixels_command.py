@@ -19,6 +19,14 @@ class RemoveSinglePixelsCommand(BaseCommand):
             False
         )
 
+        data_result = remove_single_pixels(
+            self._editor.result_img,
+            False,
+            False,
+            False
+        )
+
         self._editor.target_img.data = data
+        self._editor.result_img = data_result
 
         return True

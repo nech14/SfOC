@@ -16,13 +16,17 @@ class CorrectMatrixCommand(BaseCommand):
 
         if self.multiplication_on_correct_matrix:
             data = self._editor.target_img.data * self.corr_matrix.astype(np.float64)
+            data_result = self._editor.result_img * self.corr_matrix.astype(np.float64)
         else:
             data = self._editor.target_img.data / self.corr_matrix.astype(np.float64)
+            data_result = self._editor.result_img / self.corr_matrix.astype(np.float64)
 
 
         data[data < 0] = np.nan
+        data_result[data_result < 0] = np.nan
 
         self._editor.target_img.data = data
+        self._editor.result_img = data_result
 
         return True
 

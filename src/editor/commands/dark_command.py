@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.special import result
 
 from src.editor.commands.base_command import BaseCommand
 from src.file import FitsInfo
@@ -46,9 +45,16 @@ class DarkCommand(BaseCommand):
         )
 
         time = self._editor.target_img.info.get_datetime()
-        data = subtract_noise_frame(dark_start, dark_end, dark_time_start, dark_time_end, time)
+        data = subtract_noise_frame(dark_start, dark_end, dark_time_start, dark_time_end, self._editor.target_img.data,
+                                    time)
         data = (data - data.mix()) / (data.max() - data.min())
 
+
+        data_result = subtract_noise_frame(dark_start, dark_end, dark_time_start, dark_time_end, self._editor.result_img,
+                                    time)
+        data_result = (data_result - data_result.mix()) / (data_result.max() - data_result.min())
+
         self._editor.target_img.data = data
+        self._editor.result_img = data_result
 
         return True

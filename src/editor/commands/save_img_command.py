@@ -9,7 +9,7 @@ class SaveImgCommand(BaseCommand):
     def __init__(
             self,
             editor,
-            save_folder,
+            save_folder:str,
             title:str=None,
             file_name:str=None,
             figsize=(1920 / 100, 1080 / 100),
@@ -37,7 +37,7 @@ class SaveImgCommand(BaseCommand):
 
         plt.figure(figsize=self.figsize, dpi=self.dpi)
         plt.title(self.title)
-        plt.imshow(self._editor.target_img.data, cmap=self.cmap)
+        plt.imshow(self._editor.result_img, cmap=self.cmap)
         plt.axis(self.axis)
 
         if self.file_name is None:

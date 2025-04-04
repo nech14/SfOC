@@ -1,6 +1,5 @@
 import os.path
 
-from main import fit_format
 from src.editor.commands.base_command import BaseCommand
 from src.file import get_name_file, open_gz
 from src.file.file import FitsInfoBase, FitsInfo
@@ -35,16 +34,26 @@ class LoadCommand(BaseCommand):
     def execute(self) -> bool:
         self.saveBackup()
 
+
+
         if self.names_files is None or len(self.names_files) == 0:
             self.names_files = get_name_file(self.root_path)
 
+        if self.end_file is None:
+            self.end_file = len(self.names_files)
+
         for i in range(self.start_file, self.end_file):
             name_path = os.path.join(self.root_path, self.names_files[i])
+            print(name_path)
+
+            header, data = open_gz(
+                name_path,
+                _zip=self._zip,
+            )
+
             img_data = ImgData(
-                open_gz(
-                    name_path,
-                    _zip=self._zip,
-                ),
+                header,
+                data,
                 fit_format=self.fit_format,
                 data_index=self.data_index
             )

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Editor View</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="main">
+      <h1>Current Image</h1>
+      <img src="{{ img }}" alt="Current image" />
+
+
+      <h2>Data</h2>
+      <pre id="data-display">{{ data }}</pre>
+
+      <div class="loader" id="loader" style="display:none;">⌛ Processing...</div>
+
+      <div id="controls">
+        <button onclick="runCommand('cut')">Cut</button>
+        <button onclick="runCommand('dark')">Dark</button>
+        <button onclick="runCommand('rayleigh')">Rayleigh</button>
+        <button onclick="runCommand('auto_contrast')">Auto Contrast</button>
+        <!-- Добавь остальные кнопки по аналогии -->
+      </div>
+
+      <form onsubmit="return sendForm(event)">
+        <input type="text" id="input-param" placeholder="Parameter (e.g. index)">
+        <button type="submit">Select</button>
+      </form>
+    </div>
+
+    <div id="history">
+      <h3>History</h3>
+      <ul id="history-log"></ul>
+    </div>
+  </div>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>

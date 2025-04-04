@@ -11,9 +11,9 @@ class AutoContrastCommand(BaseCommand):
     def execute(self) -> bool:
         self.saveBackup()
 
-        data = auto_contrast_skimage(self._editor.target_img.data, self.auto_contrast_percentiles)
+        data, _, _ = auto_contrast_skimage(self._editor.result_img, self.auto_contrast_percentiles)
 
-        self._editor.target_img.data = data
+        self._editor.result_img = data
 
         return True
 

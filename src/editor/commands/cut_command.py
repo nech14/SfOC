@@ -13,7 +13,10 @@ class CutCommand(BaseCommand):
         self.saveBackup()
 
         data = cut_img(self._editor.target_img.data)
+        data_result = cut_img(self._editor.result_img)
+
         self._editor.target_img.data = data
+        self._editor.result_img = data_result
 
         return True
 
