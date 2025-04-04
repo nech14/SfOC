@@ -1,23 +1,16 @@
 import asyncio
-import base64
-import logging
 import io
 import os
 
-from fastapi import FastAPI, Query, BackgroundTasks
-from httpx import request
+from fastapi import FastAPI
 from pydantic import BaseModel
-from rich.emoji import NoEmoji
 from starlette.responses import StreamingResponse
 
 from src import graphics, logics
 from typing import List, Optional
 from src import file
-from src.file import FitsInfo
 from concurrent.futures import ProcessPoolExecutor
 
-from src.graphics.graphics import auto_contrast
-from src.logics import write_data_in_file
 
 app = FastAPI()
 
@@ -189,7 +182,7 @@ class CreateImageForVideoRequest(BaseModel):
 def create_img_logic(request: CreateImageForVideoRequest):
     logics.create_img_for_video(
         names_files=request.files_list,
-        new_path=request.data_path,
+        root_path=request.data_path,
         start_i=request.frame_id,
         end_i=request.frame_id + 1,
         flag_info=request.flag_info,
@@ -298,7 +291,7 @@ class CreateImageRequest(BaseModel):
 def create_image_logic(request: CreateImageRequest):
     logics.create_image(
         names_files=request.files_list,
-        new_path=request.data_path,
+        root_path=request.data_path,
         number=request.frame_id,
         flag_info=request.flag_info,
         name=request.general_title,

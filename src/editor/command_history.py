@@ -7,5 +7,5 @@ class CommandHistory:
     def push(self, command: BaseCommand):
         self.__history.append(command)
 
-    def pop(self):
+    def pop(self) -> BaseCommand:
         return self.__history.pop()

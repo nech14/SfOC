@@ -46,8 +46,8 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
     return buf, buf_time
 
 
-def get_dark_AVG(names, new_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
-    datas, times = get_dark(names, new_path, dark_name, _zip=_zip, fit_format=fit_format)
+def get_dark_AVG(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
+    datas, times = get_dark(names, root_path, dark_name, _zip=_zip, fit_format=fit_format)
     data_avg = (np.mean(datas, axis=0))
 
     # Получаем среднее время в секундах
@@ -230,7 +230,7 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             min(buf_min_d), max(buf_max_d), max(buf_max_dy))
 
 def create_image(
-        names_files=[], new_path="", number=1, flag_info=False, name=None, cut=False,
+        names_files=[], root_path="", number=1, flag_info=False, name=None, cut=False,
         percent_to_trim=0.1, save_folder=None, figsize=(1920 / 100, 1080 / 100),
         fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, remove_single_pixels=False,
         correct_matrix=None, Rayleigh=False, logfun=None,
@@ -239,7 +239,7 @@ def create_image(
 ):
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files) == 0:
-        names_files = file.get_name_file(new_path)
+        names_files = file.get_name_file(root_path)
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
@@ -248,13 +248,13 @@ def create_image(
 
 
     if dark:
-        dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
-        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip,
+        dark1, time1 = get_dark_AVG(names_files, root_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark2, time2 = get_dark_AVG(np.flip(names_files), root_path, dark_name=dark_name, _zip=_zip,
                                     fit_format=fit_format)
 
 
 
-    name_path = os.path.join(new_path, names_files[number])
+    name_path = os.path.join(root_path, names_files[number])
     info, data = file.open_gz(name_path, _zip=_zip)
 
     if not data_index is None:
@@ -308,7 +308,7 @@ def create_image(
             os.makedirs(save_folder)
 
         if auto_contrast:
-            processed_image, _, _ = auto_contrast_skimage(data, q=auto_contrast_percentiles)
+            processed_image, _, _ = auto_contrast_skimage(data, auto_contrast_percentiles=auto_contrast_percentiles)
         else:
             processed_image = data
 
@@ -333,7 +333,7 @@ def create_image(
 
 
 
-def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
+def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
@@ -342,7 +342,7 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
 
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files)==0:
-        names_files = file.get_name_file(new_path)
+        names_files = file.get_name_file(root_path)
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
@@ -355,7 +355,7 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
         (xmin_data, xmax_data,
          ymin_data, ymax_data,
          xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
-                                                        names_files, new_path,
+                                                        names_files, root_path,
                                                         start_i=start_i, end_i=end_i,
                                                         _zip=_zip, counts_checks=counts_checks, bins=bins,
                                                         cut=cut, percent_to_trim=percent_to_trim,
@@ -371,7 +371,7 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
         (xmin_data, xmax_data,
          ymin_data, ymax_data,
          xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
-            names_files, new_path,
+            names_files, root_path,
             start_i=start_i, end_i=start_i+1,
             _zip=_zip, counts_checks=1, bins=bins,
             cut=cut, percent_to_trim=percent_to_trim,
@@ -385,17 +385,17 @@ def create_img_for_video(names_files=[], new_path="", start_i=0, end_i=None, fla
 
 
     if dark:
-        dark1, time1 = get_dark_AVG(names_files, new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
-        dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark1, time1 = get_dark_AVG(names_files, root_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
+        dark2, time2 = get_dark_AVG(np.flip(names_files), root_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
 
     if end_i is None:
         end_i = len(names_files)
 
     for i in range(start_i, end_i):
-        name_path = os.path.join(new_path, names_files[i])
+        name_path = os.path.join(root_path, names_files[i])
         info, data = file.open_gz(name_path, _zip=_zip)
 
-        name_path1 = os.path.join(new_path, names_files[i + 1])
+        name_path1 = os.path.join(root_path, names_files[i + 1])
         info1, data1 = file.open_gz(name_path1, _zip=_zip)
         if not data_index is None:
             data = data[data_index]
@@ -683,7 +683,7 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
             data = graphics.cut_img(data, percent_to_trim)
 
         if auto_contrast:
-            data, _, _ = graphics.auto_contrast_skimage(data, q=q)
+            data, _, _ = graphics.auto_contrast_skimage(data, auto_contrast_percentiles=q)
 
         result_hist = graphics.create_hists(data, data, data,
                                                      xmin_data=xmin_data, xmax_data=xmax_data,

@@ -1,6 +1,22 @@
 from src.editor.commands.base_command import BaseCommand
+from src.graphics import calculate_frame_Rayleigh
 
 
 class ReyleighCommand(BaseCommand):
-    def execute(self):
-        pass
+
+    def __init__(self, editor):
+        super().__init__(editor)
+
+
+    def execute(self) -> bool:
+        self.saveBackup()
+        
+        data = calculate_frame_Rayleigh(
+            self._editor.target_img.data,
+            self._editor.target_img.info,
+            False
+        )
+
+        self._editor.target_img.data = data  # rework for view and data
+
+        return True

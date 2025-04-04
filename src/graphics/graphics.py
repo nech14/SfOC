@@ -254,11 +254,11 @@ def auto_contrast(data):
     cv2.destroyAllWindows()
 
 
-def auto_contrast_skimage(data, p2=None, p98=None, q=[2, 98]):
+def auto_contrast_skimage(data, p2=None, p98=None, auto_contrast_percentiles=[2, 98]):
     image = data.copy()
     non_zero_values = image[image > 0]
     if p2 is None or p98 is None:
-        p2, p98 = np.percentile(non_zero_values, (q[0], q[1]))
+        p2, p98 = np.percentile(non_zero_values, (auto_contrast_percentiles[0], auto_contrast_percentiles[1]))
     result = exposure.rescale_intensity(image, in_range=(p2, p98))
     return result, p2, p98
 
@@ -665,7 +665,7 @@ def create_img_for_video(
     combined_image = cv2.hconcat([ cv2.resize(data,(512, 512)), cv2.resize(data1,(512, 512))])
 
     if auto_contrast:
-        processed_image, _, _ = auto_contrast_skimage(combined_image, q=auto_contrast_percentiles)
+        processed_image, _, _ = auto_contrast_skimage(combined_image, auto_contrast_percentiles=auto_contrast_percentiles)
     else:
         processed_image = combined_image
     cmap_image = np.array(processed_image)

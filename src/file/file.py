@@ -205,7 +205,7 @@ def get_name_file(folder_path="/"):
     return names
 
 
-def open_gz(gz_file_path, _zip=True):
+def open_gz(gz_file_path, _zip=True) -> (list, list):
     if _zip:
         with gzip.open(gz_file_path, 'rb') as gz_file:
             # Чтение файла FITS из архива Gzip
