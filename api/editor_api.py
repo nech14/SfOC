@@ -234,10 +234,10 @@ async def download_data(
         SaveDataCommand(
             editor,
             save_folder="buf",
-            name_file="buf"
+            name_file="../buf"
         )
     )
-    file_path = f"buf/buf.pkl"
+    file_path = f"../buf/buf.pkl"
 
     return FileResponse(
         path=file_path,
