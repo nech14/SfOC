@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 
 from src.editor.commands.base_command import BaseCommand
@@ -10,6 +12,11 @@ class Editor:
     _history: CommandHistory
 
     datas: list[ImgData]
+
+    dark_start_end_index : int|None = None
+    dark_end_start_index : int|None = None
+
+    target_index: int = 0
 
     target_img: ImgData|None
     result_img: np.array
@@ -41,14 +48,20 @@ class Editor:
         if len(self.datas) == 0 or not 0 < index < len(self.datas):
             return
 
-        self.target_img = self.datas[index]
+        self.target_img = copy.deepcopy(self.datas[index])
+        self.target_index = index
         self.result_img = self.target_img.data.copy()
 
 
     def clear(self):
         self.datas = []
+        self.target_index = 0
         self.target_img = None
         self.result_img = None
+
+
+    def get_target_index(self) -> int:
+        return self.target_index
 
 
     def view(self):

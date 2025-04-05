@@ -43,7 +43,7 @@ class SaveImgCommand(BaseCommand):
         if self.file_name is None:
             self.file_name = self._editor.target_img.name
 
-        plt.savefig(self.save_folder + f"/{self.file_name.png}", bbox_inches=self.bbox_inches)
+        plt.savefig(self.save_folder + f"/{self.file_name}.png", bbox_inches=self.bbox_inches)
         plt.close()
 
         return False

@@ -1,19 +1,23 @@
 import base64
 from io import BytesIO
 
-from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
+import numpy as np
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, APIRouter
+from fastapi.encoders import jsonable_encoder
 from matplotlib import pyplot as plt
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from api.schemas.auto_contrast_command_request import AutoContrastCommandRequest
+from api.schemas.correct_matrix_request import CorrectMatrixRequest
 from api.schemas.cut_command_request import CutCommandRequest
 from api.schemas.dark_command_request import DarkCommandRequest
 from api.schemas.load_command_request import LoadCommandRequest
 from api.schemas.save_data_request import SaveDataRequest
 from api.schemas.save_img_request import SaveImgRequest
 from src.editor.commands.auto_contrast_command import AutoContrastCommand
+from src.editor.commands.correct_matrix_command import CorrectMatrixCommand
 from src.editor.commands.cut_command import CutCommand
 from src.editor.commands.dark_command import DarkCommand
 from src.editor.commands.load_command import LoadCommand
@@ -21,6 +25,8 @@ from src.editor.commands.rayleigh_command import RayleighCommand
 from src.editor.commands.remove_single_pixels_command import RemoveSinglePixelsCommand
 from src.editor.commands.save_data_command import SaveDataCommand
 from src.editor.commands.save_img_command import SaveImgCommand
+from src.editor.commands.select_command import SelectCommand
+from src.editor.commands.undo_command import UndoCommand
 from src.editor.editor import Editor
 from src.file import FitsInfo
 from src.file.fits_formats import fits_formats
@@ -29,15 +35,18 @@ app = FastAPI()
 rout_root = ""
 editor: Editor|None = None
 
+
 app.mount("/static", StaticFiles(directory="api/static"), name="static")
 templates = Jinja2Templates(directory="api/templates")
 
 def check_editor():
+    global editor
     if editor is None:
-        raise HTTPException(
-            status_code = status.HTTP_403_FORBIDDEN,
-            detail="Editor is not set"
-        )
+        editor = Editor()
+        # raise HTTPException(
+        #     status_code = status.HTTP_403_FORBIDDEN,
+        #     detail="Editor is not set"
+        # )
     return True
 
 
@@ -48,31 +57,81 @@ async def create_editor():
 
     return {"status": "editor created"}
 
+@app.get(f"{rout_root}/undo")
+async def undo():
+    editor.executeCommand(
+        UndoCommand(
+            editor
+        )
+    )
+    return {"status": "editor undo"}
+
+
 
 @app.get(f"{rout_root}/view", response_class=HTMLResponse)
 async def view_editor_page(request: Request, auth: bool = Depends(check_editor)):
-    img_array, data = editor.view()
+    try:
+        img_array, _ = editor.view()  # Игнорируем data, так как он не нужен для шаблона
 
-    # Рисуем картинку из массива
-    fig, ax = plt.subplots()
-    ax.imshow(img_array, cmap='gray')
-    ax.axis('off')
+        # Рисуем картинку из массива
+        fig, ax = plt.subplots()
+        ax.imshow(img_array, cmap='gray')
+        ax.axis('off')
 
-    # Сохраняем в буфер
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-    plt.close(fig)
-    buf.seek(0)
+        # Сохраняем в буфер
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+        buf.seek(0)
 
-    # Кодируем в base64
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    img_data_uri = f"data:image/png;base64,{img_base64}"
+        # Кодируем в base64
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        img_data_uri = f"data:image/png;base64,{img_base64}"
 
-    return templates.TemplateResponse("view.html", {
-        "request": request,
-        "img": img_data_uri,
-        "data": data,
-    })
+        return templates.TemplateResponse("view.html", {
+            "request": request,
+            "img": img_data_uri,
+            "data": ""  # Передаем пустую строку вместо data, если оно не нужно
+        })
+    except Exception as e:
+        print(f"Ошибка в view: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing view: {str(e)}")
+
+
+@app.get(f"{rout_root}/view_data")
+async def view_editor_data(auth: bool = Depends(check_editor)):
+    try:
+        img_array, _ = editor.view()  # Игнорируем data
+        print(f"Тип img_array: {type(img_array)}, Размер: {img_array.shape if hasattr(img_array, 'shape') else 'Нет shape'}")
+
+        # Проверяем, что img_array валиден
+        if img_array is None or not isinstance(img_array, np.ndarray):
+            raise ValueError("img_array пустой или не является numpy массивом")
+
+        # Рисуем картинку из массива
+        fig, ax = plt.subplots()
+        ax.imshow(img_array, cmap='gray')
+        ax.axis('off')
+
+        # Сохраняем в буфер
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+        buf.seek(0)
+
+        # Кодируем в base64
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        img_data_uri = f"data:image/png;base64,{img_base64}"
+
+        response = {
+            "img": img_data_uri
+        }
+
+        return response
+
+    except Exception as e:
+        print(f"Ошибка в view_data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
 @app.get(f"{rout_root}/clear")
@@ -106,8 +165,29 @@ async def select_data(
         index: int = Query(..., ge=0),
         auth: bool = Depends(check_editor)
 ):
-    editor.select_img(index=index)
+    editor.executeCommand(
+        SelectCommand(
+            editor,
+            index
+        )
+    )
     return {"status": f"{len(editor.datas)}"}
+
+
+@app.get(f"{rout_root}/select_index")
+async def select_index(
+        auth: bool = Depends(check_editor)
+):
+    index = editor.get_target_index()
+    return {"status": f"{index}"}
+
+
+@app.get(f"{rout_root}/count_all_datas")
+async def count_all_datas(
+        auth: bool = Depends(check_editor)
+):
+    count = len(editor.datas)
+    return {"status": f"{count}"}
 
 
 @app.post(f"{rout_root}/save_img")
@@ -146,6 +226,27 @@ async def save_data(
     return {"status": "success"}
 
 
+@app.get(f"{rout_root}/download_data")
+async def download_data(
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        SaveDataCommand(
+            editor,
+            save_folder="buf",
+            name_file="buf"
+        )
+    )
+    file_path = f"buf/buf.pkl"
+
+    return FileResponse(
+        path=file_path,
+        filename="processed_result.pkl",  # имя файла при скачивании
+        media_type="application/octet-stream"
+    )
+
+
+
 @app.post(f"{rout_root}/cut")
 async def cut(
         request:CutCommandRequest,
@@ -157,6 +258,18 @@ async def cut(
             percent_to_trim=request.percent_to_trim
         )
     )
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/dark_indexes")
+async def dark_indexes(
+        index_start: int | None = Query(..., ge=None),
+        index_end: int | None = Query(..., ge=None),
+        auth: bool = Depends(check_editor)):
+
+    editor.dark_end_start_index = index_start
+    editor.dark_start_end_index = index_end
+
     return {"status": "success"}
 
 
@@ -216,5 +329,17 @@ async def auto_contrast(
     return {"status": "success"}
 
 
+@app.post(f"{rout_root}/corr_matrix")
+async def correct_matrix(
+        request: CorrectMatrixRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        CorrectMatrixCommand(
+            editor,
+            request.correct_matrix,
+            request.multiplication_on_correct_matrix
+        )
+    )
 
 

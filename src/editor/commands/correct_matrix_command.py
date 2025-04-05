@@ -1,6 +1,7 @@
 import numpy as np
 
 from src.editor.commands.base_command import BaseCommand
+from src.graphics import create_correct_matrix
 
 
 class CorrectMatrixCommand(BaseCommand):
@@ -14,12 +15,15 @@ class CorrectMatrixCommand(BaseCommand):
     def execute(self) -> bool:
         self.saveBackup()
 
+        print(self.corr_matrix)
+        corr_matrix = create_correct_matrix(2, 2048, self.corr_matrix)
+
         if self.multiplication_on_correct_matrix:
-            data = self._editor.target_img.data * self.corr_matrix.astype(np.float64)
-            data_result = self._editor.result_img * self.corr_matrix.astype(np.float64)
+            data = self._editor.target_img.data * corr_matrix.astype(np.float64)
+            data_result = self._editor.result_img * corr_matrix.astype(np.float64)
         else:
-            data = self._editor.target_img.data / self.corr_matrix.astype(np.float64)
-            data_result = self._editor.result_img / self.corr_matrix.astype(np.float64)
+            data = self._editor.target_img.data / corr_matrix.astype(np.float64)
+            data_result = self._editor.result_img / corr_matrix.astype(np.float64)
 
 
         data[data < 0] = np.nan

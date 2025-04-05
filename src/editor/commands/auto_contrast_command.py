@@ -10,7 +10,6 @@ class AutoContrastCommand(BaseCommand):
 
     def execute(self) -> bool:
         self.saveBackup()
-
         data, _, _ = auto_contrast_skimage(self._editor.result_img, self.auto_contrast_percentiles)
 
         self._editor.result_img = data

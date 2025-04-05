@@ -39,12 +39,14 @@ class LoadCommand(BaseCommand):
         if self.names_files is None or len(self.names_files) == 0:
             self.names_files = get_name_file(self.root_path)
 
+        if self.start_file is None:
+            self.start_file = 0
+
         if self.end_file is None:
             self.end_file = len(self.names_files)
 
         for i in range(self.start_file, self.end_file):
             name_path = os.path.join(self.root_path, self.names_files[i])
-            print(name_path)
 
             header, data = open_gz(
                 name_path,
@@ -59,6 +61,8 @@ class LoadCommand(BaseCommand):
             )
 
             self._editor.datas.append(img_data)
+
+        self._editor.select_img(1)
 
         return True
 
