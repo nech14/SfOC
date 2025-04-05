@@ -179,11 +179,11 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
         if dark:
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
-            data = (data - data.min()) / (data.max() - data.min())
+            # data = (data - data.min()) / (data.max() - data.min())
 
             time = fit_format(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
-            data1 = (data1 - data1.min()) / (data1.max() - data1.min())
+            # data1 = (data1 - data1.min()) / (data1.max() - data1.min())
 
         if corr_matrix is not None:
             if multiplication_on_correct_matrix:
@@ -266,7 +266,7 @@ def create_image(
     if dark:
         time = fit_format(info).get_datetime()
         data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
-        data = (data - data.min()) / (data.max() - data.min())
+        # data = (data - data.min()) / (data.max() - data.min())
 
         visual_data = (data * n).astype(int)
 
@@ -409,11 +409,11 @@ def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, fl
         if dark:
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
-            data = (data - data.min()) / (data.max() - data.min())
+            # data = (data - data.min()) / (data.max() - data.min())
 
             time = fit_format(info).get_datetime()
             data1 = subtract_noise_frame(dark1, dark2, time1, time2, data1, time)
-            data1 = (data1 - data1.min()) / (data1.max() - data1.min())
+            # data1 = (data1 - data1.min()) / (data1.max() - data1.min())
 
         if correct_matrix is not None:
             if multiplication_on_correct_matrix:
@@ -665,7 +665,7 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
         if dark:
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
-            data = (data - data.min()) / (data.max() - data.min())
+            # data = (data - data.min()) / (data.max() - data.min())
 
         if correct_matrix is not None:
             if multiplication_on_correct_matrix:
