@@ -1,375 +1,774 @@
-# import time
-#
-# import plotly.graph_objects as go
-# from skimage.color import label2rgb
-#
-# from src.logging.logging import log_operation
-# from src import clustering
-# from src import graphics
-# from src import logics
-# from src import file
-# from src.logics import write_data_in_file
-# from src.logics import save_heat_map
-#
-# import os
-#
-# import cv2
-# import numpy as np
-#
-# import matplotlib.pyplot as plt
-# from src.logging import base_log
-# from skimage.transform import resize
-# from scipy.interpolate import griddata
-# from src.graphics import auto_contrast_skimage
-# from skimage import color
-# from skimage.segmentation import slic, mark_boundaries
-# from skimage.util import img_as_float
-# from skimage import io
-# from PIL import Image
-# import argparse
-#
-# from sklearn.cluster import DBSCAN
-#
-#
-# file_number = 150
-#
-# current_directory = os.getcwd()
-#
-# path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
-#
-# # path = os.path.join(current_directory, "data", "KEO", "2014", "30")
-# # path = os.path.join(current_directory, "data", "KEO", "2014", "28")
-#
-# # path = os.path.join(current_directory, "data", "KEO", "20130417")
-# # path = os.path.join(current_directory, "data", "andor", "20240504")
-#
-# # path = os.path.join(current_directory, "data", "KEO", "20130416")
-# # "data.ASI0.2023.10.11.5577"
-# # name="data.ASI0.2024.01.12.5577", name_file="data.ASI0.2024.01.12.5577"
-# # path = os.path.join(current_directory, "data", "ASI0", "2024", "01", "12")
-# new_path = os.path.join(path, "5577")
-#
-# print(new_path)
-# # new_path = path
-#
-# names = file.get_name_file(new_path)
-# print(names)
-# # clustering.model_method_frames(new_path=new_path, names_files=names)
-# # clustering.start(new_path=new_path, names_files=names, start=120, end=127)
-# # clustering.start(new_path=new_path, names_files=names, start=120, end=127)
-# # clustering.model_method_frame_GaussianMixture(new_path=new_path, names_files=names)
-# # clustering.model_method_frames_GaussianMixture(names, new_path, start=19, end=19+7, log=True)
-#
-# # _zip = False
-# # names_files = names
-# # i = 123
-# # diff1 = None
-# # name = "ggg"
-# # percent_to_trim = 0.1
-# #
-# # name_path = os.path.join(new_path, names_files[i])
-# # info, data = file.open_gz(name_path, _zip=_zip)
-# #
-# # name_path1 = os.path.join(new_path, names_files[i + 1])
-# # info1, data1 = file.open_gz(name_path1, _zip=_zip)
-# #
-# #
-# # data = graphics.cut_img(data, percent_to_trim)
-# # data1 = graphics.cut_img(data1, percent_to_trim)
-# #
-# # img = graphics.create_img_for_video(data, data1, name=name)
-# #
-# #
-# # diff = data - data1
-# # print(graphics.get_hist_p(data, data1, diff))
-#
-# # print(logics.get_hist_p(names_files=names, new_path=new_path, start_i=20, end_i=200, counts_checks=4))
-#
-# #
-# # clustering.bin_frame(names_files=names, new_path=new_path, i=358, type_print=clustering.BinShow.ALL,
-# #                      eps=1.2, min_samples=128//2)
-#
-# # # поиск лучших значений дли бинаризации
-# # clustering.bin_frame_best(names_files=names, new_path=new_path, i=119, eps_steep=0.5, min_samples_steep=10,
-# #                           rows=6, cols=6, eps_steep_start=0., min_samples_start_steep=0, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="30_N_1")
-# #
-# # clustering.bin_frame_best(names_files=names, new_path=new_path, i=119, eps_steep=0.2, min_samples_steep=5,
-# #                           rows=6, cols=6, eps_steep_start=0.8, min_samples_start_steep=35, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="30_N_2")
-#
-# #
-# # # Чтение изображения
-# # image = cv2.imread('C:\\Users\\nech14\\Downloads\\Telegram Desktop\\Lenna.png')
-# #
-# # # Преобразование изображения в оттенки серого
-# # gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-# #
-# # clustered_image, diff = clustering.canny_frame(names_files=names, new_path=new_path, i=123,
-# #                                                eps=50, min_samples=10, return_diff=True)
-# #
-# # # Отображение результатов
-# # plt.figure(figsize=(15, 5))
-# #
-# # plt.subplot(1, 2, 1)
-# # plt.title("Оригинальное изображение")
-# # pp= 500
-# # plt.imshow(diff, cmap="RdBu_r", interpolation='nearest', vmin=-pp, vmax=pp)
-# # # plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-# # plt.axis('off')
-# #
-# #
-# # plt.subplot(1, 2, 2)
-# # plt.title("Контуры, выделенные DBSCAN")
-# # plt.imshow(clustered_image, cmap='gray')
-# # plt.axis('off')
-# #
-# # plt.tight_layout()
-# # plt.show()
-#
-#
-# # clustering.canny_frame_best(names_files=names, new_path=new_path, i=123, eps_steep=0.5, min_samples_steep=10, log=True, cmap="gray",
-# #                             rows=6, cols=6, eps_steep_start=0., min_samples_start_steep=0, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="canny_30_g_1")
-# #
-# # clustering.canny_frame_best(names_files=names, new_path=new_path, i=123, eps_steep=5, min_samples_steep=5, log=True, cmap="gray",
-# #                             rows=6, cols=6, eps_steep_start=0., min_samples_start_steep=0, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="canny_30_g_2")
-# #
-# # clustering.canny_frame_best(names_files=names, new_path=new_path, i=123, eps_steep=10, min_samples_steep=5, log=True, cmap="gray",
-# #                             rows=6, cols=6, eps_steep_start=0., min_samples_start_steep=0, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="canny_30_g_3")
-# #
-# #
-#
-# # i=123
-# i = 358
-# # i = 21
-#
-# # clustering.print_canny_with_bin(names, new_path, i, save_folder=f"C:\\Users\\nech14\\Desktop", nameFile="canny_with_bin_30",
-# #                                 suptitle="KEO 20130417")
-#
-# start_time = time.time()
-#
-# save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test"
-# save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\20130417"
-# image_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\20130417\\diff"
-# # save_folder = None
-#
-#
-#
-# save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test"
-#
-#
-#
-#
-# image_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\diff1"
-# save_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test_test"
-# save_cluster_folder = "C:\\work\\search_for_oxide_cloud\\SfOC\\result\\KEO\\2014\\28\\test_test\\clusters"
-#
-#
-# # name_data = "ASI1\\2024\\03"
-# # name_data = "KEO\\2014"
-# name_data = "KEO"
-# # filter_d = "5577"
-# # filter_d = "6300"
-# filter_d = None
-# path = os.path.join(current_directory, "data", name_data)
-#
-# save_folder_b = "C:\\data_gray_abs_1k"
-# logs = True
-#
-# # fit_format = file.FitsInfo
-# fit_format = file.FitsInfo2014
-# # _zip = True
-# _zip = False
-# # name = "SLIC_DBSCAN_RGB"
-#
-# start_i = 20
-# end_i = 24
-#
-# # n_p = np.array(["03", "04", "05"])
-# # n_p = np.array(["03"])
-# # n_p = np.array(["30"])
-# n_p = np.array(["20130417"])
-#
-# eps = 0.01
-# eps = 0.01
-#
-# log_fun = base_log
-#
-# diff_buf = []
-#
-# for n in n_p:
-#     if not filter_d is None:
-#         new_path = os.path.join(path, n, filter_d)
-#         save_folder = os.path.join(save_folder_b, name_data, n, filter_d)
-#     else:
-#         new_path = os.path.join(path, n)
-#         save_folder = os.path.join(save_folder_b, name_data, n)
-#     image_folder = os.path.join(save_folder, "image_diff")
-#
-#     image_folder = None
-#     save_cluster_folder = os.path.join(save_folder, "clusters")
-#     save_folder_slic = os.path.join(save_folder, "slic")
-#     # save_folder_slic = None
-#     names = file.get_name_file(new_path)
-#
-#     print(names)
-#
-#     #
-#     # save_heat_map(names, new_path, image_folder, logs=logs, start_i=start_i, end_i=end_i, _zip=_zip,
-#     #               type_fits=fit_format, log_fun=log_fun)
-#     write_data_in_file(names, new_path, save_folder, image_folder=image_folder, save_folder_clusters=save_cluster_folder,
-#                        logs=logs, start_i=start_i, end_i=end_i, type_fits=fit_format, _zip=_zip,
-#                        save_folder_slic =save_folder_slic, eps=eps, log_fun=log_fun)
-#
-#     # for i in range(start_i, end_i):
-#     #     image_file = os.path.join(image_folder, f"{names[i + 1]}.png")
-#     #     image = img_as_float(io.imread(image_file))
-#     #     # Конвертирование изображения в формат, подходящий для сохранения как JPG
-#     #     # Для этого преобразуем его в 8-битное изображение с помощью функции из Pillow
-#     #     image = Image.fromarray((image * 255).astype('uint8'))
-#     #     image = image.convert('RGB')
-#     #     diff = np.array(image)
-#     #     diff = diff / 255.0
-#     #     diff_buf.append(diff)
-#
-#     # Создание 3D графика
-#     # fig = go.Figure()
-#     #
-#     # # Цикл по каждому изображению (слою)
-#     # for i, img in enumerate(diff_buf):
-#     #     fig.add_trace(go.Surface(z=np.ones_like(img[:, :, 0]) * i, surfacecolor=img[:, :, 0], showscale=False))
-#
-#     # # Настройки осей
-#     # fig.update_layout(scene=dict(
-#     #     xaxis_title='X',
-#     #     yaxis_title='Y',
-#     #     zaxis_title='Layer'),
-#     #     width=700, height=700)
-#     #
-#     # fig.show()
-#
-#     # diff_buf = np.array(diff_buf)
-#     # num_frames, height, width, channels = diff_buf.shape
-#     #
-#     # # Конкатенация кадров в один массив
-#     # frames_reshaped = diff_buf.reshape(-1, height, width, channels)
-#     #
-#     # # Применение SLIC
-#     # segments = slic(diff_buf, n_segments=1000, compactness=10, start_label=1)
-#     #
-#     # # Преобразование сегментов обратно в форму (num_frames, height, width)
-#     # segments_reshaped = segments.reshape(num_frames, height, width)
-#
-#
-#     # Пример визуализации одного кадра
-#     #
-#     # plt.imshow(label2rgb(segments_reshaped[0], diff_buf[0]))
-#     # plt.show()
-#
-#     # # Создание 3D графика
-#     # fig = go.Figure()
-#     #
-#     # # Цикл по каждому изображению (слою)
-#     # for i, img in enumerate(segments_reshaped):
-#     #     superpixels = color.label2rgb(img, diff_buf[i], kind='avg')
-#     #
-#     #     # Извлекаем цветные значения (RGB) для визуализации
-#     #     color_surface = superpixels[:, :, :3]  # Получаем только RGB каналы
-#     #
-#     #     # Создаём 2D поверхность для каждого слоя
-#     #     fig.add_trace(go.Surface(z=np.ones_like(superpixels[:, :, 0]) * i,
-#     #                              surfacecolor=color_surface[:, :, 0],  # Используйте первый канал для цвета
-#     #                              showscale=False))
-#     # # Настройки внешнего вида графика
-#     # fig.update_layout(scene=dict(zaxis=dict(range=[0, len(diff_buf)])),
-#     #                   title='Colored Superpixels Visualization',
-#     #                   scene_camera_eye=dict(x=1.5, y=1.5, z=1.5))
-#     #
-#     #
-#     # fig.show()
-#
-# #
-# # name = "GM"
-# # for i in range(start_i, end_i):
-# #     # optimal_n_components, name_info = clustering.start(names, new_path, save_folder, i, i+7, log=True)
-# #     # optimal_n_components, name_info = clustering.model_method_frames(names, new_path, save_folder, i, i+7, log=True)
-# #     optimal_n_components, name_info = clustering.model_method_frames_GaussianMixture(names, new_path, save_folder, i, i+7, log=True)
-# #     print(f"{i}/{end_i}")
-# #     # print(name_info)
-# #     # Открытие файла в режиме добавления (append)
-# #     with open(f"{save_folder}\\count_{name}.txt", "a", encoding="utf-8") as file:
-# #         # Запись дополнительного текста в файл
-# #         file.write(f"{optimal_n_components}   {name_info[0]}   {name_info[-1]}   {i}   {i+7}\n")
-# # # Засеките время окончания
-# # end_time = time.time()
-# # with open(f"{save_folder}\\count_{name}.txt", "a", encoding="utf-8") as file:
-# #     # Запись дополнительного текста в файл
-# #     file.write(f"{end_time}\n")
-# #
-#
-#
-# # clustering.base_lvl(names, new_path)
-# #print(clustering.get_clusters(names, new_path, 123))
-#
-# path_file_matrix="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
-#
-# # logics.create_video(names, new_path, start_i=0, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
-# #                     name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder="result/ASI0/2023/10/11/5577", save_img=True,
-# #                     dark=False, fit_format=None, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod1",
-# #                     remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True)
-#
-# logics.create_video(None, r"C:\work\search_for_oxide_cloud\SfOC\data\ASI0\2023\10\11\5577", start_i=0, end_i=10, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh1",
-#                     name="data.ASI0.2023.10.11.5577.heatmap.hists", cut=True, save_folder=r"F:\data", save_img=True,
-#                     dark=False, fit_format=file.FitsInfo, _zip=True, hists=False, name_img_folder="img_for_video/diff",
-#                     remove_single_pixels=True, correct_matrix=None, Rayleigh=False)
-#
-#
-# #
-# # logics.create_video(names, new_path, start_i=60, end_i=80, flag_info=True, names=True, name_file="data.ASI0.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh3",
-# #                     name="data.KEO.2023.10.11.5577.heatmap.hists.remove_single_pixels.correct_matrix.Rayleigh", cut=True, save_folder="result/ASI0/2023/10/11/5577/test", save_img=True,
-# #                     dark=True, fit_format=file.FitsInfo, _zip=True, hists=True, name_img_folder="img_for_video/hists_mod3",
-# #                     remove_single_pixels=True, correct_matrix=path_file_matrix, Rayleigh=True, logfun=None, frames_s=10,
-# #                     counts_checks=3, check_frame=[63, 75])
-#
-#
-#
-#
-# # logics.create_video(names, new_path, start_i=4, flag_info=True, names=True, name_file="data.andor.20240504.heatmap.hist",
-# #                     name="data.andor.20240504.heatmap.hist", cut=True, save_folder="result/andor/20240504", save_img=True,
-# #                     dark=False, dark_name=None, fit_format=file.FitsInfoAndor, _zip=False, hists=True, name_img_folder="img_for_video/hist")
-#
-# # logics.create_video(names, new_path, start_i=4, flag_info=True, names=True, name_file="data.andor.20240506.heatmap.hist",
-# #                     name="data.andor.20240506.heatmap.hist", cut=True, save_folder="result/andor/20240506", save_img=True,
-# #                     dark=False, dark_name=None, fit_format="andor", _zip=False, hists=True, name_img_folder="img_for_video/hist")
-# #
-# # logics.create_video(names, new_path, start_i=20, end_i=50, flag_info=True, names=True, name_file="data.andor.20240504.heatmap.hist",
-# #                     name="data.andor.20240504.heatmap.hist.remove_single_pixels.Rayleigh", cut=True, save_folder="result/andor/20240504/test", save_img=True,
-# #                     dark=False, fit_format=file.FitsInfoAndor, _zip=False, hists=True, name_img_folder="img_for_video/hists_mod",
-# #                     remove_single_pixels=True, correct_matrix=None, Rayleigh=False, logfun=None, frames_s=2, data_index=0)
-#
-#
-#
-# # logics.viewing_pictures(names, file_number, new_path, dark=False, _zip=False)
-#
-#
-#
-# #GUI.start()
-#
-#
-#
-#
-#
-#
-# # hist_3d(names, file_number, len(names)-20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=0.5, rotate=True)
-# # hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=1.5, rotate=True)
-# # hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.OH", xlim3d_max=20000, ylim3d_max=(len(names)-file_number-20)//100, rotate=True, start_folder="result/ASI0/2023/10/11/OH")
-#
-#
-# # hist_3d(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577", ylim3d_max=(len(names)-file_number)/100, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
-#
-# # create_video_hist_3d(name_file="result_ASI0_2023_10_11_OH", folder_name="result/ASI0/2023/10/11/OH/img")
-#
-#
-# # hist_3d_diff(names, file_number, 20, name_g="data.ASI0.2023.10.11.5577.diff", ylim3d_max=(len(names)-file_number)/100, rotate=True, start_folder="result/ASI0/2023/10/11/5577")
-#
-# # create_video_hist_3d(name_file="result_ASI0_2023_10_11_5577_diff", folder_name="result/ASI0/2023/10/11/5577/diff")
-#
-# print('hay')
+
+
+import asyncio
+import io
+import os
+
+
+from pydantic import BaseModel
+from starlette.responses import StreamingResponse
+
+from src import graphics, logics
+from typing import List, Optional
+from src import file
+from concurrent.futures import ProcessPoolExecutor
+import base64
+from io import BytesIO
+
+import numpy as np
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
+from fastapi.encoders import jsonable_encoder
+from matplotlib import pyplot as plt
+from starlette.responses import HTMLResponse, FileResponse
+from starlette.staticfiles import StaticFiles
+from starlette.templating import Jinja2Templates
+
+from api.schemas.auto_contrast_command_request import AutoContrastCommandRequest
+from api.schemas.correct_matrix_request import CorrectMatrixRequest
+from api.schemas.cut_command_request import CutCommandRequest
+from api.schemas.dark_command_request import DarkCommandRequest
+from api.schemas.load_command_request import LoadCommandRequest
+from api.schemas.save_data_request import SaveDataRequest
+from api.schemas.save_img_request import SaveImgRequest
+from src.editor.commands.auto_contrast_command import AutoContrastCommand
+from src.editor.commands.correct_matrix_command import CorrectMatrixCommand
+from src.editor.commands.cut_command import CutCommand
+from src.editor.commands.dark_command import DarkCommand
+from src.editor.commands.load_command import LoadCommand
+from src.editor.commands.rayleigh_command import RayleighCommand
+from src.editor.commands.remove_single_pixels_command import RemoveSinglePixelsCommand
+from src.editor.commands.save_data_command import SaveDataCommand
+from src.editor.commands.save_img_command import SaveImgCommand
+from src.editor.commands.select_command import SelectCommand
+from src.editor.commands.undo_command import UndoCommand
+from src.editor.editor import Editor
+from src.file import FitsInfo
+from src.file.fits_formats import fits_formats
+
+
+app = FastAPI()
+
+editor: Editor|None = None
+
+
+app.mount("/static", StaticFiles(directory="api/static"), name="static")
+templates = Jinja2Templates(directory="api/templates")
+
+# Ограничения на количество одновременно выполняемых задач
+video_task_semaphore = asyncio.Semaphore(2)  # Одновременно можно обрабатывать 2 задачи по созданию видео
+img_task_semaphore = asyncio.Semaphore(3)  # Одновременно можно обрабатывать 3 задачи по созданию видео
+
+# Процессный пул для тяжелых задач
+video_executor = ProcessPoolExecutor(max_workers=2)
+img_executor = ProcessPoolExecutor(max_workers=3)
+
+class_registry = file.class_registry
+
+running_tasks_name = []
+running_tasks = []
+
+rout_root = ""
+
+@app.get(f"{rout_root}/tasks")
+async def get_tasks():
+    # Получаем список активных задач
+    active_tasks = [task for task in running_tasks_name]
+    return {
+        "active_tasks": len(active_tasks),
+        "task_status": [{"task": str(task)} for task in active_tasks]
+    }
+
+
+@app.get(f"{rout_root}/", description="Получить привет")
+async def root():
+    return {"message": "Hello World"}
+
+
+# Создаём модель для входных данных
+class CreateVideoRequest(BaseModel):
+    data_path: str
+    files_list: List[str] = []
+    start_i: Optional[int] = 0
+    end_i: Optional[int] = None
+    name_file: Optional[str] = "output"
+    flag_info: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
+    frame_title: Optional[bool] = False
+    save_folder: Optional[str] = ""
+    save_folder_video: Optional[str] = None
+    save_img: Optional[bool] = False
+    name_img_folder: Optional[str] = "img_for_video"
+    name_video_folder: Optional[str] = "video"
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    fit_format: Optional[str] = "FitsInfo"
+    zip: Optional[bool] = True
+    hists: Optional[bool] = False
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
+    Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    type_diff: Optional[int] = 1
+    upper_limit: Optional[float] = 500.
+    lower_limit: Optional[float] = None
+    logfun: Optional[str] = None
+    counts_checks: Optional[int] = 4
+    check_frame: List[int] = None
+    bins: Optional[int] = 5000
+    fps: Optional[int] = 1
+    frames_s: Optional[int] = 1
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
+    data_index: Optional[int] = None
+
+
+# Пример функции, которая выполняет тяжелую операцию по созданию видео
+def create_video_logic(request: CreateVideoRequest):
+    return logics.create_video(
+        names_files=request.files_list,
+        new_path=rf"{request.data_path}",
+        start_i=request.start_i,
+        end_i=request.end_i,
+        name_file=request.name_file,
+        flag_info=request.flag_info,
+        name=request.general_title,
+        cut=request.mask,
+        names=request.frame_title,
+        save_folder=fr"{request.save_folder}",
+        save_folder_video=request.save_folder_video,
+        save_img=request.save_img,
+        name_img_folder=request.name_img_folder,
+        name_video_folder=request.name_video_folder,
+        dark=request.dark,
+        dark_name=request.dark_name,
+        fit_format=class_registry[request.fit_format],
+        _zip=request.zip,
+        hists=request.hists,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        type_diff=request.type_diff,
+        counts_checks=request.counts_checks,
+        check_frame=request.check_frame,
+        bins=request.bins,
+        fps=request.fps,
+        frames_s=request.frames_s,
+        data_index=request.data_index,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        upper_limit=request.upper_limit,
+        lower_limit=request.lower_limit,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
+    )
+
+
+
+# Создаём POST-эндпоинт
+@app.post(f"{rout_root}/create_video")
+async def create_video_endpoint(request: CreateVideoRequest):
+    async with video_task_semaphore:  # Ограничиваем количество одновременных задач
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(video_executor, create_video_logic, request)
+        running_tasks_name.append(f"create_video {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_video {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        return result
+
+
+
+
+# Модель запроса
+class CreateImageForVideoRequest(BaseModel):
+    data_path: str
+    files_list: List[str] = []
+    frame_id: Optional[int] = 0
+    flag_info: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
+    percent_to_trim: Optional[float] = 0.1
+    frame_title: Optional[bool] = False
+    save_folder: Optional[str] = None
+    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
+    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    zip: Optional[bool] = True
+    hists: Optional[bool] = True
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
+    Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    type_diff: Optional[int] = 1
+    upper_limit: Optional[float] = 500.
+    lower_limit: Optional[float] = None
+    bins: Optional[int] = 5000
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
+    logfun: Optional[str] = None  # Или замените на нужный тип
+    data_index: Optional[int] = None,
+    file_name: Optional[str] = "buf"
+
+
+def create_img_logic(request: CreateImageForVideoRequest):
+    logics.create_img_for_video(
+        names_files=request.files_list,
+        root_path=request.data_path,
+        start_i=request.frame_id,
+        end_i=request.frame_id + 1,
+        flag_info=request.flag_info,
+        name=request.general_title,
+        cut=request.mask,
+        percent_to_trim=request.percent_to_trim,
+        names=request.frame_title,
+        save_folder=request.save_folder,
+        figsize=request.figsize,
+        fit_format=class_registry[request.fit_format],
+        dark=request.dark,
+        dark_name=request.dark_name,
+        _zip=request.zip,
+        hists=request.hists,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        type_diff = request.type_diff,
+        bins=request.bins,
+        counts_checks=1,
+        check_frame=None,
+        logfun=None,
+        data_index=request.data_index,
+        file_name=request.file_name,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        upper_limit=request.upper_limit,
+        lower_limit=request.lower_limit,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
+    )
+
+    return  os.path.join(request.save_folder, f'{request.file_name}.png')
+
+
+# Модель для ответа с изображениями
+class ImagesResponse(BaseModel):
+    images: List[str]
+
+
+# Эндпоинт
+@app.post(f"{rout_root}/create_image_for_video")
+async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
+
+    async with img_task_semaphore:  # Ограничиваем количество одновременных задач
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(img_executor, create_img_logic, request)
+        running_tasks_name.append(f"create_image {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
+
+
+@app.post(f"{rout_root}/remove/task")
+async def remove_task(task_id: str):
+    if len(running_tasks_name)>0 and len(running_tasks) > int(task_id):
+        running_tasks[int(task_id)].cancel()
+        return {"status": f"Task {running_tasks_name[int(task_id)]} has been cancelled"}
+    else:
+        return {"status": f"Running_tasks: {len(running_tasks)}"}
+
+
+
+
+# Модель запроса
+class CreateImageRequest(BaseModel):
+    data_path: str
+    files_list: List[str] = []
+    frame_id: Optional[int] = 0
+    flag_info: Optional[bool] = False
+    general_title: Optional[str] = None
+    mask: Optional[bool] = False
+    percent_to_trim: Optional[float] = 0.1
+    save_folder: Optional[str] = None
+    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
+    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    zip: Optional[bool] = True
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
+    Rayleigh: Optional[bool] = False
+    result_matrix_safe_folder: Optional[str] = None
+    check_frame: Optional[int] = None
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
+    logfun: Optional[str] = None  # Или замените на нужный тип
+    data_index: Optional[int] = None,
+    file_name: Optional[str] = "buf"
+
+
+
+def create_image_logic(request: CreateImageRequest):
+    logics.create_image(
+        names_files=request.files_list,
+        root_path=request.data_path,
+        number=request.frame_id,
+        flag_info=request.flag_info,
+        name=request.general_title,
+        cut=request.mask,
+        percent_to_trim=request.percent_to_trim,
+        save_folder=request.save_folder,
+        figsize=request.figsize,
+        fit_format=class_registry[request.fit_format],
+        dark=request.dark,
+        dark_name=request.dark_name,
+        _zip=request.zip,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        Rayleigh=request.Rayleigh,
+        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        logfun=None,
+        data_index=request.data_index,
+        file_name=request.file_name,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        auto_contrast = request.auto_contrast,
+        auto_contrast_percentiles = request.auto_contrast_percentiles
+    )
+
+    return  os.path.join(request.save_folder, f'{request.file_name}.png')
+
+
+@app.post(f"{rout_root}/create_img")
+async def create_img(request: CreateImageRequest):
+
+    async with img_task_semaphore:  # Ограничиваем количество одновременных задач
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(img_executor, create_image_logic, request)
+        running_tasks_name.append(f"create_image {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
+
+
+
+class CreateHeatmapRequest(BaseModel):
+    data_path: str
+    files_list: List[str] = []
+    start_i: Optional[int] = 0
+    end_i: Optional[int] = None
+    edges: Optional[int] = 0
+    flag_info: Optional[bool] = False
+    title: Optional[str] = None
+    mask: Optional[bool] = False
+    percent_to_trim: Optional[float] = 0.1
+    save_folder: Optional[str] = None
+    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
+    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    dark: Optional[bool] = False
+    dark_name: Optional[str] = "DARK"
+    zip: Optional[bool] = True
+    remove_single_pixels: Optional[bool] = False
+    correct_matrix: Optional[str] = None
+    multiplication_on_correct_matrix: Optional[bool] = True
+    Rayleigh: Optional[bool] = False
+    counts_checks: Optional[int] = 4
+    check_frame: Optional[int] = None
+    auto_contrast: Optional[bool] = True
+    auto_contrast_percentiles: List[int] = [2, 98]
+    result_auto_contrast: Optional[bool] = True
+    bins: Optional[int] = 500
+    cmap: Optional[str] = "viridis"
+    logfun: Optional[str] = None  # Или замените на нужный тип
+    data_index: Optional[int] = None
+    file_name: Optional[str] = "buf"
+
+
+def create_heatmap_logic(request: CreateHeatmapRequest):
+    logics.create_heatmap(
+        names=request.files_list,
+        new_path=request.data_path,
+        start_file=request.start_i,
+        end_file=request.end_i,
+        edges=request.edges,
+        title=request.title,
+        bins=request.bins,
+        cmap=request.cmap,
+        save_folder=request.save_folder,
+        _zip=request.zip,
+        counts_checks=request.counts_checks,
+        check_frame=request.check_frame,
+        remove_single_pixels=request.remove_single_pixels,
+        correct_matrix=request.correct_matrix,
+        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
+        Rayleigh=request.Rayleigh,
+        dark=request.dark,
+        dark_name=request.dark_name,
+        cut=request.mask,
+        percent_to_trim=request.percent_to_trim,
+        data_index=request.data_index,
+        q=request.auto_contrast_percentiles,
+        name_file=request.file_name,
+        result_auto_contrast=request.result_auto_contrast,
+        auto_contrast=request.auto_contrast
+    )
+    return os.path.join(request.save_folder, f'{request.file_name}.png')
+
+
+@app.post(f"{rout_root}/create_heatmap")
+async def create_heatmap(request: CreateHeatmapRequest):
+    async with video_task_semaphore:
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(video_executor, create_heatmap_logic, request)
+        running_tasks_name.append(f"create_heatmap {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_heatmap {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
+
+
+def check_editor():
+    global editor
+    if editor is None:
+        editor = Editor()
+        # raise HTTPException(
+        #     status_code = status.HTTP_403_FORBIDDEN,
+        #     detail="Editor is not set"
+        # )
+    return True
+
+
+@app.get(f"{rout_root}/create")
+async def create_editor():
+    global editor
+    editor = Editor()
+
+    return {"status": "editor created"}
+
+@app.get(f"{rout_root}/undo")
+async def undo():
+    editor.executeCommand(
+        UndoCommand(
+            editor
+        )
+    )
+    return {"status": "editor undo"}
+
+
+
+@app.get(f"{rout_root}/view", response_class=HTMLResponse)
+async def view_editor_page(request: Request, auth: bool = Depends(check_editor)):
+    try:
+        img_array, _ = editor.view()  # Игнорируем data, так как он не нужен для шаблона
+
+        # Рисуем картинку из массива
+        fig, ax = plt.subplots()
+        ax.imshow(img_array, cmap='gray')
+        ax.axis('off')
+
+        # Сохраняем в буфер
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+        buf.seek(0)
+
+        # Кодируем в base64
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        img_data_uri = f"data:image/png;base64,{img_base64}"
+
+        return templates.TemplateResponse("view.html", {
+            "request": request,
+            "img": img_data_uri,
+            "data": ""  # Передаем пустую строку вместо data, если оно не нужно
+        })
+    except Exception as e:
+        print(f"Ошибка в view: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing view: {str(e)}")
+
+
+@app.get(f"{rout_root}/view_data")
+async def view_editor_data(auth: bool = Depends(check_editor)):
+    try:
+        img_array, _ = editor.view()  # Игнорируем data
+        print(f"Тип img_array: {type(img_array)}, Размер: {img_array.shape if hasattr(img_array, 'shape') else 'Нет shape'}")
+
+        # Проверяем, что img_array валиден
+        if img_array is None or not isinstance(img_array, np.ndarray):
+            raise ValueError("img_array пустой или не является numpy массивом")
+
+        # Рисуем картинку из массива
+        fig, ax = plt.subplots()
+        ax.imshow(img_array, cmap='gray')
+        ax.axis('off')
+
+        # Сохраняем в буфер
+        buf = BytesIO()
+        plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
+        plt.close(fig)
+        buf.seek(0)
+
+        # Кодируем в base64
+        img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+        img_data_uri = f"data:image/png;base64,{img_base64}"
+
+        response = {
+            "img": img_data_uri
+        }
+
+        return response
+
+    except Exception as e:
+        print(f"Ошибка в view_data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
+
+
+@app.get(f"{rout_root}/clear")
+async def clear(auth: bool = Depends(check_editor)):
+    editor.clear()
+    return {"status": "success"}
+
+
+@app.post(f"{rout_root}/load")
+async def load_data(
+        request: LoadCommandRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        LoadCommand(
+            editor,
+            root_path=request.root_path,
+            names_files=request.names_files,
+            start_file=request.start_file,
+            end_file=request.end_file,
+            _zip=request._zip,
+            fit_format=fits_formats[request.fit_format],
+            data_index=request.data_index
+        )
+    )
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/select")
+async def select_data(
+        index: int = Query(..., ge=0),
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        SelectCommand(
+            editor,
+            index
+        )
+    )
+    return {"status": f"{len(editor.datas)}"}
+
+
+@app.get(f"{rout_root}/select_index")
+async def select_index(
+        auth: bool = Depends(check_editor)
+):
+    index = editor.get_target_index()
+    return {"status": f"{index}"}
+
+
+@app.get(f"{rout_root}/count_all_datas")
+async def count_all_datas(
+        auth: bool = Depends(check_editor)
+):
+    count = len(editor.datas)
+    return {"status": f"{count}"}
+
+
+@app.post(f"{rout_root}/save_img")
+async def save_img(
+        request: SaveImgRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        SaveImgCommand(
+            editor,
+            save_folder=request.save_folder,
+            title = request.title,
+            file_name = request.file_name,
+            figsize = request.figsize,
+            dpi = request.dpi,
+            cmap = request.cmap,
+            axis = request.axis,
+            bbox_inches = request.bbox_inches
+        )
+    )
+    return {"status": "success"}
+
+
+@app.post(f"{rout_root}/save_data")
+async def save_data(
+        request: SaveDataRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        SaveDataCommand(
+            editor,
+            save_folder=request.save_folder,
+            name_file=request.name_file
+        )
+    )
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/download_data")
+async def download_data(
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        SaveDataCommand(
+            editor,
+            save_folder="buf",
+            name_file="../buf"
+        )
+    )
+    file_path = f"../buf/buf.pkl"
+
+    return FileResponse(
+        path=file_path,
+        filename="processed_result.pkl",  # имя файла при скачивании
+        media_type="application/octet-stream"
+    )
+
+
+
+@app.post(f"{rout_root}/cut")
+async def cut(
+        request:CutCommandRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        CutCommand(
+            editor,
+            percent_to_trim=request.percent_to_trim
+        )
+    )
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/dark_indexes")
+async def dark_indexes(
+        index_start: int | None = Query(..., ge=None),
+        index_end: int | None = Query(..., ge=None),
+        auth: bool = Depends(check_editor)):
+
+    editor.dark_end_start_index = index_start
+    editor.dark_start_end_index = index_end
+
+    return {"status": "success"}
+
+
+@app.post(f"{rout_root}/dark")
+async def dark(
+        request:DarkCommandRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        DarkCommand(
+            editor,
+            names=request.names,
+            root_path = request.root_path,
+            file_name = request.file_name,
+            _zip = request._zip,
+            fit_format = fits_formats[request.fit_format]
+        )
+    )
+
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/rayleigh")
+async def rayleigh(auth: bool = Depends(check_editor)):
+    editor.executeCommand(
+        RayleighCommand(
+            editor
+        )
+    )
+
+    return {"status": "success"}
+
+
+@app.get(f"{rout_root}/remove_single_pixels")
+async def remove_single_pixels(auth: bool = Depends(check_editor)):
+    editor.executeCommand(
+        RemoveSinglePixelsCommand(
+            editor
+        )
+    )
+
+    return {"status": "success"}
+
+
+@app.post(f"{rout_root}/auto_contrast")
+async def auto_contrast(
+        request:AutoContrastCommandRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        AutoContrastCommand(
+            editor,
+            auto_contrast_percentiles=request.auto_contrast_percentiles
+        )
+    )
+
+    return {"status": "success"}
+
+
+@app.post(f"{rout_root}/corr_matrix")
+async def correct_matrix(
+        request: CorrectMatrixRequest,
+        auth: bool = Depends(check_editor)
+):
+    editor.executeCommand(
+        CorrectMatrixCommand(
+            editor,
+            request.correct_matrix,
+            request.multiplication_on_correct_matrix
+        )
+    )
+
+
