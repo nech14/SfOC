@@ -4,7 +4,7 @@ import numpy as np
 
 from src.editor.commands.base_command import BaseCommand
 from src.editor.command_history import CommandHistory
-from src.models.img_data import ImgData
+from src.models.img_data_model import ImgData
 
 
 class Editor:

@@ -3,7 +3,7 @@ import os.path
 from src.editor.commands.base_command import BaseCommand
 from src.file import get_name_file, open_gz
 from src.file.file import FitsInfoBase, FitsInfo
-from src.models.img_data import ImgData
+from src.models.img_data_model import ImgData
 
 
 class LoadCommand(BaseCommand):

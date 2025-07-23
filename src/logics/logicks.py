@@ -15,6 +15,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pickle
 
+from src.models.dark_data_model import DarkData
+
 
 def get_names(path, _zip=True):
     new_path = os.path.join(path, "5577")
@@ -44,6 +46,19 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
         buf_time = np.append(buf_time, fit_format(info).get_datetime())
 
     return buf, buf_time
+
+
+def get_dark_avg(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
+    datas, times = get_dark(names, root_path, dark_name, _zip=_zip, fit_format=fit_format)
+    data_avg = (np.mean(datas, axis=0))
+
+    # Получаем среднее время в секундах
+    average_time_seconds = sum(dt.timestamp() for dt in times) / len(times)
+
+    # Преобразовываем среднее значение времени обратно в формат datetime.datetime
+    time_avg = datetime.datetime.fromtimestamp(average_time_seconds)
+
+    return DarkData(data_avg, time_avg)
 
 
 def get_dark_AVG(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
@@ -322,6 +337,7 @@ def create_image(
         else:
             file_name_buf = file_name
         plt.savefig(save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
+        plt.show()
         plt.close()
 
     if flag_info:
@@ -335,7 +351,7 @@ def create_image(
 
 def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
-                         fit_format=file.FitsInfo, dark=False, dark_name="DARK", n=10000, _zip=True, hists=True, remove_single_pixels=False,
+                         fit_format=file.FitsInfo, dark=False, dark_name="DARK", _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
                          data_index=None, result_matrix_safe_folder=None, type_diff=1, file_name=None, multiplication_on_correct_matrix=True,
                          upper_limit=500., lower_limit=None, auto_contrast=True, auto_contrast_percentiles=[2, 98]):
