@@ -612,15 +612,17 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
     result_hist = ax1.hist(data.flatten(), bins=bins)
 
     if return_data:
+        if show:
+            plt.show()
         plt.close()
         return result_hist
-
-    result_hist1 = ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
 
     if xmin_data is not None and xmax_data is not None:
         ax1.set_xlim(xmin=xmin_data, xmax=xmax_data)
     if ymin_data is not None and ymax_data is not None:
         ax1.set_ylim(ymin=ymin_data, ymax=ymax_data)
+
+    result_hist1 = ax1.hist(data1.flatten(), bins=bins, alpha=0.5)
 
     ax2 = fig.add_subplot(gs[0, 1])
     if diff1 is not None:
@@ -647,7 +649,7 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
 
     if show:
         plt.show()
-    plt.close()
+    # plt.close()
 
     return image_array[:, :, :3]
 

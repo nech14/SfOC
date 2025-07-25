@@ -1,11 +1,10 @@
 import datetime
-import io
 import time
 
 from src import graphics
 from src import file
 from src import clustering
-from src.graphics.graphics import drive_to_color_palette, auto_contrast_skimage
+from src.graphics.graphics import auto_contrast_skimage
 from src.logging import base_log
 import os
 
@@ -48,7 +47,7 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
     return buf, buf_time
 
 
-def get_dark_avg(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo):
+def get_dark_avg(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo) -> DarkData:
     datas, times = get_dark(names, root_path, dark_name, _zip=_zip, fit_format=fit_format)
     data_avg = (np.mean(datas, axis=0))
 

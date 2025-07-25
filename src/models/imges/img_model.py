@@ -9,6 +9,7 @@ class Img:
 
     def __init__(self, data, fit_format, data_index=None):
         self._data = data
+        self._view_data = None
         self.data_rayleigh = None
         self.data_index = data_index
         self.fit_format: FitsInfoBase = fit_format
@@ -24,6 +25,12 @@ class Img:
             self._data = value
         else:
             self._data[self.data_index] = value
+
+    @property
+    def view_data(self):
+        if self._view_data is None:
+            return self.data
+        return self._view_data
 
     def remove_single_pixels(self) -> 'Img':
         self.data = graphics.remove_single_pixels(self.data, False, False, False)
@@ -53,7 +60,6 @@ class Img:
         self.data = graphics.cut_img(self.data, percent_to_trim=percent_to_trim, nan=nan)
         return self
 
-
     def auto_contrast_version(self, auto_contrast_percentiles=tuple[2, 98]) -> list:
-        result, _, _ = auto_contrast_skimage(self.data, auto_contrast_percentiles=auto_contrast_percentiles)
-        return result
+        self._view_data, _, _ = auto_contrast_skimage(self.data, auto_contrast_percentiles=auto_contrast_percentiles)
+        return self.view_data

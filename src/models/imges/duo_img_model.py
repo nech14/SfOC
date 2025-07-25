@@ -1,5 +1,5 @@
 from src.models.dark_data_model import DarkData
-from src.models.img_model import Img
+from src.models.imges.img_model import Img
 
 
 class DuoImg:

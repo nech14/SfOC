@@ -1,6 +1,6 @@
 
 from abc import  ABC, abstractmethod
-from src.models.img_data_model import ImgData
+from src.models.imges.img_data_model import ImgData
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
