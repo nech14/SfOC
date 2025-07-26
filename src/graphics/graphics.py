@@ -649,7 +649,8 @@ def create_hists(data, data1, diff, diff1=None, bins=2000,
 
     if show:
         plt.show()
-    # plt.close()
+    else:
+        plt.close()
 
     return image_array[:, :, :3]
 

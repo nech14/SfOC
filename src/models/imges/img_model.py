@@ -1,11 +1,15 @@
+import os
+import pickle
 
 from src.models.dark_data_model import DarkData
 from src.file.file import FitsInfoBase
 from src.graphics import graphics, auto_contrast_skimage
 from src.logics import logicks
+from src.models.imges.abstract_img import AbstractImg
+from src.models.recipes.base_recipes_model import BaseRecipes
 
 
-class Img:
+class Img(AbstractImg):
 
     def __init__(self, data, fit_format, data_index=None):
         self._data = data
@@ -13,6 +17,7 @@ class Img:
         self.data_rayleigh = None
         self.data_index = data_index
         self.fit_format: FitsInfoBase = fit_format
+        self.filename: str|None = None
 
     @property
     def data(self):
@@ -63,3 +68,23 @@ class Img:
     def auto_contrast_version(self, auto_contrast_percentiles=tuple[2, 98]) -> list:
         self._view_data, _, _ = auto_contrast_skimage(self.data, auto_contrast_percentiles=auto_contrast_percentiles)
         return self.view_data
+
+    def save_rayleigh_matrix(self, folder: str) -> None:
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+
+        if self.filename is None or len(self.filename)==0:
+            self.filename = self.fit_format.get_datetime()
+
+        save_path = (
+            os.path.join(
+                folder, f"{self.filename}.pkl"
+            )
+        )
+
+        with open(save_path, 'wb') as file:
+            pickle.dump(self.data_rayleigh, file)
+
+
+    def show(self, recipe: BaseRecipes) -> None:
+        pass

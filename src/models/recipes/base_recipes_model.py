@@ -31,6 +31,7 @@ class BaseRecipes:
     multiplication_on_correct_matrix: bool = False
     auto_contrast: bool = False
     auto_contrast_percentiles: tuple[int, int] = [2, 98]
+    show: bool = False
 
 
     correct_matrix = None
