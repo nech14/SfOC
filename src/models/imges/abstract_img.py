@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import matplotlib.pyplot as plt
+
 from src.models.dark_data_model import DarkData
 from src.models.recipes.base_recipes_model import BaseRecipes
 
@@ -11,6 +13,11 @@ class AbstractImg(ABC):
     @property
     @abstractmethod
     def data(self):
+        pass
+
+    @property
+    @abstractmethod
+    def view_data(self):
         pass
 
     @abstractmethod
@@ -41,6 +48,7 @@ class AbstractImg(ABC):
     def save_rayleigh_matrix(self, folder: str, filename: str) -> None:
         pass
 
-    @abstractmethod
+
     def show(self, recipe: BaseRecipes) -> None:
-        pass
+        plt.imshow(self.view_data)
+        plt.show()

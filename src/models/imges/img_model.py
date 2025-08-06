@@ -6,7 +6,6 @@ from src.file.file import FitsInfoBase
 from src.graphics import graphics, auto_contrast_skimage
 from src.logics import logicks
 from src.models.imges.abstract_img import AbstractImg
-from src.models.recipes.base_recipes_model import BaseRecipes
 
 
 class Img(AbstractImg):
@@ -84,7 +83,3 @@ class Img(AbstractImg):
 
         with open(save_path, 'wb') as file:
             pickle.dump(self.data_rayleigh, file)
-
-
-    def show(self, recipe: BaseRecipes) -> None:
-        pass

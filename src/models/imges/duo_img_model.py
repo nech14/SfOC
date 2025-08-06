@@ -1,3 +1,5 @@
+from typing import Any
+
 import cv2
 from matplotlib import pyplot as plt
 
@@ -10,19 +12,19 @@ from src.models.recipes.video_recipe_model import VideoRecipe
 
 class DuoImg(AbstractImg):
 
-    @property
-    def data(self):
-        pass
-
     def __init__(self, img_first: Img|None = None, img_second: Img|None = None):
         self.img_first: Img|None = img_first
         self.img_second: Img|None = img_second
         self._view_data = None
 
     @property
+    def data(self) -> tuple[Img|None, Img|None]:
+        return self.img_first.data, self.img_second.data
+
+    @property
     def view_data(self):
         if self._view_data is None:
-            return self.data
+            return self.data #need fix
         return self._view_data
 
     @view_data.setter

@@ -2,15 +2,20 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from src.logics import logicks
-from src.logics.preprocessors import get_image, remove_single_pixels_image, use_dark_frames_image, correct_matrix_image, \
-    rayleigh_image, cut_image, save_result_matrix_image, auto_contrast_image, save_image, create_hist, \
-    get_images_by_number, auto_contrast_result, save_heatmap_image, create_base_img_for_video, create_image_with_hist, \
-    show_image, save_image_for_video
 from src.models.imges.duo_img_model import DuoImg
 from src.models.imges.img_model import Img
 from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
+from src.pipeline.steps.contrast import auto_contrast_image, auto_contrast_result
+from src.pipeline.steps.geometry import cut_image
+from src.pipeline.steps.histogram import create_hist
+from src.pipeline.steps.image_creation import create_base_img_for_video, create_image_with_hist
+from src.pipeline.steps.image_loader import get_image, get_images_by_number
+from src.pipeline.steps.matrix_correction import correct_matrix_image, rayleigh_image
+from src.pipeline.steps.noise import remove_single_pixels_image, use_dark_frames_image
+from src.pipeline.steps.saving import save_result_matrix_image, save_image, save_heatmap_image, save_image_for_video
+from src.pipeline.steps.show_data import show_image
 
 
 def create_image(recipe: ImageRecipe) -> None:
