@@ -7,9 +7,10 @@ from matplotlib import pyplot as plt
 from src.models.imges.abstract_img import AbstractImg
 from src.models.imges.duo_img_model import DuoImg
 from src.models.recipes.base_recipes_model import BaseRecipes
+from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
-
+from src.pipeline.utils.save import create_mp4
 
 def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
     if recipe.result_matrix_save_folder is None:
@@ -92,3 +93,18 @@ def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
         file_name_buf = recipe.frame_name
     plt.savefig(recipe.save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
     plt.close()
+
+
+def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> None:
+    save_folder_video = recipe.save_folder_video
+    if save_folder_video is None:
+        save_folder_video = recipe.name_file_video
+
+    create_mp4(
+        frames=frames,
+        name=recipe.name_file_video,
+        flag_info=recipe.flag_info,
+        save_folder=save_folder_video,
+        fps=recipe.fps,
+        frames_s=1,
+        logfun=recipe.logfun)
