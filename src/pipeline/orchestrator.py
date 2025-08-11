@@ -1,12 +1,14 @@
 
 import numpy as np
+from matplotlib import pyplot as plt
+
 from src.models.hist_limits import HistLimits
 from src.models.imges.duo_img_model import DuoImg
 from src.models.imges.img_model import Img
 from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
-from src.pipeline.steps.base_operations import base_operation_with_img
+from src.pipeline.base_pipelines.base_operations import base_operation_with_img
 from src.pipeline.steps.contrast import auto_contrast_result
 from src.pipeline.steps.histogram import create_hist
 from src.pipeline.steps.image_creation import create_base_img_for_video, create_image_with_hist
@@ -14,16 +16,16 @@ from src.pipeline.steps.image_loader import get_image, get_images_by_number
 from src.pipeline.steps.saving import save_image, save_heatmap_image, save_image_for_video, \
     save_video
 from src.pipeline.steps.show_data import show_image
-from src.pipeline.utils.helpers import get_hist_p
+from src.pipeline.utils.helpers import get_hist_parameters
 
 
 def create_image(recipe: ImageRecipe) -> None:
     img = get_image(recipe)
     base_operation_with_img(recipe, img)
     save_image(recipe, img.view_data)
-    # plt.imshow(img.view_data, cmap="gray")
-    # plt.gca().invert_yaxis()
-    # plt.show()
+    plt.imshow(img.view_data, cmap="gray")
+    plt.gca().invert_yaxis()
+    plt.show()
 
 
 def _get_hist_found_limits_with_one_image(recipe: HeatmapRecipe, img: Img) -> Img:
@@ -43,7 +45,7 @@ def get_hist_found_limits(recipe: HeatmapRecipe) -> HistLimits:
         img_first = _get_hist_found_limits_with_one_image(recipe, img_first)
         img_second = _get_hist_found_limits_with_one_image(recipe, img_second)
 
-        limits = get_hist_p(img_first, img_second, recipe.bins)
+        limits = get_hist_parameters(img_first, img_second, recipe.bins)
         hist_limits.add_limits(*limits)
     return hist_limits
 

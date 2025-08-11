@@ -7,7 +7,6 @@ from matplotlib import pyplot as plt
 from src.file import file
 from src.models.dark_data_model import DarkData
 from src.models.imges.abstract_img import AbstractImg
-from src.models.imges.img_model import Img
 import matplotlib.patches as mpatches
 
 
@@ -185,7 +184,8 @@ def create_hists(image_first, image_second, diff, diff1=None, bins=2000,
     return image_array[:, :, :3]
 
 
-def get_hist_p(img_first: AbstractImg, img_second: AbstractImg, bins=2000) -> Tuple[float, float, float, float, float, float, float]:
+def get_hist_parameters(img_first: AbstractImg, img_second: AbstractImg, bins=2000) \
+        -> Tuple[float, float, float, float, float, float, float]:
     diff = img_first.data - img_second.data
     plt.figure(figsize=(10, 10))
     f_data = img_first.data.flatten()

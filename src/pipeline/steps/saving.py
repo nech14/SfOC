@@ -51,7 +51,7 @@ def save_heatmap_image(recipe: HeatmapRecipe, transposed_data, info_for_heatmap,
     colorbar.set_label('n in bin')
 
     y_positions = np.linspace(0, transposed_data.shape[0] - 1, 10)  # Позиции меток на графике
-    y_labels = np.linspace(recipe.xmin_data, recipe.xmax_data, 10)
+    y_labels = np.linspace(recipe.hist_limits.xmin, recipe.hist_limits.xmax, 10)
 
     plt.yticks(y_positions, [int(label) for label in y_labels], fontsize=8)  # Устанавливаем метки
     plt.ylabel("y")

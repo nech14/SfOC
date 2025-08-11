@@ -2,6 +2,7 @@
 
 import asyncio
 import io
+import logging
 import os
 
 
@@ -44,8 +45,9 @@ from src.editor.commands.undo_command import UndoCommand
 from src.editor.editor import Editor
 from src.file import FitsInfo
 from src.file.fits_formats import fits_formats
+from src.logging.logging import setup_logging
 
-
+setup_logging()
 app = FastAPI()
 
 editor: Editor|None = None
@@ -68,6 +70,7 @@ running_tasks_name = []
 running_tasks = []
 
 rout_root = ""
+
 
 @app.get(f"{rout_root}/tasks")
 async def get_tasks():

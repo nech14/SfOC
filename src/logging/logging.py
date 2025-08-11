@@ -1,4 +1,4 @@
-
+import logging
 import sqlite3
 import os
 from datetime import datetime
@@ -60,3 +60,17 @@ def log_operation(operation, tag1, tag2):
     conn.commit()
     conn.close()
 
+
+
+def setup_logging():
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+        handlers=[
+            logging.FileHandler("app.log", encoding="utf-8"),
+            logging.StreamHandler()
+        ]
+    )
+
+def get_logger():
+    return logging.getLogger(__name__)

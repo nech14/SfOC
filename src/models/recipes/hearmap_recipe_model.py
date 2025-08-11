@@ -37,7 +37,7 @@ class HeatmapRecipe(BaseRecipes):
         start_i = self.first_frame_number
         count_frame = end_i - self.first_frame_number
 
-        check_frame = self.need_check_frames.copy()
+        check_frame = self.need_check_frames
         if check_frame is None:
             check_frame = []
         elif isinstance(check_frame, int):
