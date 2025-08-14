@@ -7,13 +7,13 @@ from matplotlib import pyplot as plt
 from src.models.imges.abstract_img import AbstractImg
 from src.models.imges.duo_img_model import DuoImg
 from src.models.recipes.base_recipes_model import BaseRecipes
-from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
+from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
 from src.pipeline.utils.save import create_mp4
 
 def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
-    if recipe.result_matrix_save_folder is None:
+    if recipe.result_matrix_save_folder is None or recipe.result_matrix_save_folder == "":
         return
 
     if recipe.result_matrix_save_folder == "" and not recipe.save_folder is None and recipe.save_folder != "":
@@ -76,7 +76,7 @@ def save_heatmap_image(recipe: HeatmapRecipe, transposed_data, info_for_heatmap,
 
 
 def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
-    if recipe.save_folder is None:
+    if recipe.save_folder is None or recipe.save_folder == "":
         return
 
     if not os.path.exists(recipe.save_folder):
@@ -87,20 +87,20 @@ def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
     plt.imshow(img)
     plt.axis('off')
     # plt.savefig(save_folder + f"/{i}.png", bbox_inches='tight')
-    if recipe.frame_name is None:
+    if recipe.file_name is None:
         file_name_buf = f"{duo_img.img_first.fit_format.get_datetime()}".replace(":", "-")
     else:
-        file_name_buf = recipe.frame_name
+        file_name_buf = recipe.file_name
     plt.savefig(recipe.save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
     plt.close()
 
 
-def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> None:
+def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> str:
     save_folder_video = recipe.save_folder_video
     if save_folder_video is None:
         save_folder_video = recipe.name_file_video
 
-    create_mp4(
+    return create_mp4(
         frames=frames,
         name=recipe.name_file_video,
         flag_info=recipe.flag_info,

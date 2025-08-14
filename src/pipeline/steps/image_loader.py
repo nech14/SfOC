@@ -3,7 +3,7 @@ import os
 from src.file import file
 from src.models.imges.img_model import Img
 from src.models.recipes.base_recipes_model import BaseRecipes
-from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
+from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 
 

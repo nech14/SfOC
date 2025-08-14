@@ -71,6 +71,10 @@ def setup_logging():
             logging.StreamHandler()
         ]
     )
+    logging.getLogger("PIL").disabled = True
+    logging.getLogger("matplotlib").disabled = True
+    logging.getLogger("matplotlib.font_manager").disabled = True
+    logging.getLogger("PIL.PngImagePlugin").disabled = True
 
 def get_logger():
     return logging.getLogger(__name__)

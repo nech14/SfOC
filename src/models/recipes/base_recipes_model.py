@@ -1,11 +1,13 @@
 import numpy as np
 
+from api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
+from api.schemas_request.base_request import CreateVideoRequest
 from src.file import file
 from src.file.file import FitsInfoBase, FitsInfo
 from src.graphics import graphics
 from src.logics.logicks import get_dark_avg
 from src.models.dark_data_model import DarkData
-
+from src.file.file import class_registry
 
 class BaseRecipes:
     names_files: list[str]|None = None
@@ -59,3 +61,32 @@ class BaseRecipes:
 
     def get_names_files(self):
         self.names_files = file.get_name_file(self.root_path)
+
+    @classmethod
+    def get_recipe_by_request(
+            cls, request: CreateImageRequest|CreateHeatmapRequest|CreateImageForVideoRequest|CreateVideoRequest
+    ):
+        if cls.__name__ in ["ImageRecipe", "HeatmapRecipe", "VideoRecipe"]:
+            recipe = cls(request.files_list, request.data_path)
+        else:
+            recipe = cls()
+
+        # Только для случаев, когда названия в request и recipe разные
+        rename_map = {
+            "general_title": "name",
+        }
+
+        for req_attr, value in request.__dict__.items():
+            if value is None:
+                continue
+
+            # Если есть переименование
+            target_attr = rename_map.get(req_attr, req_attr)
+
+            if hasattr(recipe, target_attr):
+                setattr(recipe, target_attr, value)
+
+        recipe.fit_format = class_registry[request.fit_format]
+
+        return recipe
+

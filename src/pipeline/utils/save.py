@@ -14,7 +14,7 @@ def create_mp4(
         fps=1,
         frames_s=1,
         logfun=None
-):
+) -> str:
     # Размеры кадра и частота кадров в видео
     frame = frames[0]
     frame_width = frame.shape[1]
@@ -26,20 +26,23 @@ def create_mp4(
 
     # Создаем объект VideoWriter для записи видео в формате MP4
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(f"{save_folder}/{name}.mp4", fourcc, fps, (frame_width, frame_height))
+    filename_path = f"{save_folder}/{name}.mp4"
+    out = cv2.VideoWriter(filename_path, fourcc, fps, (frame_width, frame_height))
     count = 0
     for i in frames:
         for j in range(frames_s):
             out.write(i)
 
         count += 1
-        if flag_info:
-            print(f"create video: {count}/{len(frames)}")
-        if not logfun is None:
-            logfun("create video", count, len(frames))
+        # if flag_info:
+        #     print(f"create video: {count}/{len(frames)}")
+        # if not logfun is None:
+        #     logfun("create video", count, len(frames))
 
     # Закрываем объект VideoWriter
     out.release()
+
+    return f"{filename_path}"
 
 
 def save_heat_map(

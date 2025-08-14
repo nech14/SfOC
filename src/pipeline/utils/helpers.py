@@ -22,6 +22,7 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
         return None
 
     for name in names[1:]:
+        # print(name)
         if not check_name in name:
             break
 

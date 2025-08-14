@@ -41,6 +41,7 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
         name_path = os.path.join(new_path, name)
         info, data = file.open_gz(name_path, _zip=_zip)
 
+        data = np.array(data)
         buf = np.vstack((buf, [data]))
         buf_time = np.append(buf_time, fit_format(info).get_datetime())
 
@@ -77,6 +78,8 @@ def subtract_noise_frame(dark1, dark2, time1, time2, data, date_time):
 
     k1 = (date_time - time1) / (time2-time1)
     k2 = (time2 - date_time) / (time2-time1)
+    # print(f"k: {k1} | {k2}")
+    # print(f"time: {time1} | {time2} | {time2-time1}")
 
     fix_data = data.copy()
     fix_data = fix_data - (dark1*k2 + dark2*k1)/2
@@ -170,6 +173,7 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
     if flag_info:
         print(f"check_frame: {check_frame}")
 
+    print(f"check_frame: {check_frame} | {len(names_files)}")
     for i in check_frame:
         name_path = os.path.join(new_path, names_files[i])
         info, data = file.open_gz(name_path, _zip=_zip)
@@ -190,7 +194,6 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
             dark2, time2 = get_dark_AVG(np.flip(names_files), new_path, dark_name=dark_name, _zip=_zip,
                                         fit_format=fit_format)
 
-        if dark:
             time = fit_format(info).get_datetime()
             data = subtract_noise_frame(dark1, dark2, time1, time2, data, time)
             # data = (data - data.min()) / (data.max() - data.min())
@@ -207,8 +210,8 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
                 data = data / corr_matrix.astype(np.float64)
                 data1 = data1 / corr_matrix.astype(np.float64)
 
-            data[data < 0] = np.nan
-            data1[data1 < 0] = np.nan
+            # data[data < 0] = np.nan
+            # data1[data1 < 0] = np.nan
 
         if Rayleigh:
             info_f = fit_format(info)
@@ -227,6 +230,8 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
 
 
         diff = data - data1
+
+
 
         min_x, max_x, min_y, max_y, min_d, max_d, max_dy = graphics.get_hist_p(data, data1, diff, bins)
         if flag_info:
@@ -336,7 +341,7 @@ def create_image(
         else:
             file_name_buf = file_name
         plt.savefig(save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
-        plt.show()
+        # plt.show()
         plt.close()
 
     if flag_info:
@@ -348,7 +353,7 @@ def create_image(
 
 
 
-def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, flag_info=False, name=None, cut=False,
+def create_img_for_video(names_files=[], root_path="", first_frame_number=0, last_frame_number=None, flag_info=False, name=None, cut=False,
                          percent_to_trim=0.1, names=False, save_folder=None, figsize=(1920 / 100, 1080 / 100),
                          fit_format=file.FitsInfo, dark=False, dark_name="DARK", _zip=True, hists=True, remove_single_pixels=False,
                          correct_matrix=None, Rayleigh=False, bins=5000, counts_checks=4, check_frame=None, logfun=None,
@@ -371,7 +376,7 @@ def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, fl
          ymin_data, ymax_data,
          xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
                                                         names_files, root_path,
-                                                        start_i=start_i, end_i=end_i,
+                                                        start_i=first_frame_number, end_i=last_frame_number,
                                                         _zip=_zip, counts_checks=counts_checks, bins=bins,
                                                         cut=cut, percent_to_trim=percent_to_trim,
                                                         fit_format=fit_format,
@@ -387,7 +392,7 @@ def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, fl
          ymin_data, ymax_data,
          xmin_diff, xmax_diff, ymax_diff) = get_hist_p(
             names_files, root_path,
-            start_i=start_i, end_i=start_i+1,
+            start_i=first_frame_number, end_i=first_frame_number + 1,
             _zip=_zip, counts_checks=1, bins=bins,
             cut=cut, percent_to_trim=percent_to_trim,
             fit_format=fit_format,
@@ -403,10 +408,10 @@ def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, fl
         dark1, time1 = get_dark_AVG(names_files, root_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
         dark2, time2 = get_dark_AVG(np.flip(names_files), root_path, dark_name=dark_name, _zip=_zip, fit_format=fit_format)
 
-    if end_i is None:
-        end_i = len(names_files)
+    if last_frame_number is None:
+        last_frame_number = len(names_files)
 
-    for i in range(start_i, end_i):
+    for i in range(first_frame_number, last_frame_number):
         name_path = os.path.join(root_path, names_files[i])
         info, data = file.open_gz(name_path, _zip=_zip)
 
@@ -524,10 +529,10 @@ def create_img_for_video(names_files=[], root_path="", start_i=0, end_i=None, fl
             plt.close()
 
         if flag_info:
-            print(f"create img: {(i - start_i +1)}/{end_i - start_i}")
+            print(f"create img: {(i - first_frame_number + 1)}/{last_frame_number - first_frame_number}")
 
         if logfun:
-            logfun("create img", i-start_i+1, end_i-start_i)
+            logfun("create img", i - first_frame_number + 1, last_frame_number - first_frame_number)
     return datas
 
 
@@ -548,7 +553,7 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
         end_i = len(names_files) - 2
 
     if save_img:
-        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
+        datas = create_img_for_video(names_files, new_path, first_frame_number=start_i, last_frame_number=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, save_folder=(save_folder + '/' + name_img_folder),
                                      dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip, hists=hists,
                                      remove_single_pixels=remove_single_pixels, correct_matrix=correct_matrix,
@@ -558,7 +563,7 @@ def create_video(names_files=[], new_path="", start_i=6, end_i=None, name_file="
                                      upper_limit=upper_limit, lower_limit=lower_limit, auto_contrast=auto_contrast,
                                      auto_contrast_percentiles=auto_contrast_percentiles)
     else:
-        datas = create_img_for_video(names_files, new_path, start_i=start_i, end_i=end_i, flag_info=flag_info,
+        datas = create_img_for_video(names_files, new_path, first_frame_number=start_i, last_frame_number=end_i, flag_info=flag_info,
                                      name=name, cut=cut, names=names, dark=dark, dark_name=dark_name, fit_format=fit_format, _zip=_zip,
                                      hists=hists, remove_single_pixels=remove_single_pixels,
                                      correct_matrix=correct_matrix, Rayleigh=Rayleigh, logfun=logfun, counts_checks=counts_checks, bins=bins,
@@ -732,6 +737,7 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
 
     plt.yticks(y_positions, [int(label) for label in y_labels], fontsize=8)  # Устанавливаем метки
     plt.ylabel("y")
+    plt.gca().invert_yaxis()
 
     plt.xlabel("time")
     plt.xticks(np.arange(0, len(info_for_heatmap), 10), info_for_heatmap[::10], rotation=45, ha='right', fontsize=8)

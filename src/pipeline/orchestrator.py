@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from src.models.hist_limits import HistLimits
 from src.models.imges.duo_img_model import DuoImg
 from src.models.imges.img_model import Img
-from src.models.recipes.hearmap_recipe_model import HeatmapRecipe
+from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
 from src.pipeline.base_pipelines.base_operations import base_operation_with_img
@@ -23,9 +23,9 @@ def create_image(recipe: ImageRecipe) -> None:
     img = get_image(recipe)
     base_operation_with_img(recipe, img)
     save_image(recipe, img.view_data)
-    plt.imshow(img.view_data, cmap="gray")
-    plt.gca().invert_yaxis()
-    plt.show()
+    # plt.imshow(img.view_data, cmap="gray")
+    # plt.gca().invert_yaxis()
+    # plt.show()
 
 
 def _get_hist_found_limits_with_one_image(recipe: HeatmapRecipe, img: Img) -> Img:
@@ -62,6 +62,8 @@ def create_heatmap(recipe: HeatmapRecipe) -> None:
     for frame_id in range(recipe.first_frame_number+recipe.edges, recipe.last_frame_number-recipe.edges):
         img = get_images_by_number(recipe, frame_id)
 
+        # img.show(recipe)
+
         hist = _create_column_for_heatmap(recipe, img)
         data_for_heatmap.append(hist)
         info_for_heatmap.append(img.fit_format.get_datetime().time())
@@ -69,7 +71,7 @@ def create_heatmap(recipe: HeatmapRecipe) -> None:
     data_for_heatmap = np.array(data_for_heatmap)
     transposed_data = np.transpose(data_for_heatmap)
     transposed_data = auto_contrast_result(recipe, transposed_data)
-    save_heatmap_image(recipe, transposed_data, info_for_heatmap, True)
+    save_heatmap_image(recipe, transposed_data, info_for_heatmap, False)
 
 
 def create_image_for_video(recipe: VideoRecipe, frame_number:int, last_diff: list | None = None) -> DuoImg:
@@ -89,13 +91,14 @@ def create_images_for_video(recipe: VideoRecipe) -> list[DuoImg]:
     frames: list[DuoImg] = []
     last_diff = None
     for frame_id in range(recipe.first_frame_number, recipe.last_frame_number):
+        print(f"create: {frame_id}")
         img = create_image_for_video(recipe, frame_id, last_diff)
         frames.append(img)
         last_diff=frames[-1].get_diff()
 
     return frames
 
-def create_video(recipe: VideoRecipe) -> None:
+def create_video(recipe: VideoRecipe) -> str:
     images = create_images_for_video(recipe)
     frames = [i.view_data for i in images]
-    save_video(recipe, frames)
+    return save_video(recipe, frames)

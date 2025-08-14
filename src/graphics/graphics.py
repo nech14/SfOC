@@ -570,6 +570,11 @@ def print_graphics_cv2_arr(data, data1, max_limit=255, dlimit=0, names=None, nam
             return 2
 
 
+def safe_percentile(arr, q, default=0):
+    if arr.size == 0:
+        return default
+    return np.percentile(arr, q)
+
 def get_hist_p(data, data1, diff, bins=2000):
     plt.figure(figsize=(10, 10))
     f_data = data.flatten()
@@ -578,18 +583,19 @@ def get_hist_p(data, data1, diff, bins=2000):
 
     clean_data = data.flatten()
     clean_data = clean_data[np.isfinite(clean_data)]
-    min_x = np.percentile(clean_data, 1) * 2
-    max_x = np.percentile(clean_data, 99) * 2
+    min_x = safe_percentile(clean_data, 1) * 2
+    max_x = safe_percentile(clean_data, 99) * 2
 
     clean_data1 = data1.flatten()
     clean_data1 = clean_data1[np.isfinite(clean_data1)]
-    min_x1 = np.percentile(clean_data1, 1) * 2
-    max_x1 = np.percentile(clean_data1, 99) * 2
+    min_x1 = safe_percentile(clean_data1, 1) * 2
+    max_x1 = safe_percentile(clean_data1, 99) * 2
+
 
     clean_diff = diff.flatten()
     clean_diff = clean_diff[np.isfinite(clean_diff)]
-    min_d = np.percentile(clean_diff, 1) * 2
-    max_d = np.percentile(clean_diff, 99) * 2
+    min_d = safe_percentile(clean_diff, 1) * 2
+    max_d = safe_percentile(clean_diff, 99) * 2
 
     counts, bin_edges, patches = plt.hist(f_data, bins=bins)
     counts1, bin_edges1, patches1 = plt.hist(f_data1, bins=bins)

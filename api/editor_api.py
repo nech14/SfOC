@@ -337,7 +337,7 @@ async def correct_matrix(
     editor.executeCommand(
         CorrectMatrixCommand(
             editor,
-            request.correct_matrix,
+            request.correct_matrix_path,
             request.multiplication_on_correct_matrix
         )
     )

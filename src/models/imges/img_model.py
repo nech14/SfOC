@@ -1,6 +1,8 @@
 import os
 import pickle
 
+import matplotlib.pyplot as plt
+
 from src.models.dark_data_model import DarkData
 from src.file.file import FitsInfoBase
 from src.graphics import graphics, auto_contrast_skimage
@@ -42,6 +44,7 @@ class Img(AbstractImg):
 
     def dark_frames(self, dark_start: DarkData, dart_end: DarkData) -> 'Img':
         time = self.fit_format.get_datetime()
+        # dart_end.frame = dark_start.frame.copy()
         self.data = logicks.subtract_noise_frame(
             dark_start.frame, dart_end.frame,
             dark_start.time, dart_end.time,

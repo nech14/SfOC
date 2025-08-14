@@ -58,7 +58,9 @@ class HistLimits():
     @property
     def xmax(self) -> float|None:
         return max(self.buf_max_x)
+        # return 65535
 
     @property
     def xmin(self) -> float|None:
         return min(self.buf_max_x)
+        # return 0

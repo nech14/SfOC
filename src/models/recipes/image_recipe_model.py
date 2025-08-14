@@ -1,16 +1,16 @@
 import numpy as np
 
+from api.base_api import CreateImageRequest
 from src import file
 from src.file.file import FitsInfoBase, FitsInfo
 from src.graphics import graphics
 from src.logics.logicks import get_dark_avg
 from src.models.recipes.base_recipes_model import BaseRecipes
 
-
 class ImageRecipe(BaseRecipes):
     def __init__(self, names_files, root_path, correct_matrix_path=None):
-        self.names_files: list[str] = names_files
         self.root_path: str = root_path
+        self.names_files: list[str] = names_files
         self.frame_number: int = 20
         self.flag_info: bool = False
         self.name: str = "test124"
@@ -25,7 +25,7 @@ class ImageRecipe(BaseRecipes):
         self.remove_single_pixels: bool = False
         self.correct_matrix_path: str = correct_matrix_path
         self.rayleigh: bool = False
-        self.result_matrix_save_folder: str = None
+        self.result_matrix_save_folder: str|None = None
         self.logfun = None
         self.data_index: int = None
         self.file_name: str = "result12"
@@ -37,3 +37,5 @@ class ImageRecipe(BaseRecipes):
     @classmethod
     def create(cls):
         pass
+
+
