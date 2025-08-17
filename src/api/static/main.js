@@ -1,3 +1,5 @@
+const BASE = "/Editor";
+
 function showImageLoader(state) {
   const loader = document.getElementById("img-loader");
   const img = document.getElementById("img-display");
@@ -14,39 +16,34 @@ function logHistory(command, status) {
 
 async function updateView() {
   try {
-    showImageLoader(true);  // Показываем загрузчик
-    const res = await fetch('/view_data');
-    if (!res.ok) {
-      throw new Error(`Server error: ${res.status}`);
-    }
+    showImageLoader(true);
+    const res = await fetch(`${BASE}/view_data`);
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
     const data = await res.json();
-    console.log("Ответ от /view_data:", data);  // Отладка
 
     const imgEl = document.getElementById("img-display");
-    imgEl.src = data.img;  // Устанавливаем без ?t=, так как base64 не кэшируется
+    imgEl.src = data.img;
   } catch (err) {
     console.error("Ошибка при обновлении:", err);
     logHistory("update", `Error: ${err.message}`);
   } finally {
-    showImageLoader(false);  // Убираем загрузчик
+    showImageLoader(false);
   }
 }
 
 async function runCommand(command) {
   showImageLoader(true);
   try {
-    const res = await fetch(`/${command}`);
-    if (!res.ok) throw new Error('Server error');
+    const res = await fetch(`${BASE}/${command}`);
+    if (!res.ok) throw new Error("Server error");
     const data = await res.json();
     logHistory(command, data.status);
     await updateView();
-
-    // ⏪ Если это Undo — обновим и номер кадра
-    if (command === 'undo') {
+    if (command === "undo") {
       await updateFrameIndicator();
     }
   } catch (err) {
-    console.error('Ошибка команды:', err);
+    console.error("Ошибка команды:", err);
     logHistory(command, "Error");
   } finally {
     showImageLoader(false);
@@ -56,17 +53,17 @@ async function runCommand(command) {
 async function sendJson(endpoint, payload) {
   showImageLoader(true);
   try {
-    const res = await fetch(`/${endpoint}`, {
+    const res = await fetch(`${BASE}/${endpoint}`, {
       method: "POST",
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error('Server error');
+    if (!res.ok) throw new Error("Server error");
     const data = await res.json();
     logHistory(endpoint, data.status);
     await updateView();
   } catch (err) {
-    console.error('Ошибка отправки:', err);
+    console.error("Ошибка отправки:", err);
     logHistory(endpoint, "Error");
   } finally {
     showImageLoader(false);
@@ -76,11 +73,11 @@ async function sendJson(endpoint, payload) {
 
 function sendForm(e) {
   e.preventDefault();
-  const val = document.getElementById('input-param').value;
+  const val = document.getElementById("input-param").value;
   if (!val) return false;
 
-  runCommandGet(`/select?index=${val}`).then(() => {
-    updateFrameIndicator();  // ✅ Обновить отображение "Кадр: X из Y"
+  runCommandGet(`${BASE}/select?index=${val}`).then(() => {
+    updateFrameIndicator();
   });
 
   return false;
@@ -90,12 +87,12 @@ async function runCommandGet(url) {
   showImageLoader(true);
   try {
     const res = await fetch(url);
-    if (!res.ok) throw new Error('Server error');
+    if (!res.ok) throw new Error("Server error");
     const data = await res.json();
     logHistory(url, data.status);
     await updateView();
   } catch (err) {
-    console.error('Ошибка команды:', err);
+    console.error("Ошибка команды:", err);
     logHistory(url, "Error");
   } finally {
     showImageLoader(false);
@@ -111,23 +108,20 @@ function sendAutoContrast(form) {
     return false;
   }
 
-  const payload = {
-    auto_contrast_percentiles: [lower, upper]
-  };
-
-  return sendJson('auto_contrast', payload);
+  const payload = { auto_contrast_percentiles: [lower, upper] };
+  return sendJson("auto_contrast", payload);
 }
 
 function handleFormSubmit(event, payloadBuilder, endpoint) {
-  event.preventDefault();  // <-- предотвращаем перезагрузку
+  event.preventDefault();
   const payload = payloadBuilder(event.target);
   return sendJson(endpoint, payload);
 }
 
 function downloadData() {
-  const link = document.createElement('a');
-  link.href = '/download_data';
-  link.download = ''; // имя будет задано на сервере через FileResponse
+  const link = document.createElement("a");
+  link.href = `${BASE}/download_data`;
+  link.download = "";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -139,8 +133,8 @@ let totalCount = 1;
 async function updateFrameIndicator() {
   try {
     const [indexRes, countRes] = await Promise.all([
-      fetch('/select_index'),
-      fetch('/count_all_datas')
+      fetch(`${BASE}/select_index`),
+      fetch(`${BASE}/count_all_datas`),
     ]);
 
     const indexData = await indexRes.json();
@@ -149,7 +143,8 @@ async function updateFrameIndicator() {
     currentIndex = parseInt(indexData.status);
     totalCount = parseInt(countData.status);
 
-    document.getElementById("frame-indicator").textContent = `Кадр: ${currentIndex + 1} из ${totalCount}`;
+    document.getElementById("frame-indicator").textContent =
+      `Кадр: ${currentIndex + 1} из ${totalCount}`;
   } catch (err) {
     console.error("Ошибка при получении индекса и количества:", err);
   }
@@ -160,7 +155,7 @@ async function selectIndex(index) {
 
   try {
     showImageLoader(true);
-    const res = await fetch(`/select?index=${index}`);
+    const res = await fetch(`${BASE}/select?index=${index}`);
     const data = await res.json();
     logHistory(`select ${index}`, data.status);
     await updateView();
@@ -192,20 +187,18 @@ function sendDarkIndexes(event) {
     return false;
   }
 
-  const url = `/dark_indexes?index_start=${encodeURIComponent(start)}&index_end=${encodeURIComponent(end)}`;
+  const url = `${BASE}/dark_indexes?index_start=${encodeURIComponent(start)}&index_end=${encodeURIComponent(end)}`;
 
   showImageLoader(true);
   fetch(url)
-    .then(res => {
+    .then((res) => {
       if (!res.ok) throw new Error("Ошибка сервера");
       return res.json();
     })
-    .then(data => {
+    .then((data) => {
       logHistory("dark_indexes", data.status);
-      // Можно обновить картинку, если нужно:
-      // return updateView();
     })
-    .catch(err => {
+    .catch((err) => {
       console.error("Ошибка:", err);
       logHistory("dark_indexes", "Error");
     })
@@ -216,16 +209,6 @@ function sendDarkIndexes(event) {
   return false;
 }
 
-
-// Инициализируем индикатор при загрузке страницы
 document.addEventListener("DOMContentLoaded", () => {
   updateFrameIndicator();
 });
-
-
-
-
-// Убрали автоматический вызов updateView при загрузке
-// document.addEventListener('DOMContentLoaded', () => {
-//   updateView();
-// });

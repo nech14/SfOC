@@ -2,12 +2,11 @@ import asyncio
 import io
 import os
 
-from fastapi import FastAPI, APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
-from src import graphics, logics
-from typing import List, Optional
+from src.api.schemas_request.base_request import CreateVideoRequest, CreateImageForVideoRequest, CreateImageRequest, CreateHeatmapRequest
+from src import logics
 from src import file
 from concurrent.futures import ProcessPoolExecutor
 
@@ -44,44 +43,6 @@ async def root():
     return {"message": "Hello World"}
 
 
-# Создаём модель для входных данных
-class CreateVideoRequest(BaseModel):
-    data_path: str
-    files_list: List[str] = []
-    start_i: Optional[int] = 0
-    end_i: Optional[int] = None
-    name_file: Optional[str] = "output"
-    flag_info: Optional[bool] = False
-    general_title: Optional[str] = None
-    mask: Optional[bool] = False
-    frame_title: Optional[bool] = False
-    save_folder: Optional[str] = ""
-    save_folder_video: Optional[str] = None
-    save_img: Optional[bool] = False
-    name_img_folder: Optional[str] = "img_for_video"
-    name_video_folder: Optional[str] = "video"
-    dark: Optional[bool] = False
-    dark_name: Optional[str] = "DARK"
-    fit_format: Optional[str] = "FitsInfo"
-    zip: Optional[bool] = True
-    hists: Optional[bool] = False
-    remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None
-    multiplication_on_correct_matrix: Optional[bool] = True
-    Rayleigh: Optional[bool] = False
-    result_matrix_safe_folder: Optional[str] = None
-    type_diff: Optional[int] = 1
-    upper_limit: Optional[float] = 500.
-    lower_limit: Optional[float] = None
-    logfun: Optional[str] = None
-    counts_checks: Optional[int] = 4
-    check_frame: List[int] = None
-    bins: Optional[int] = 5000
-    fps: Optional[int] = 1
-    frames_s: Optional[int] = 1
-    auto_contrast: Optional[bool] = True
-    auto_contrast_percentiles: List[int] = [2, 98]
-    data_index: Optional[int] = None
 
 
 # Пример функции, которая выполняет тяжелую операцию по созданию видео
@@ -89,12 +50,12 @@ def create_video_logic(request: CreateVideoRequest):
     return logics.create_video(
         names_files=request.files_list,
         new_path=rf"{request.data_path}",
-        start_i=request.start_i,
-        end_i=request.end_i,
+        start_i=request.first_frame_number,
+        end_i=request.last_frame_number,
         name_file=request.name_file,
         flag_info=request.flag_info,
         name=request.general_title,
-        cut=request.mask,
+        cut=request.cut,
         names=request.frame_title,
         save_folder=fr"{request.save_folder}",
         save_folder_video=request.save_folder_video,
@@ -102,13 +63,13 @@ def create_video_logic(request: CreateVideoRequest):
         name_img_folder=request.name_img_folder,
         name_video_folder=request.name_video_folder,
         dark=request.dark,
-        dark_name=request.dark_name,
+        dark_name=request.dark_file_name,
         fit_format=class_registry[request.fit_format],
-        _zip=request.zip,
-        hists=request.hists,
+        _zip=request.zipped_file,
+        hists=request.hist,
         remove_single_pixels=request.remove_single_pixels,
-        correct_matrix=request.correct_matrix,
-        Rayleigh=request.Rayleigh,
+        correct_matrix=request.correct_matrix_path,
+        Rayleigh=request.rayleigh,
         result_matrix_safe_folder=request.result_matrix_safe_folder,
         type_diff=request.type_diff,
         counts_checks=request.counts_checks,
@@ -146,45 +107,13 @@ async def create_video_endpoint(request: CreateVideoRequest):
 
 
 
-# Модель запроса
-class CreateImageForVideoRequest(BaseModel):
-    data_path: str
-    files_list: List[str] = []
-    frame_id: Optional[int] = 0
-    flag_info: Optional[bool] = False
-    general_title: Optional[str] = None
-    mask: Optional[bool] = False
-    percent_to_trim: Optional[float] = 0.1
-    frame_title: Optional[bool] = False
-    save_folder: Optional[str] = None
-    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
-    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
-    dark: Optional[bool] = False
-    dark_name: Optional[str] = "DARK"
-    zip: Optional[bool] = True
-    hists: Optional[bool] = True
-    remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None
-    multiplication_on_correct_matrix: Optional[bool] = True
-    Rayleigh: Optional[bool] = False
-    result_matrix_safe_folder: Optional[str] = None
-    type_diff: Optional[int] = 1
-    upper_limit: Optional[float] = 500.
-    lower_limit: Optional[float] = None
-    bins: Optional[int] = 5000
-    auto_contrast: Optional[bool] = True
-    auto_contrast_percentiles: List[int] = [2, 98]
-    logfun: Optional[str] = None  # Или замените на нужный тип
-    data_index: Optional[int] = None,
-    file_name: Optional[str] = "buf"
-
 
 def create_img_logic(request: CreateImageForVideoRequest):
     logics.create_img_for_video(
         names_files=request.files_list,
         root_path=request.data_path,
-        start_i=request.frame_id,
-        end_i=request.frame_id + 1,
+        first_frame_number=request.frame_number,
+        last_frame_number=request.frame_number + 1,
         flag_info=request.flag_info,
         name=request.general_title,
         cut=request.mask,
@@ -196,7 +125,7 @@ def create_img_logic(request: CreateImageForVideoRequest):
         dark=request.dark,
         dark_name=request.dark_name,
         _zip=request.zip,
-        hists=request.hists,
+        hists=request.hist,
         remove_single_pixels=request.remove_single_pixels,
         correct_matrix=request.correct_matrix,
         Rayleigh=request.Rayleigh,
@@ -217,10 +146,6 @@ def create_img_logic(request: CreateImageForVideoRequest):
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
-
-# Модель для ответа с изображениями
-class ImagesResponse(BaseModel):
-    images: List[str]
 
 
 # Эндпоинт
@@ -259,54 +184,26 @@ async def remove_task(task_id: str):
 
 
 
-# Модель запроса
-class CreateImageRequest(BaseModel):
-    data_path: str
-    files_list: List[str] = []
-    frame_id: Optional[int] = 0
-    flag_info: Optional[bool] = False
-    general_title: Optional[str] = None
-    mask: Optional[bool] = False
-    percent_to_trim: Optional[float] = 0.1
-    save_folder: Optional[str] = None
-    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
-    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
-    dark: Optional[bool] = False
-    dark_name: Optional[str] = "DARK"
-    zip: Optional[bool] = True
-    remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None
-    multiplication_on_correct_matrix: Optional[bool] = True
-    Rayleigh: Optional[bool] = False
-    result_matrix_safe_folder: Optional[str] = None
-    check_frame: Optional[int] = None
-    auto_contrast: Optional[bool] = True
-    auto_contrast_percentiles: List[int] = [2, 98]
-    logfun: Optional[str] = None  # Или замените на нужный тип
-    data_index: Optional[int] = None,
-    file_name: Optional[str] = "buf"
-
-
 
 def create_image_logic(request: CreateImageRequest):
     logics.create_image(
         names_files=request.files_list,
         root_path=request.data_path,
-        number=request.frame_id,
+        number=request.frame_number,
         flag_info=request.flag_info,
         name=request.general_title,
-        cut=request.mask,
+        cut=request.cut,
         percent_to_trim=request.percent_to_trim,
         save_folder=request.save_folder,
         figsize=request.figsize,
         fit_format=class_registry[request.fit_format],
         dark=request.dark,
-        dark_name=request.dark_name,
-        _zip=request.zip,
+        dark_name=request.dark_file_name,
+        _zip=request.zipped_file,
         remove_single_pixels=request.remove_single_pixels,
-        correct_matrix=request.correct_matrix,
-        Rayleigh=request.Rayleigh,
-        result_matrix_safe_folder=request.result_matrix_safe_folder,
+        correct_matrix=request.correct_matrix_path,
+        Rayleigh=request.rayleigh,
+        result_matrix_safe_folder=request.result_matrix_save_folder,
         logfun=None,
         data_index=request.data_index,
         file_name=request.file_name,
@@ -343,59 +240,27 @@ async def create_img(request: CreateImageRequest):
 
 
 
-class CreateHeatmapRequest(BaseModel):
-    data_path: str
-    files_list: List[str] = []
-    start_i: Optional[int] = 0
-    end_i: Optional[int] = None
-    edges: Optional[int] = 0
-    flag_info: Optional[bool] = False
-    title: Optional[str] = None
-    mask: Optional[bool] = False
-    percent_to_trim: Optional[float] = 0.1
-    save_folder: Optional[str] = None
-    figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
-    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
-    dark: Optional[bool] = False
-    dark_name: Optional[str] = "DARK"
-    zip: Optional[bool] = True
-    remove_single_pixels: Optional[bool] = False
-    correct_matrix: Optional[str] = None
-    multiplication_on_correct_matrix: Optional[bool] = True
-    Rayleigh: Optional[bool] = False
-    counts_checks: Optional[int] = 4
-    check_frame: Optional[int] = None
-    auto_contrast: Optional[bool] = True
-    auto_contrast_percentiles: List[int] = [2, 98]
-    result_auto_contrast: Optional[bool] = True
-    bins: Optional[int] = 500
-    cmap: Optional[str] = "viridis"
-    logfun: Optional[str] = None  # Или замените на нужный тип
-    data_index: Optional[int] = None
-    file_name: Optional[str] = "buf"
-
-
 def create_heatmap_logic(request: CreateHeatmapRequest):
     logics.create_heatmap(
         names=request.files_list,
         new_path=request.data_path,
-        start_file=request.start_i,
-        end_file=request.end_i,
+        start_file=request.first_frame_number,
+        end_file=request.last_frame_number,
         edges=request.edges,
         title=request.title,
         bins=request.bins,
         cmap=request.cmap,
         save_folder=request.save_folder,
-        _zip=request.zip,
+        _zip=request.zipped_file,
         counts_checks=request.counts_checks,
         check_frame=request.check_frame,
         remove_single_pixels=request.remove_single_pixels,
-        correct_matrix=request.correct_matrix,
+        correct_matrix=request.correct_matrix_path,
         multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
-        Rayleigh=request.Rayleigh,
+        Rayleigh=request.rayleigh,
         dark=request.dark,
-        dark_name=request.dark_name,
-        cut=request.mask,
+        dark_name=request.dark_file_name,
+        cut=request.cut,
         percent_to_trim=request.percent_to_trim,
         data_index=request.data_index,
         q=request.auto_contrast_percentiles,

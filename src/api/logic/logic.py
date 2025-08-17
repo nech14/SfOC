@@ -4,7 +4,7 @@ from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
 
-from api.schemas_request.base_request import CreateHeatmapRequest, CreateImageRequest, GetDarkFilesRequest, \
+from src.api.schemas_request.base_request import CreateHeatmapRequest, CreateImageRequest, GetDarkFilesRequest, \
     CreateVideoRequest, CreateImageForVideoRequest
 from src import logics
 from src.file import class_registry, file

@@ -1,21 +1,23 @@
 import base64
+import os
 from io import BytesIO
 
 import numpy as np
-from fastapi import FastAPI, Depends, HTTPException, status, Query, Request, APIRouter
-from fastapi.encoders import jsonable_encoder
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from matplotlib import pyplot as plt
 from starlette.responses import HTMLResponse, FileResponse
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
-from api.schemas.auto_contrast_command_request import AutoContrastCommandRequest
-from api.schemas.correct_matrix_request import CorrectMatrixRequest
-from api.schemas.cut_command_request import CutCommandRequest
-from api.schemas.dark_command_request import DarkCommandRequest
-from api.schemas.load_command_request import LoadCommandRequest
-from api.schemas.save_data_request import SaveDataRequest
-from api.schemas.save_img_request import SaveImgRequest
+from src.api.api_tags import ApiTags
+from src.api.base_api import rout_root
+from src.api.schemas_request.auto_contrast_command_request import AutoContrastCommandRequest
+from src.api.schemas_request.correct_matrix_request import CorrectMatrixRequest
+from src.api.schemas_request.cut_command_request import CutCommandRequest
+from src.api.schemas_request.dark_command_request import DarkCommandRequest
+from src.api.schemas_request.load_command_request import LoadCommandRequest
+from src.api.schemas_request.save_data_request import SaveDataRequest
+from src.api.schemas_request.save_img_request import SaveImgRequest
 from src.editor.commands.auto_contrast_command import AutoContrastCommand
 from src.editor.commands.correct_matrix_command import CorrectMatrixCommand
 from src.editor.commands.cut_command import CutCommand
@@ -28,16 +30,16 @@ from src.editor.commands.save_img_command import SaveImgCommand
 from src.editor.commands.select_command import SelectCommand
 from src.editor.commands.undo_command import UndoCommand
 from src.editor.editor import Editor
-from src.file import FitsInfo
 from src.file.fits_formats import fits_formats
 
-app = FastAPI()
-rout_root = ""
-editor: Editor|None = None
+router = APIRouter(prefix="/Editor", tags=[ApiTags.Edit])
+static_path = os.path.join(os.path.dirname(__file__), "static")
+# router.mount("/static", StaticFiles(directory=static_path), name="static")
+templates_path = os.path.join(os.path.dirname(__file__), "templates")
+templates = Jinja2Templates(directory=templates_path)
 
-
-app.mount("/static", StaticFiles(directory="api/static"), name="static")
-templates = Jinja2Templates(directory="api/templates")
+print(static_path)
+print(templates_path)
 
 def check_editor():
     global editor
@@ -50,14 +52,14 @@ def check_editor():
     return True
 
 
-@app.get(f"{rout_root}/create")
+@router.get(f"{rout_root}/create", tags=[ApiTags.Edit.value])
 async def create_editor():
     global editor
     editor = Editor()
 
     return {"status": "editor created"}
 
-@app.get(f"{rout_root}/undo")
+@router.get(f"{rout_root}/undo", tags=[ApiTags.Edit.value])
 async def undo():
     editor.executeCommand(
         UndoCommand(
@@ -68,11 +70,11 @@ async def undo():
 
 
 
-@app.get(f"{rout_root}/view", response_class=HTMLResponse)
+@router.get(f"{rout_root}/view", response_class=HTMLResponse, tags=[ApiTags.Edit.value])
 async def view_editor_page(request: Request, auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data, так как он не нужен для шаблона
-
+        img_array = np.array(img_array, dtype=np.float32)
         # Рисуем картинку из массива
         fig, ax = plt.subplots()
         ax.imshow(img_array, cmap='gray')
@@ -98,7 +100,7 @@ async def view_editor_page(request: Request, auth: bool = Depends(check_editor))
         raise HTTPException(status_code=500, detail=f"Error processing view: {str(e)}")
 
 
-@app.get(f"{rout_root}/view_data")
+@router.get(f"{rout_root}/view_data", tags=[ApiTags.Edit.value])
 async def view_editor_data(auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data
@@ -134,13 +136,13 @@ async def view_editor_data(auth: bool = Depends(check_editor)):
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
-@app.get(f"{rout_root}/clear")
+@router.get(f"{rout_root}/clear")
 async def clear(auth: bool = Depends(check_editor)):
     editor.clear()
     return {"status": "success"}
 
 
-@app.post(f"{rout_root}/load")
+@router.post(f"{rout_root}/load")
 async def load_data(
         request: LoadCommandRequest,
         auth: bool = Depends(check_editor)
@@ -160,7 +162,7 @@ async def load_data(
     return {"status": "success"}
 
 
-@app.get(f"{rout_root}/select")
+@router.get(f"{rout_root}/select")
 async def select_data(
         index: int = Query(..., ge=0),
         auth: bool = Depends(check_editor)
@@ -174,7 +176,7 @@ async def select_data(
     return {"status": f"{len(editor.datas)}"}
 
 
-@app.get(f"{rout_root}/select_index")
+@router.get(f"{rout_root}/select_index")
 async def select_index(
         auth: bool = Depends(check_editor)
 ):
@@ -182,7 +184,7 @@ async def select_index(
     return {"status": f"{index}"}
 
 
-@app.get(f"{rout_root}/count_all_datas")
+@router.get(f"{rout_root}/count_all_datas")
 async def count_all_datas(
         auth: bool = Depends(check_editor)
 ):
@@ -190,7 +192,7 @@ async def count_all_datas(
     return {"status": f"{count}"}
 
 
-@app.post(f"{rout_root}/save_img")
+@router.post(f"{rout_root}/save_img")
 async def save_img(
         request: SaveImgRequest,
         auth: bool = Depends(check_editor)
@@ -211,7 +213,7 @@ async def save_img(
     return {"status": "success"}
 
 
-@app.post(f"{rout_root}/save_data")
+@router.post(f"{rout_root}/save_data")
 async def save_data(
         request: SaveDataRequest,
         auth: bool = Depends(check_editor)
@@ -226,7 +228,7 @@ async def save_data(
     return {"status": "success"}
 
 
-@app.get(f"{rout_root}/download_data")
+@router.get(f"{rout_root}/download_data")
 async def download_data(
         auth: bool = Depends(check_editor)
 ):
@@ -247,7 +249,7 @@ async def download_data(
 
 
 
-@app.post(f"{rout_root}/cut")
+@router.post(f"{rout_root}/cut")
 async def cut(
         request:CutCommandRequest,
         auth: bool = Depends(check_editor)
@@ -261,7 +263,7 @@ async def cut(
     return {"status": "success"}
 
 
-@app.get(f"{rout_root}/dark_indexes")
+@router.get(f"{rout_root}/dark_indexes")
 async def dark_indexes(
         index_start: int | None = Query(..., ge=None),
         index_end: int | None = Query(..., ge=None),
@@ -273,7 +275,7 @@ async def dark_indexes(
     return {"status": "success"}
 
 
-@app.post(f"{rout_root}/dark")
+@router.post(f"{rout_root}/dark")
 async def dark(
         request:DarkCommandRequest,
         auth: bool = Depends(check_editor)
@@ -292,7 +294,7 @@ async def dark(
     return {"status": "success"}
 
 
-@app.get(f"{rout_root}/rayleigh")
+@router.get(f"{rout_root}/rayleigh")
 async def rayleigh(auth: bool = Depends(check_editor)):
     editor.executeCommand(
         RayleighCommand(
@@ -303,7 +305,7 @@ async def rayleigh(auth: bool = Depends(check_editor)):
     return {"status": "success"}
 
 
-@app.get(f"{rout_root}/remove_single_pixels")
+@router.get(f"{rout_root}/remove_single_pixels")
 async def remove_single_pixels(auth: bool = Depends(check_editor)):
     editor.executeCommand(
         RemoveSinglePixelsCommand(
@@ -314,9 +316,9 @@ async def remove_single_pixels(auth: bool = Depends(check_editor)):
     return {"status": "success"}
 
 
-@app.post(f"{rout_root}/auto_contrast")
+@router.post(f"{rout_root}/auto_contrast")
 async def auto_contrast(
-        request:AutoContrastCommandRequest,
+        request: AutoContrastCommandRequest,
         auth: bool = Depends(check_editor)
 ):
     editor.executeCommand(
@@ -329,7 +331,7 @@ async def auto_contrast(
     return {"status": "success"}
 
 
-@app.post(f"{rout_root}/corr_matrix")
+@router.post(f"{rout_root}/corr_matrix")
 async def correct_matrix(
         request: CorrectMatrixRequest,
         auth: bool = Depends(check_editor)
@@ -337,7 +339,7 @@ async def correct_matrix(
     editor.executeCommand(
         CorrectMatrixCommand(
             editor,
-            request.correct_matrix_path,
+            request.correct_matrix,
             request.multiplication_on_correct_matrix
         )
     )

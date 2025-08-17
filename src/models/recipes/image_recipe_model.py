@@ -1,10 +1,4 @@
-import numpy as np
-
-from api.base_api import CreateImageRequest
-from src import file
 from src.file.file import FitsInfoBase, FitsInfo
-from src.graphics import graphics
-from src.logics.logicks import get_dark_avg
 from src.models.recipes.base_recipes_model import BaseRecipes
 
 class ImageRecipe(BaseRecipes):

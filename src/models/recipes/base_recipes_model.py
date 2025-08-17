@@ -1,7 +1,7 @@
 import numpy as np
 
-from api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
-from api.schemas_request.base_request import CreateVideoRequest
+from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
+from src.api.schemas_request.base_request import CreateVideoRequest
 from src.file import file
 from src.file.file import FitsInfoBase, FitsInfo
 from src.graphics import graphics
