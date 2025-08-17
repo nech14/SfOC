@@ -32,7 +32,7 @@ from src.editor.commands.undo_command import UndoCommand
 from src.editor.editor import Editor
 from src.file.fits_formats import fits_formats
 
-router = APIRouter(prefix="/Editor", tags=[ApiTags.Edit])
+router = APIRouter(prefix="/Editor", tags=[ApiTags.Editor.value])
 static_path = os.path.join(os.path.dirname(__file__), "static")
 # router.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(os.path.dirname(__file__), "templates")
@@ -52,14 +52,14 @@ def check_editor():
     return True
 
 
-@router.get(f"{rout_root}/create", tags=[ApiTags.Edit.value])
+@router.get(f"{rout_root}/create", tags=[ApiTags.Editor.value])
 async def create_editor():
     global editor
     editor = Editor()
 
     return {"status": "editor created"}
 
-@router.get(f"{rout_root}/undo", tags=[ApiTags.Edit.value])
+@router.get(f"{rout_root}/undo", tags=[ApiTags.Editor.value])
 async def undo():
     editor.executeCommand(
         UndoCommand(
@@ -70,7 +70,7 @@ async def undo():
 
 
 
-@router.get(f"{rout_root}/view", response_class=HTMLResponse, tags=[ApiTags.Edit.value])
+@router.get(f"{rout_root}/view", response_class=HTMLResponse, tags=[ApiTags.Editor.value])
 async def view_editor_page(request: Request, auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data, так как он не нужен для шаблона
@@ -100,7 +100,7 @@ async def view_editor_page(request: Request, auth: bool = Depends(check_editor))
         raise HTTPException(status_code=500, detail=f"Error processing view: {str(e)}")
 
 
-@router.get(f"{rout_root}/view_data", tags=[ApiTags.Edit.value])
+@router.get(f"{rout_root}/view_data", tags=[ApiTags.Editor.value])
 async def view_editor_data(auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data

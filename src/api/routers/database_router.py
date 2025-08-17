@@ -3,8 +3,8 @@ import datetime
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy import text
 
+from config import rout_root
 from src.api.api_tags import ApiTags
-from src.api.base_api import rout_root
 from src.database.database import Session
 from src.database.models.models import Frames, User, Camera, Coefs, Filters, FindStarsCoefs, Keograms, Location, Paths, \
     Nights, Background, BackgroundsAll
