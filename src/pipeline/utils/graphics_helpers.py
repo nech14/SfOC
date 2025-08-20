@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from pathlib import Path
 from skimage.exposure import exposure
 from skimage.measure import label, regionprops
 
@@ -106,3 +107,32 @@ def remove_single_pixels(data, log=False, label_diff_region=False, data_copy_del
     if data_copy_del is not False:
         return data_copy, data_copy_del
     return data_copy
+
+
+
+def compress_by_2(img: np.ndarray) -> np.ndarray:
+    # Убеждаемся, что форма делится на 2
+    h, w = img.shape
+    assert h % 2 == 0 and w % 2 == 0, "Размеры должны быть кратны 2"
+
+    # 1. Ресайпим в 4D: (h//2, 2, w//2, 2)
+    # 2. Считаем среднее по осям 1 и 3
+    return img.reshape(h // 2, 2, w // 2, 2).mean(axis=(1, 3))
+
+def create_correct_matrix_new(  #need test
+    count_compression: int =2,
+    base_shape: int = 2048,
+    path_file: Path = Path(
+        "C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+    )
+):
+    # Загружаем и преобразуем данные
+    matrix = np.fromfile(path_file, dtype='float32')
+    matrix2048 = matrix.reshape((base_shape, base_shape), order='F')
+
+    # Применяем сжатие count_compression раз
+    new_matrix = matrix2048
+    for _ in range(count_compression):
+        new_matrix = compress_by_2(new_matrix)
+
+    return new_matrix
