@@ -6,18 +6,17 @@ import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from matplotlib import pyplot as plt
 from starlette.responses import HTMLResponse, FileResponse
-from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from src.api.api_tags import ApiTags
 from src.api.base_api import rout_root
-from src.api.schemas_request.auto_contrast_command_request import AutoContrastCommandRequest
-from src.api.schemas_request.correct_matrix_request import CorrectMatrixRequest
-from src.api.schemas_request.cut_command_request import CutCommandRequest
-from src.api.schemas_request.dark_command_request import DarkCommandRequest
-from src.api.schemas_request.load_command_request import LoadCommandRequest
-from src.api.schemas_request.save_data_request import SaveDataRequest
-from src.api.schemas_request.save_img_request import SaveImgRequest
+from src.api.requests.editor_request.auto_contrast_command_request import AutoContrastCommandRequest
+from src.api.requests.editor_request.correct_matrix_request import CorrectMatrixRequest
+from src.api.requests.editor_request.cut_command_request import CutCommandRequest
+from src.api.requests.editor_request.dark_command_request import DarkCommandRequest
+from src.api.requests.editor_request.load_command_request import LoadCommandRequest
+from src.api.requests.editor_request.save_data_request import SaveDataRequest
+from src.api.requests.editor_request.save_img_request import SaveImgRequest
 from src.editor.commands.auto_contrast_command import AutoContrastCommand
 from src.editor.commands.correct_matrix_command import CorrectMatrixCommand
 from src.editor.commands.cut_command import CutCommand
