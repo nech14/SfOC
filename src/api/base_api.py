@@ -5,11 +5,14 @@ import os
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
-from src.api.schemas_request.base_request import CreateVideoRequest, CreateImageForVideoRequest, CreateImageRequest, CreateHeatmapRequest
 from src import logics
 from src import file
 from concurrent.futures import ProcessPoolExecutor
 
+from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
+from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
+from src.api.requests.edit_request.create_image_request import CreateImageRequest
+from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 
 router = APIRouter()
 
