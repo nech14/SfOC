@@ -13,7 +13,7 @@ class CreateImageRequest(BaseModel):
     percent_to_trim: Optional[float] = 0.1
     save_folder: Optional[str] = None
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
-    fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
+    fit_format: Optional[str] = "FitsInfo"
     dark: Optional[bool] = False
     dark_file_name: Optional[str] = "DARK"
     zipped_file: Optional[bool] = True
