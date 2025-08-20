@@ -3,10 +3,12 @@ from datetime import datetime
 
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
-
-from src.api.schemas_request.base_request import CreateHeatmapRequest, CreateImageRequest, GetDarkFilesRequest, \
-    CreateVideoRequest, CreateImageForVideoRequest
 from src import logics
+from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
+from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
+from src.api.requests.edit_request.create_image_request import CreateImageRequest
+from src.api.requests.edit_request.create_video_request import CreateVideoRequest
+from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesRequest
 from src.file import class_registry, file
 from src.models.recipes.image_recipe_model import ImageRecipe
 from src.models.recipes.video_recipe_model import VideoRecipe
@@ -107,7 +109,7 @@ def create_video_logic(request: CreateVideoRequest):
 
 def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
     if request.files_list is None or len(request.files_list) == 0:
-        request.files_list = file.get_name_file(request.data_path)
+        request.files_list = file.get_name_files(request.data_path)
 
     request.fit_format = class_registry[request.fit_format]
 
