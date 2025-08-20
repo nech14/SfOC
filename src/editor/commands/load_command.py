@@ -1,7 +1,7 @@
 import os.path
 
 from src.editor.commands.base_command import BaseCommand
-from src.file import get_name_file, open_gz
+from src.file import get_name_files, open_gz
 from src.file.file import FitsInfoBase, FitsInfo
 from src.models.imges.img_data_model import ImgData
 
@@ -37,7 +37,7 @@ class LoadCommand(BaseCommand):
 
 
         if self.names_files is None or len(self.names_files) == 0:
-            self.names_files = get_name_file(self.root_path)
+            self.names_files = get_name_files(self.root_path)
 
         if self.start_file is None:
             self.start_file = 0

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -14,7 +15,7 @@ def create_mp4(
         fps=1,
         frames_s=1,
         logfun=None
-) -> str:
+) -> Path:
     # Размеры кадра и частота кадров в видео
     frame = frames[0]
     frame_width = frame.shape[1]
@@ -42,7 +43,7 @@ def create_mp4(
     # Закрываем объект VideoWriter
     out.release()
 
-    return f"{filename_path}"
+    return Path(f"{filename_path}")
 
 
 def save_heat_map(

@@ -1,17 +1,22 @@
+from pathlib import Path
+
 import numpy as np
 
 from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
-from src.api.schemas_request.base_request import CreateVideoRequest
-from src.file import file
+from src.api.requests.edit_request.create_video_request import CreateVideoRequest
+from src.file import file, get_name_files
 from src.file.file import FitsInfoBase, FitsInfo
 from src.graphics import graphics
 from src.logics.logicks import get_dark_avg
 from src.models.dark_data_model import DarkData
 from src.file.file import class_registry
+from src.pipeline.utils import graphics_helpers
+
 
 class BaseRecipes:
-    names_files: list[str]|None = None
+    files_names: list[str] | None = None
     root_path: str
+    files_path: list[Path] = []
     frame_number: int
     flag_info: bool = False
     name: str|None = None
@@ -25,6 +30,7 @@ class BaseRecipes:
     zipped_file: bool = True
     remove_single_pixels: bool = False
     correct_matrix_path: str = None
+    use_correct_matrix: bool = False
     rayleigh: bool = False
     result_matrix_save_folder: str = None
     logfun = None
@@ -35,32 +41,49 @@ class BaseRecipes:
     auto_contrast_percentiles: tuple[int, int] = [2, 98]
     show: bool = False
 
-
     correct_matrix = None
     dark_start: DarkData = None
     dart_end: DarkData = None
 
+
     def open_correct_matrix(self):
-        self.correct_matrix = graphics.create_correct_matrix(2, 2048, self.correct_matrix_path)
+        # self.correct_matrix = graphics.create_correct_matrix(2, 2048, self.correct_matrix_path)
+        self.correct_matrix = graphics_helpers.create_correct_matrix_new(
+            2,
+            2048
+            ,Path(self.correct_matrix_path)
+        )
+
 
     def open_dark(self):
         self.dark_start = get_dark_avg(
-            self.names_files,
+            self.files_names,
             self.root_path,
             dark_name=self.dark_file_name,
             _zip=self.zipped_file,
             fit_format=self.fit_format
         )
         self.dart_end = get_dark_avg(
-            np.flip(self.names_files),
+            np.flip(self.files_names),
             self.root_path,
             dark_name=self.dark_file_name,
             _zip=self.zipped_file,
             fit_format=self.fit_format
         )
 
-    def get_names_files(self):
-        self.names_files = file.get_name_file(self.root_path)
+
+    def get_names_files(self) -> list[str]:
+        self.files_names = file.get_name_files(self.root_path)
+        return self.files_names
+
+
+    def get_path_files(self) -> list[Path]:
+        if not self.files_names:
+            self.get_names_files()
+
+        self.files_path = [Path(self.root_path, name) for name in self.files_names]
+        return self.files_path
+
 
     @classmethod
     def get_recipe_by_request(

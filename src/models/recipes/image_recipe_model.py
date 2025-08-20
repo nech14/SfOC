@@ -1,10 +1,13 @@
+from pathlib import Path
+
 from src.file.file import FitsInfoBase, FitsInfo
 from src.models.recipes.base_recipes_model import BaseRecipes
 
 class ImageRecipe(BaseRecipes):
-    def __init__(self, names_files, root_path, correct_matrix_path=None):
-        self.root_path: str = root_path
-        self.names_files: list[str] = names_files
+    def __init__(self, files_names, root_path: Path, correct_matrix_path=None):
+        self.root_path: Path = root_path
+        self.files_names: list[str] = files_names
+        self.files_path: list[Path] = []
         self.frame_number: int = 20
         self.flag_info: bool = False
         self.name: str = "test124"
@@ -18,6 +21,7 @@ class ImageRecipe(BaseRecipes):
         self.zipped_file: bool = True
         self.remove_single_pixels: bool = False
         self.correct_matrix_path: str = correct_matrix_path
+        self.use_correct_matrix: bool = True
         self.rayleigh: bool = False
         self.result_matrix_save_folder: str|None = None
         self.logfun = None
@@ -31,5 +35,4 @@ class ImageRecipe(BaseRecipes):
     @classmethod
     def create(cls):
         pass
-
 

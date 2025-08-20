@@ -20,7 +20,7 @@ from src.models.dark_data_model import DarkData
 def get_names(path, _zip=True):
     new_path = os.path.join(path, "5577")
 
-    names = file.get_name_file(new_path, _zip=_zip)
+    names = file.get_name_files(new_path, _zip=_zip)
     return new_path, names
 
 
@@ -93,7 +93,7 @@ def create_all_png(frequency="5577", _zip=True):
     path = os.path.join(current_directory, "data", "ASI0", "2023", "10", "11")
     new_path = os.path.join(path, frequency)
 
-    names = file.get_name_file(new_path)
+    names = file.get_name_files(new_path)
 
     save_path = os.path.join(path, frequency + "_img")
     for name in names:
@@ -258,7 +258,7 @@ def create_image(
 ):
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files) == 0:
-        names_files = file.get_name_file(root_path)
+        names_files = file.get_name_files(root_path)
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
@@ -362,7 +362,7 @@ def create_img_for_video(names_files=[], root_path="", first_frame_number=0, las
 
     plt.rcParams.update({"font.size": 14})
     if names_files is None or len(names_files)==0:
-        names_files = file.get_name_file(root_path)
+        names_files = file.get_name_files(root_path)
 
     if correct_matrix is not None:
         corr_matrix = graphics.create_correct_matrix(2, 2048, correct_matrix)
@@ -637,7 +637,7 @@ def create_heatmap(names=None, new_path=r"", edges=0, start_file=0, end_file=Non
                    multiplication_on_correct_matrix=True, q=[2, 50], name_file=None, result_auto_contrast=True):
 
     if names is None or len(names)==0:
-        names = file.get_name_file(new_path)
+        names = file.get_name_files(new_path)
 
     if end_file is None:
         end_file = len(names)
@@ -766,7 +766,7 @@ def create_heatmap1(names=None, new_path=r"", edges=0, start_file=0, end_file=No
                    auto_contrast=True, cmap="viridis", save_folder=None, limit=None, fit_format=file.FitsInfo, _zip=True):
 
     if names is None or len(names)==0:
-        names = file.get_name_file(new_path)
+        names = file.get_name_files(new_path)
 
     if end_file is None:
         end_file = len(names)

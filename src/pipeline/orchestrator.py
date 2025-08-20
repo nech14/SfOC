@@ -1,8 +1,10 @@
+from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
 
 from src.models.hist_limits import HistLimits
+from src.models.imges.abstract_img import AbstractImg
 from src.models.imges.duo_img_model import DuoImg
 from src.models.imges.img_model import Img
 from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
@@ -19,13 +21,14 @@ from src.pipeline.steps.show_data import show_image
 from src.pipeline.utils.helpers import get_hist_parameters
 
 
-def create_image(recipe: ImageRecipe) -> None:
+def create_image(recipe: ImageRecipe) -> AbstractImg:
     img = get_image(recipe)
-    base_operation_with_img(recipe, img)
+    img = base_operation_with_img(recipe, img)
     save_image(recipe, img.view_data)
-    # plt.imshow(img.view_data, cmap="gray")
-    # plt.gca().invert_yaxis()
-    # plt.show()
+    plt.imshow(img.view_data, cmap="gray")
+    plt.gca().invert_yaxis()
+    plt.show()
+    return img
 
 
 def _get_hist_found_limits_with_one_image(recipe: HeatmapRecipe, img: Img) -> Img:
@@ -84,7 +87,6 @@ def create_image_for_video(recipe: VideoRecipe, frame_number:int, last_diff: lis
     create_image_with_hist(recipe, duo_img, last_diff)
     show_image(recipe, duo_img)
     save_image_for_video(recipe, duo_img)
-
     return duo_img
 
 def create_images_for_video(recipe: VideoRecipe) -> list[DuoImg]:
@@ -98,7 +100,7 @@ def create_images_for_video(recipe: VideoRecipe) -> list[DuoImg]:
 
     return frames
 
-def create_video(recipe: VideoRecipe) -> str:
+def create_video(recipe: VideoRecipe) -> Path:
     images = create_images_for_video(recipe)
     frames = [i.view_data for i in images]
     return save_video(recipe, frames)

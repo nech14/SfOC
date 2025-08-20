@@ -1,6 +1,8 @@
 import os
 import gzip
 import datetime
+from pathlib import Path
+
 from astropy.io import fits
 
 class FitsInfoBase:
@@ -168,7 +170,7 @@ class FitsInfo2014(FitsInfoBase):
         self.SWCREATE = info[23]
 
 
-def get_A(CCDGAIN, ROSPEED, DEVICEID="ASI0"):
+def get_A(CCDGAIN, ROSPEED, DEVICEID="ASI0") -> float:
     if "ASI0" in DEVICEID:
         if "2MHz" in ROSPEED:
             A = [0.255, 0.508, 1.]
@@ -193,7 +195,7 @@ class_registry["FitsInfo2014"] = FitsInfo2014
 class_registry["FitsInfoAndor"] = FitsInfoAndor
 
 
-def get_name_file(folder_path="/"):
+def get_name_files(folder_path: Path|str="/") -> list[str]:
     files = os.listdir(folder_path)
 
     names = []
@@ -205,7 +207,7 @@ def get_name_file(folder_path="/"):
     return names
 
 
-def open_gz(gz_file_path, _zip=True) -> (list, list):
+def open_gz(gz_file_path: Path|str, _zip=True) -> (list, list):
     if _zip:
         with gzip.open(gz_file_path, 'rb') as gz_file:
             # Чтение файла FITS из архива Gzip
@@ -217,7 +219,7 @@ def open_gz(gz_file_path, _zip=True) -> (list, list):
             return f[0].header, f[0].data
 
 
-def remove_extensions(file_path):
+def remove_extensions(file_path: Path|str):
     # Удаляем расширения, пока они есть
     while True:
         file_path, ext = os.path.splitext(file_path)

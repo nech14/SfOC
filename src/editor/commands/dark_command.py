@@ -2,7 +2,7 @@ import numpy as np
 
 from src.editor.commands.base_command import BaseCommand
 from src.file import FitsInfo
-from src.file.file import FitsInfoBase, get_name_file
+from src.file.file import FitsInfoBase, get_name_files
 from src.logics import get_dark, get_dark_AVG, subtract_noise_frame
 
 
@@ -29,7 +29,7 @@ class DarkCommand(BaseCommand):
         self.saveBackup()
 
         if self.names is None or len(self.names) == 0:
-            self.names = get_name_file(self.root_path)
+            self.names = get_name_files(self.root_path)
 
 
         dark_start_name = self.names.copy()

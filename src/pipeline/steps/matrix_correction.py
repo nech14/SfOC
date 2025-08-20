@@ -7,7 +7,7 @@ logger = get_logger()
 
 def correct_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
     try:
-        if not recipe.correct_matrix_path is None:
+        if recipe.use_correct_matrix:
             logger.debug("Запуск correct_matrix_image для рецепта %s", recipe)
             if recipe.correct_matrix is None:
                 recipe.open_correct_matrix()

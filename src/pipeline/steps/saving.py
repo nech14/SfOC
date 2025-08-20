@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -33,7 +34,7 @@ def save_image(recipe: ImageRecipe, processed_image) -> None:
     plt.gca().invert_yaxis()
     plt.axis('off')
     if recipe.file_name is None:
-        file_name_buf = recipe.names_files[recipe.frame_number]
+        file_name_buf = recipe.files_names[recipe.frame_number]
     else:
         file_name_buf = recipe.file_name
     plt.savefig(recipe.save_folder + f"/{file_name_buf}.png", bbox_inches='tight')
@@ -95,7 +96,7 @@ def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
     plt.close()
 
 
-def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> str:
+def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> Path:
     save_folder_video = recipe.save_folder_video
     if save_folder_video is None:
         save_folder_video = recipe.name_file_video

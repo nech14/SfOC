@@ -3,6 +3,7 @@ import os
 from typing import Tuple, Union, List
 
 import numpy as np
+from pathlib import Path
 from matplotlib import pyplot as plt
 from src.file import file
 from src.models.dark_data_model import DarkData
@@ -89,7 +90,9 @@ def compress_by_2(img: np.ndarray) -> np.ndarray:
 def create_correct_matrix_new(  #need test
     count_compression=2,
     base_shape=2048,
-    path_file="C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+    path_file= Path(
+        "C:/work/search_for_oxide_cloud/ALL SKY IMAGERS/Calibration SN10210/UNIFORMITY COEFFICIENT FILES/20190718_Russia-LZOS_KEO10210_5577L14002-02_0001000ms_G3_FOV180_uniformity_map_2048x2048.dat"
+    )
 ):
     # Загружаем и преобразуем данные
     matrix = np.fromfile(path_file, dtype='float32')
