@@ -10,8 +10,11 @@ from config import rout_root, img_task_semaphore, img_executor, running_tasks_na
 from src.api.api_tags import ApiTags
 from src.api.logic.logic import get_dark_files_logic, create_img_logic, create_image_logic, create_heatmap_logic, \
     create_video_logic
-from src.api.schemas_request.base_request import GetDarkFilesRequest, CreateVideoRequest, CreateImageForVideoRequest, \
-    CreateImageRequest, CreateHeatmapRequest
+from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
+from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
+from src.api.requests.edit_request.create_image_request import CreateImageRequest
+from src.api.requests.edit_request.create_video_request import CreateVideoRequest
+from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesRequest
 
 router = APIRouter(prefix="/edit", tags=[ApiTags.Edit.value])
 
@@ -28,6 +31,30 @@ async def get_dark_files(request: GetDarkFilesRequest):
         running_tasks.append(task)
 
         task.add_done_callback(lambda t: running_tasks_name.remove(f"get_dark_files_logic {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        # Читаем файл изображения в бинарном режиме
+        with open(result, "rb") as image_file:
+            img_data = image_file.read()
+
+
+        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
+
+
+
+@router.post(f"{rout_root}/create_img", tags=[ApiTags.Edit.value])
+async def create_img(request: CreateImageRequest):
+
+    async with img_task_semaphore:  # Ограничиваем количество одновременных задач
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(img_executor, create_image_logic, request)
+        running_tasks_name.append(f"create_image {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
         task.add_done_callback(lambda t: running_tasks.remove(t))
 
         result = await task
@@ -84,31 +111,6 @@ async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
 
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
-
-
-@router.post(f"{rout_root}/create_img", tags=[ApiTags.Edit.value])
-async def create_img(request: CreateImageRequest):
-
-    async with img_task_semaphore:  # Ограничиваем количество одновременных задач
-        loop = asyncio.get_event_loop()
-
-        task = loop.run_in_executor(img_executor, create_image_logic, request)
-        running_tasks_name.append(f"create_image {request}")
-        running_tasks.append(task)
-
-        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_image {request}"))
-        task.add_done_callback(lambda t: running_tasks.remove(t))
-
-        result = await task
-
-        # Читаем файл изображения в бинарном режиме
-        with open(result, "rb") as image_file:
-            img_data = image_file.read()
-
-
-        return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
-
-
 
 
 

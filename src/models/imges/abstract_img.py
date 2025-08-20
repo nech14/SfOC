@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import matplotlib.pyplot as plt
 
+from src.file.file import FitsInfoBase
 from src.models.dark_data_model import DarkData
 from src.models.recipes.base_recipes_model import BaseRecipes
 
@@ -9,6 +10,7 @@ from src.models.recipes.base_recipes_model import BaseRecipes
 class AbstractImg(ABC):
 
     filename: str|None = None
+    fit_format: FitsInfoBase = FitsInfoBase
 
     @property
     @abstractmethod

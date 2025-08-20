@@ -4,6 +4,7 @@ from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
 from src import logics
+from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
 from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
 from src.api.requests.edit_request.create_image_request import CreateImageRequest
@@ -52,13 +53,14 @@ def create_img_logic(request: CreateImageForVideoRequest):
     #     auto_contrast_percentiles = request.auto_contrast_percentiles
     # )
 
-    recipe = VideoRecipe.get_recipe_by_request(request)
-    for k, v in vars(recipe).items():
-        print(f"{k} = {v}")
+    recipe = ImageRecipe.get_recipe_by_request(request)
+    # for k, v in vars(recipe).items():
+    #     print(f"{k} = {v}")
     orchestrator.create_image_for_video(recipe, request.frame_number)
 
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
+
 
 
 # Пример функции, которая выполняет тяжелую операцию по созданию видео

@@ -1,13 +1,16 @@
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
 
 from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
+from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.file import file, get_name_files
 from src.file.file import FitsInfoBase, FitsInfo
+from src.file.fits_formats import fits_formats
 from src.graphics import graphics
-from src.logics.logicks import get_dark_avg
+from src.logics.logicks import get_dark_avg, get_dark
 from src.models.dark_data_model import DarkData
 from src.file.file import class_registry
 from src.pipeline.utils import graphics_helpers
@@ -27,6 +30,8 @@ class BaseRecipes:
     fit_format: type[FitsInfoBase] = FitsInfo
     dark: bool = False
     dark_file_name: str = "DARK"
+    dark_file_path: list[Path] = []
+    dark_data: list[DarkData] = []
     zipped_file: bool = True
     remove_single_pixels: bool = False
     correct_matrix_path: str = None
@@ -71,6 +76,27 @@ class BaseRecipes:
             fit_format=self.fit_format
         )
 
+    def open_dark_by_datetime(self, need_time: datetime) -> tuple[DarkData, DarkData]:
+        dates_np = np.array([e.time for e in self.dark_data])
+        mask = (dates_np[:-1] <= need_time) & (need_time <= dates_np[1:])
+        idx = np.where(mask)[0]
+        i = idx[0]
+        self.dark_start = self.dark_data[i]
+        self.dart_end = self.dark_data[i+1]
+        return self.dark_start, self.dart_end
+
+    def get_dark_files(self) -> list[DarkData]:
+        if len(self.dark_file_path) > 0:
+            self.dark_data = []
+            for path in self.dark_file_path:
+                info, data = file.open_gz(path, _zip=self.zipped_file)
+                info = self.fit_format(info)
+                time = info.get_datetime()
+                dark_f = DarkData(data, time)
+                self.dark_data.append(dark_f)
+
+            self.dark_data.sort(key=lambda e: e.time)
+        return self.dark_data
 
     def get_names_files(self) -> list[str]:
         self.files_names = file.get_name_files(self.root_path)
@@ -87,9 +113,13 @@ class BaseRecipes:
 
     @classmethod
     def get_recipe_by_request(
-            cls, request: CreateImageRequest|CreateHeatmapRequest|CreateImageForVideoRequest|CreateVideoRequest
+            cls, request:
+            CreateImageRequest|CreateHeatmapRequest
+            |CreateImageForVideoRequest|CreateVideoRequest
+            |CreateImageDbRequest
     ):
-        if cls.__name__ in ["ImageRecipe", "HeatmapRecipe", "VideoRecipe"]:
+        if ((hasattr(request, "files_list") and hasattr(request, "data_path"))
+                and cls.__name__ in ["ImageRecipe", "HeatmapRecipe", "VideoRecipe"]):
             recipe = cls(request.files_list, request.data_path)
         else:
             recipe = cls()

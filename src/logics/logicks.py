@@ -78,8 +78,6 @@ def subtract_noise_frame(dark1, dark2, time1, time2, data, date_time):
 
     k1 = (date_time - time1) / (time2-time1)
     k2 = (time2 - date_time) / (time2-time1)
-    # print(f"k: {k1} | {k2}")
-    # print(f"time: {time1} | {time2} | {time2-time1}")
 
     fix_data = data.copy()
     fix_data = fix_data - (dark1*k2 + dark2*k1)/2

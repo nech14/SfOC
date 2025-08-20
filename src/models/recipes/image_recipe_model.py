@@ -4,7 +4,7 @@ from src.file.file import FitsInfoBase, FitsInfo
 from src.models.recipes.base_recipes_model import BaseRecipes
 
 class ImageRecipe(BaseRecipes):
-    def __init__(self, files_names, root_path: Path, correct_matrix_path=None):
+    def __init__(self, files_names:list[str]=None, root_path: Path=None, correct_matrix_path=None):
         self.root_path: Path = root_path
         self.files_names: list[str] = files_names
         self.files_path: list[Path] = []
