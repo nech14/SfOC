@@ -3,7 +3,7 @@ import os
 from concurrent.futures import ProcessPoolExecutor
 
 
-rout_root = os.getenv("rout_root")
+rout_root = os.getenv("rout_root", "")
 DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "yes")
 video_tasks_count = os.getenv("video_tasks_count", 2)
 img_tasks_count = os.getenv("img_tasks_count", 3)
@@ -18,5 +18,8 @@ img_executor = ProcessPoolExecutor(max_workers=img_tasks_count)
 
 running_tasks_name = []
 running_tasks = []
+
+ip = "0.0.0.0"
+port = 8000
 
 

@@ -1,8 +1,12 @@
 
 
 import os
+
+import uvicorn
+
+import config
 from config import rout_root, running_tasks_name, running_tasks
-from src.api.routers import editor_router, database_router, edit_router
+from src.api.routers import editor_router, database_router, edit_router, edit_by_database_router
 from src.api.api_tags import tags, ApiTags
 from src import file
 from fastapi import FastAPI
@@ -15,6 +19,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": tags[0], "description": "Эндпоинты работы с задачами"},
         {"name": tags[3], "description": "Эндпоинты работы с картинками"},
+        {"name": tags[4], "description": "Эндпоинты работы с картинками"},
         {"name": tags[1], "description": "Эндпоинты работы с картинками"},
         {"name": tags[2], "description": "Эндпоинты работы с картинками"},
     ]
@@ -23,6 +28,7 @@ app = FastAPI(
 app.include_router(database_router.router)
 app.include_router(editor_router.router)
 app.include_router(edit_router.router)
+app.include_router(edit_by_database_router.router)
 static_path = os.path.join(os.path.dirname(__file__), "src", "api", "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
@@ -54,3 +60,6 @@ async def remove_task(task_id: str):
     else:
         return {"status": f"Running_tasks: {len(running_tasks)}"}
 
+
+if __name__ == "__main__":
+    uvicorn.run(app, host=config.ip, port=config.port)
