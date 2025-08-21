@@ -1,16 +1,13 @@
+
 from datetime import datetime
 from pathlib import Path
-
 import numpy as np
-
 from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
-from src.file import file, get_name_files
+from src.file import file
 from src.file.file import FitsInfoBase, FitsInfo
-from src.file.fits_formats import fits_formats
-from src.graphics import graphics
-from src.logics.logicks import get_dark_avg, get_dark
+from src.logics.logicks import get_dark_avg
 from src.models.dark_data_model import DarkData
 from src.file.file import class_registry
 from src.pipeline.utils import graphics_helpers

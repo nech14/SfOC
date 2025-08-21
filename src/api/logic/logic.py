@@ -53,7 +53,7 @@ def create_img_logic(request: CreateImageForVideoRequest):
     #     auto_contrast_percentiles = request.auto_contrast_percentiles
     # )
 
-    recipe = ImageRecipe.get_recipe_by_request(request)
+    recipe = VideoRecipe.get_recipe_by_request(request)
     # for k, v in vars(recipe).items():
     #     print(f"{k} = {v}")
     orchestrator.create_image_for_video(recipe, request.frame_number)
@@ -63,7 +63,6 @@ def create_img_logic(request: CreateImageForVideoRequest):
 
 
 
-# Пример функции, которая выполняет тяжелую операцию по созданию видео
 def create_video_logic(request: CreateVideoRequest):
     #  logics.create_video(
     #     names_files=request.files_list,

@@ -10,7 +10,7 @@ from src.models.recipes.base_recipes_model import BaseRecipes
 class AbstractImg(ABC):
 
     filename: str|None = None
-    fit_format: FitsInfoBase = FitsInfoBase
+    fit_format: FitsInfoBase|None = None
 
     @property
     @abstractmethod

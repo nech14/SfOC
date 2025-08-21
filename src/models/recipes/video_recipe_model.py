@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cv2
 from matplotlib import pyplot as plt
 
@@ -20,9 +22,9 @@ class VideoRecipe(BaseRecipes):
     xmax_diff: float | None = None
     ymax_diff: float | None = None
 
-    def __init__(self, names_files,  root_path: str, correct_matrix_path=None):
+    def __init__(self, names_files: list[str]=None,  root_path: Path=None, correct_matrix_path:Path=None):
         self.names_files: list[str] = names_files
-        self.root_path: str = root_path
+        self.root_path: Path = root_path
         self.auto_contrast = True
         self.cut = True
         self.remove_single_pixels: bool = True

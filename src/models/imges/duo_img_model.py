@@ -22,6 +22,10 @@ class DuoImg(AbstractImg):
         return self.img_first.data, self.img_second.data
 
     @property
+    def fit_format(self) -> FitsInfoBase:
+        return self.img_first.fit_format
+
+    @property
     def view_data(self):
         if self._view_data is None:
             return self.data #need fix

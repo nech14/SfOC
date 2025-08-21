@@ -67,7 +67,6 @@ async def create_img(request: CreateImageRequest):
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
 
 
-# Создаём POST-эндпоинт
 @router.post(f"{rout_root}/create_video", tags=[ApiTags.Edit.value])
 async def create_video_endpoint(request: CreateVideoRequest):
     async with video_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -89,7 +88,6 @@ async def create_video_endpoint(request: CreateVideoRequest):
         )
 
 
-# Эндпоинт
 @router.post(f"{rout_root}/create_image_for_video", tags=[ApiTags.Edit.value])
 async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
