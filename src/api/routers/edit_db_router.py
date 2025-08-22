@@ -15,13 +15,12 @@ from src.api.requests.edit_db_request.create_image_db_request import CreateImage
 from src.api.requests.edit_db_request.create_image_for_video_db_request import CreateImageForVideoDbRequest, \
     CreateImageForVideoDbInternal
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbRequest, CreateVideoDbInternal
-from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
-
 from src.database.database import Session
-from src.database.models.models import Background, BackgroundsAll, Frames
-from src.models.recipes.image_recipe_model import ImageRecipe
-from src.models.recipes.video_recipe_model import VideoRecipe
+from src.database.models.models import BackgroundsAll, Frames
+from src.models.recipes_models.image_recipe_model import ImageRecipe
+from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
+from src.utils.common.common import print_vars
 
 router = APIRouter(prefix="/editDB", tags=[ApiTags.EditDatabase.value])
 
@@ -216,8 +215,7 @@ def create_video_image_db_logic(request: CreateImageForVideoDbRequest):
     if req.dark:
         recipe.dark_file_path = [path.dest for path in get_dark_frames(req.id_night)]
 
-    for k, v in vars(recipe).items():
-        print(f"{k} = {v}")
+    print_vars(recipe)
     orchestrator.create_image_for_video(recipe, req.frame_number)
 
 
@@ -236,8 +234,7 @@ def create_image_db_logic(request: CreateImageDbRequest):
     if req.dark:
         recipe.dark_file_path = [path.dest for path in get_dark_frames(frameModel.id_night)]
 
-    for k, v in vars(recipe).items():
-        print(f"{k} = {v}")
+    print_vars(recipe)
     orchestrator.create_image(recipe)
 
     return os.path.join(req.save_folder, f'{req.file_name}.png')

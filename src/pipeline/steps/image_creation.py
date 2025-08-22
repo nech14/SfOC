@@ -2,8 +2,8 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.models.imges.duo_img_model import DuoImg
-from src.models.recipes.video_recipe_model import VideoRecipe
+from src.models.images_models.duo_img_model import DuoImg
+from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.utils.helpers import drive_to_color_palette, create_hists
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
 from src.pipeline.utils.save import save_heat_map

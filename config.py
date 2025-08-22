@@ -21,5 +21,6 @@ running_tasks = []
 
 ip = "0.0.0.0"
 port = 8000
+DATABASE_URL = "mysql+pymysql://root@192.168.0.19:3306/api_test"
 
 

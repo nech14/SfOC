@@ -5,12 +5,12 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.models.imges.abstract_img import AbstractImg
-from src.models.imges.duo_img_model import DuoImg
-from src.models.recipes.base_recipes_model import BaseRecipes
-from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
-from src.models.recipes.image_recipe_model import ImageRecipe
-from src.models.recipes.video_recipe_model import VideoRecipe
+from src.models.images_models.abstract_img import AbstractImg
+from src.models.images_models.duo_img_model import DuoImg
+from src.models.recipes_models.base_recipes_model import BaseRecipes
+from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
+from src.models.recipes_models.image_recipe_model import ImageRecipe
+from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.utils.save import create_mp4
 
 def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:

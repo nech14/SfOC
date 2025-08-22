@@ -3,13 +3,13 @@ from pathlib import Path
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.models.hist_limits import HistLimits
-from src.models.imges.abstract_img import AbstractImg
-from src.models.imges.duo_img_model import DuoImg
-from src.models.imges.img_model import Img
-from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
-from src.models.recipes.image_recipe_model import ImageRecipe
-from src.models.recipes.video_recipe_model import VideoRecipe
+from src.models.common_models.hist_limits import HistLimits
+from src.models.images_models.abstract_img import AbstractImg
+from src.models.images_models.duo_img_model import DuoImg
+from src.models.images_models.img_model import Img
+from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
+from src.models.recipes_models.image_recipe_model import ImageRecipe
+from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.base_pipelines.base_operations import base_operation_with_img
 from src.pipeline.steps.contrast import auto_contrast_result
 from src.pipeline.steps.histogram import create_hist

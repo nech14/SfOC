@@ -3,18 +3,19 @@ from datetime import datetime
 
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
-from src import logics
-from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
+
+from src.api.base_api import class_registry
 from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
 from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
 from src.api.requests.edit_request.create_image_request import CreateImageRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesRequest
-from src.file import class_registry, file
-from src.models.recipes.image_recipe_model import ImageRecipe
-from src.models.recipes.video_recipe_model import VideoRecipe
+from src.models.recipes_models.image_recipe_model import ImageRecipe
+from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
 from src.pipeline.utils.helpers import get_dark, get_dark_avg
+from src.utils.file import file
+from src.utils.logics import old_logicks
 
 
 def create_img_logic(request: CreateImageForVideoRequest):
@@ -250,7 +251,7 @@ def create_image_logic(request: CreateImageRequest):
 
 
 def create_heatmap_logic(request: CreateHeatmapRequest):
-    logics.create_heatmap(
+    old_logicks.create_heatmap(
         names=request.files_list,
         new_path=request.data_path,
         start_file=request.first_frame_number,

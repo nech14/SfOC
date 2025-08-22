@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
 
-from src.file import file
-from src.models.imges.img_model import Img
-from src.models.recipes.base_recipes_model import BaseRecipes
-from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
-from src.models.recipes.image_recipe_model import ImageRecipe
+from src.models.images_models.img_model import Img
+from src.models.recipes_models.base_recipes_model import BaseRecipes
+from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
+from src.models.recipes_models.image_recipe_model import ImageRecipe
+from src.utils.file import file
 
 
 def get_image(recipe: ImageRecipe) -> Img:

@@ -1,25 +1,21 @@
 import os
-import pdb
 from pathlib import Path
 from asyncio import Queue
-from typing import Iterable, Any
-
 import numpy as np
 from textual import on
 from textual.app import App, ComposeResult
 from textual.await_complete import AwaitComplete
-from textual.containers import Horizontal, VerticalScroll, Grid, Container
-from textual.dom import DOMNode
-from textual.reactive import Reactive, var
+from textual.containers import Horizontal, VerticalScroll, Container
 from textual.screen import Screen, ModalScreen
 from textual.widgets import DirectoryTree, Footer, Header, Static, Button, Label, Log, Input, SelectionList
 from textual.widgets._directory_tree import DirEntry
 from textual.widgets.selection_list import Selection
 
 import psutil
-from src import logics
 from textual.widgets._tree import TreeNode, Tree
 from textual.worker import WorkerCancelled, WorkerFailed
+
+from src.utils.logics import old_logicks
 
 ERROR_TEXT = """
 An error has occurred. To continue:
@@ -383,10 +379,9 @@ class DirectoryTreeApp(App):
 
     def create_heatmap(self, bool):
         if bool:
-            new_path, names = logics.get_names(self.tree.selected[-1])
+            new_path, names = old_logicks.get_names(self.tree.selected[-1])
             save_dir = os.path.normpath(str(self.save_dir_container.renderable))
-            logics.create_heatmap(names, new_path, save_folder=save_dir, title="heatmap", auto_contrast=False, edges=15, limit=10000)
-        pass
+            old_logicks.create_heatmap(names, new_path, save_folder=save_dir, title="heatmap", auto_contrast=False, edges=15, limit=10000)
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""

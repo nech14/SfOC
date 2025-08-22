@@ -5,13 +5,15 @@ from typing import Tuple, Union, List
 import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
-from src.file import file
-from src.models.dark_data_model import DarkData
-from src.models.imges.abstract_img import AbstractImg
 import matplotlib.patches as mpatches
 
+from src.models.common_models.dark_data_model import DarkData
+from src.models.fits_models.fits import FitsInfo
+from src.models.images_models.abstract_img import AbstractImg
+from src.utils.file import file
 
-def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.FitsInfo) -> (
+
+def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=FitsInfo) -> (
         None|tuple[np.ndarray, np.ndarray]
 ):
     if check_name in names[0]:
@@ -36,7 +38,7 @@ def get_dark(names, new_path, check_name="DARK", _zip=True, fit_format=file.Fits
     return buf, buf_time
 
 
-def get_dark_avg(names, root_path, dark_name="DARK", _zip=True, fit_format=file.FitsInfo) -> DarkData:
+def get_dark_avg(names, root_path, dark_name="DARK", _zip=True, fit_format=FitsInfo) -> DarkData:
     dark_data, times = get_dark(names, root_path, dark_name, _zip=_zip, fit_format=fit_format)
     data_avg = (np.mean(dark_data, axis=0))
 

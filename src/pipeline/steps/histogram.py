@@ -1,8 +1,8 @@
 import numpy as np
 
+from src.models.images_models.img_model import Img
+from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.pipeline.utils.helpers import create_hists
-from src.models.imges.img_model import Img
-from src.models.recipes.heatmap_recipe_model import HeatmapRecipe
 
 
 def create_hist(recipe: HeatmapRecipe, img: Img) -> np.ndarray:
