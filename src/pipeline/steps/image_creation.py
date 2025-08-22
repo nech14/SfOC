@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.models.images_models.duo_img_model import DuoImg
+from src.models.images_models.video_img_model import VideoImg
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.utils.helpers import drive_to_color_palette, create_hists
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
 from src.pipeline.utils.save import save_heat_map
 
 
-def create_image_with_hist(recipe: VideoRecipe, duo_img: DuoImg, diff_last=None) -> DuoImg:
+def create_image_with_hist(recipe: VideoRecipe, duo_img: VideoImg, diff_last=None) -> VideoImg:
     if not recipe.hist:
         return duo_img
 
@@ -35,7 +35,7 @@ def create_image_with_hist(recipe: VideoRecipe, duo_img: DuoImg, diff_last=None)
     duo_img.view_data = cv2.vconcat([img, img_hist_BGR])
     return duo_img
 
-def create_base_img_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> DuoImg:
+def create_base_img_for_video(recipe: VideoRecipe, duo_img: VideoImg) -> VideoImg:
     duo_img.view_data = create_img_for_video(
         duo_img.img_first.data,
         duo_img.img_second.data,

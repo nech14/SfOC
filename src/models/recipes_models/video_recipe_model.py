@@ -1,8 +1,12 @@
+from datetime import datetime
 from pathlib import Path
 
 import cv2
+import numpy as np
 from matplotlib import pyplot as plt
 
+from src.models.common_models.dark_data_model import DarkData
+from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.utils.logics import old_logicks
 
 
@@ -12,6 +16,9 @@ class VideoRecipe(BaseRecipes):
     counts_checks: int = 1
     check_frame: list[int]|None = None
     bins: int = 100
+
+    dark_first_frame: tuple[DarkData, DarkData] = None
+    dark_second_frame: tuple[DarkData, DarkData] = None
 
     xmin_data: float | None = None
     xmax_data: float | None = None
@@ -39,6 +46,18 @@ class VideoRecipe(BaseRecipes):
         self.fps = 30/60
         self.file_name: str|None = None
         self.frame_name: str|None = None
+
+    def _open_dark_two_dates(self, dt1: datetime, dt2: datetime) -> tuple[tuple[DarkData, DarkData], tuple[DarkData, DarkData]]:
+        dates_np = np.array([e.time for e in self.dark_data])
+        mask1 = (dates_np[:-1] <= dt1) & (dt1 <= dates_np[1:])
+        mask2 = (dates_np[:-1] <= dt2) & (dt2 <= dates_np[1:])
+        idx1 = np.where(mask1)[0]
+        idx2 = np.where(mask2)[0]
+        i1 = idx1[0]
+        i2 = idx2[0]
+        self.dark_first_frame = (self.dark_data[i1], self.dark_data[i1 + 1])
+        self.dark_second_frame = (self.dark_data[i2], self.dark_data[i2 + 1])
+        return self.dark_first_frame, self.dark_second_frame
 
     def found_limits(self):
         (self.xmin_data, self.xmax_data,

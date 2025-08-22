@@ -10,7 +10,7 @@ def use_dark_frames_image(recipe: BaseRecipes, img: AbstractImg) -> None:
             recipe.get_dark_files()
 
         # if recipe.dark_start is None a recipe.dark_start is None:
-        recipe.open_dark_by_datetime(img.fit_format.get_datetime())
+        recipe.open_dark_by_datetime(img.get_datetime())
 
         # plt.subplot(121)
         # plt.imshow(recipe.dark_start.frame)
@@ -18,7 +18,7 @@ def use_dark_frames_image(recipe: BaseRecipes, img: AbstractImg) -> None:
         # plt.imshow(recipe.dart_end.frame)
         # plt.show()
 
-        img.dark_frames(recipe.dark_start, recipe.dart_end)
+        img.dark_frames_by_recipe(recipe)
 
 
 def remove_single_pixels_image(recipe: BaseRecipes, img: AbstractImg) -> None:

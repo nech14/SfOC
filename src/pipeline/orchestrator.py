@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 
 from src.models.common_models.hist_limits import HistLimits
 from src.models.images_models.abstract_img import AbstractImg
-from src.models.images_models.duo_img_model import DuoImg
+from src.models.images_models.video_img_model import VideoImg
 from src.models.images_models.img_model import Img
 from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes_models.image_recipe_model import ImageRecipe
@@ -77,10 +77,10 @@ def create_heatmap(recipe: HeatmapRecipe) -> None:
     save_heatmap_image(recipe, transposed_data, info_for_heatmap, False)
 
 
-def create_image_for_video(recipe: VideoRecipe, frame_number:int, last_diff: list | None = None) -> DuoImg:
+def create_image_for_video(recipe: VideoRecipe, frame_number:int, last_diff: list | None = None) -> VideoImg:
     img1 = get_images_by_number(recipe, frame_number)
     img2 = get_images_by_number(recipe, frame_number + 1)
-    duo_img = DuoImg(img1, img2)
+    duo_img = VideoImg(img1, img2)
 
     base_operation_with_img(recipe, duo_img)
     create_base_img_for_video(recipe, duo_img)
@@ -89,8 +89,8 @@ def create_image_for_video(recipe: VideoRecipe, frame_number:int, last_diff: lis
     save_image_for_video(recipe, duo_img)
     return duo_img
 
-def create_images_for_video(recipe: VideoRecipe) -> list[DuoImg]:
-    frames: list[DuoImg] = []
+def create_images_for_video(recipe: VideoRecipe) -> list[VideoImg]:
+    frames: list[VideoImg] = []
     last_diff = None
     for frame_id in range(recipe.first_frame_number, recipe.last_frame_number):
         print(f"create: {frame_id}")

@@ -1,9 +1,11 @@
 import os
 import pickle
+from datetime import datetime
 
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
 from src.models.images_models.abstract_img import AbstractImg
+from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
 from src.utils.graphics import old_graphics
 from src.utils.logics import old_logicks
@@ -37,6 +39,9 @@ class Img(AbstractImg):
             return self.data
         return self._view_data
 
+    def get_datetime(self) -> datetime:
+        return self.fit_format.get_datetime()
+
     def remove_single_pixels(self) -> 'Img':
         self.data = old_graphics.remove_single_pixels(self.data, False, False, False)
         return self
@@ -50,6 +55,9 @@ class Img(AbstractImg):
             self.data, time
         )
         return self
+
+    def dark_frames_by_recipe(self, recipe: BaseRecipes) -> 'Img':
+        return self.dark_frames(recipe.dark_start, recipe.dart_end)
 
     def correct_matrix(self, correct_matrix, multiplication=True) -> 'Img':
         if multiplication:

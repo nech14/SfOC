@@ -5,8 +5,8 @@ import os
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
-from src import logics
-from src import file
+from src.utils.common.fits_formats import fits_formats
+from src.utils.logics import old_logicks
 from concurrent.futures import ProcessPoolExecutor
 
 from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
@@ -24,7 +24,7 @@ img_task_semaphore = asyncio.Semaphore(3)  # Одновременно можно
 video_executor = ProcessPoolExecutor(max_workers=2)
 img_executor = ProcessPoolExecutor(max_workers=3)
 
-class_registry = file.class_registry
+class_registry = fits_formats
 
 running_tasks_name = []
 running_tasks = []
@@ -50,7 +50,7 @@ async def root():
 
 # Пример функции, которая выполняет тяжелую операцию по созданию видео
 def create_video_logic(request: CreateVideoRequest):
-    return logics.create_video(
+    return old_logicks.create_video(
         names_files=request.files_list,
         new_path=rf"{request.data_path}",
         start_i=request.first_frame_number,
@@ -112,7 +112,7 @@ async def create_video_endpoint(request: CreateVideoRequest):
 
 
 def create_img_logic(request: CreateImageForVideoRequest):
-    logics.create_img_for_video(
+    old_logicks.create_img_for_video(
         names_files=request.files_list,
         root_path=request.data_path,
         first_frame_number=request.frame_number,
@@ -189,7 +189,7 @@ async def remove_task(task_id: str):
 
 
 def create_image_logic(request: CreateImageRequest):
-    logics.create_image(
+    old_logicks.create_image(
         names_files=request.files_list,
         root_path=request.data_path,
         number=request.frame_number,
@@ -244,7 +244,7 @@ async def create_img(request: CreateImageRequest):
 
 
 def create_heatmap_logic(request: CreateHeatmapRequest):
-    logics.create_heatmap(
+    old_logicks.create_heatmap(
         names=request.files_list,
         new_path=request.data_path,
         start_file=request.first_frame_number,

@@ -23,6 +23,8 @@ from skimage.util import img_as_float
 from skimage import io
 from PIL import Image
 
+from src.models.fits_models.abstract_fits import FitsInfoAbstract
+from src.models.fits_models.fits import FitsInfo
 from src.models.fits_models.fits_2014 import FitsInfo2014
 from src.utils.file import file
 from src.utils.graphics import old_graphics
@@ -1743,7 +1745,7 @@ def start_1(names_files, new_path):
 
 
 
-def work_with_date(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits=file.FitsInfo):
+def work_with_date(names_files, new_path, i, percent_to_trim=0.1, _zip=False, type_fits:FitsInfoAbstract=FitsInfo):
     name_path = os.path.join(new_path, names_files[i])
     info, data = file.open_gz(name_path, _zip=_zip)
     # data = data[0]
@@ -1837,7 +1839,7 @@ def base_lvl(names_files, new_path):
     percent_to_trim = 0.1
 
     data, data1, diff, info, info1 = work_with_date(names_files, new_path, i, percent_to_trim=percent_to_trim,
-                                                    _zip=_zip, type_fits=file.FitsInfo2014)
+                                                    _zip=_zip, type_fits=FitsInfo2014)
 
     plt.subplot(431)
     plt.imshow(data, cmap="gray", vmax=pp*2)

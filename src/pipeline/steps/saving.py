@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from src.models.images_models.abstract_img import AbstractImg
-from src.models.images_models.duo_img_model import DuoImg
+from src.models.images_models.video_img_model import VideoImg
 from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes_models.image_recipe_model import ImageRecipe
@@ -76,7 +76,7 @@ def save_heatmap_image(recipe: HeatmapRecipe, transposed_data, info_for_heatmap,
     plt.close()
 
 
-def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
+def save_image_for_video(recipe: VideoRecipe, duo_img: VideoImg) -> None:
     if recipe.save_folder is None or recipe.save_folder == "":
         return
 
@@ -96,7 +96,7 @@ def save_image_for_video(recipe: VideoRecipe, duo_img: DuoImg) -> None:
     plt.close()
 
 
-def save_video(recipe: VideoRecipe, frames: list[DuoImg]) -> Path:
+def save_video(recipe: VideoRecipe, frames: list[VideoImg]) -> Path:
     save_folder_video = recipe.save_folder_video
     if save_folder_video is None:
         save_folder_video = recipe.name_file_video

@@ -9,9 +9,9 @@ from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
 from src.models.fits_models.fits import FitsInfo
 from src.pipeline.utils import graphics_helpers
-from src.pipeline.utils.helpers import get_dark_avg
 from src.utils.common.fits_formats import fits_formats
 from src.utils.file import file
+from src.utils.logics.old_logicks import get_dark_avg #OLD
 
 
 class BaseRecipes:
@@ -74,14 +74,29 @@ class BaseRecipes:
             fit_format=self.fit_format
         )
 
-    def open_dark_by_datetime(self, need_time: datetime) -> tuple[DarkData, DarkData]:
+    def open_dark_by_datetime(
+            self,
+            need_time: datetime | tuple[datetime, datetime]
+    ) -> tuple[DarkData, DarkData]:
+        if isinstance(need_time, tuple):
+            return self._open_dark_two_dates(*need_time)
+        else:
+            return self._open_dark_one_date(need_time)
+
+
+    def _open_dark_one_date(self, dt) -> tuple[DarkData, DarkData]:
         dates_np = np.array([e.time for e in self.dark_data])
-        mask = (dates_np[:-1] <= need_time) & (need_time <= dates_np[1:])
+        mask = (dates_np[:-1] <= dt) & (dt <= dates_np[1:])
         idx = np.where(mask)[0]
         i = idx[0]
         self.dark_start = self.dark_data[i]
-        self.dart_end = self.dark_data[i+1]
+        self.dart_end = self.dark_data[i + 1]
         return self.dark_start, self.dart_end
+
+
+    def _open_dark_two_dates(self, dt1, dt2):
+        raise NotImplementedError
+
 
     def get_dark_files(self) -> list[DarkData]:
         if len(self.dark_file_path) > 0:

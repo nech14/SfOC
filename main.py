@@ -1,16 +1,14 @@
 
 
 import os
-
 import uvicorn
-
 import config
 from src.api.routers import editor_router, database_router, edit_router, edit_db_router, task_router
 from src.api.api_tags import tags
-from src import file
 from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
-from src.editor.editor import Editor
+from src.utils.common.fits_formats import fits_formats
+from src.utils.editor.editor import Editor
 from src.logging.logging import setup_logging
 
 
@@ -36,6 +34,6 @@ if __name__ == "__main__":
 
     editor: Editor | None = None
 
-    class_registry = file.class_registry
+    class_registry = fits_formats
 
     uvicorn.run(app, host=config.ip, port=config.port)

@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
+
 import matplotlib.pyplot as plt
 
 from src.models.common_models.dark_data_model import DarkData
@@ -30,6 +32,10 @@ class AbstractImg(ABC):
         pass
 
     @abstractmethod
+    def dark_frames_by_recipe(self, recipe: BaseRecipes) -> 'AbstractImg':
+        pass
+
+    @abstractmethod
     def correct_matrix(self, correct_matrix, multiplication=True) -> 'AbstractImg':
         pass
 
@@ -49,6 +55,9 @@ class AbstractImg(ABC):
     def save_rayleigh_matrix(self, folder: str, filename: str) -> None:
         pass
 
+    @abstractmethod
+    def get_datetime(self) -> datetime:
+        pass
 
     def show(self, recipe: BaseRecipes) -> None:
         plt.imshow(self.view_data)
