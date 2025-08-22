@@ -13,98 +13,24 @@ from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesReq
 from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
-from src.pipeline.utils.helpers import get_dark, get_dark_avg
+from src.utils.common.common import print_vars
+from src.utils.logics.work_with_dark import get_dark, get_dark_avg
 from src.utils.file import file
 from src.utils.logics import old_logicks
 
 
-def create_img_logic(request: CreateImageForVideoRequest):
-    # logics.create_img_for_video(
-    #     names_files=request.files_list,
-    #     root_path=request.data_path,
-    #     first_frame_number=request.frame_number,
-    #     last_frame_number=request.frame_number + 1,
-    #     flag_info=request.flag_info,
-    #     name=request.general_title,
-    #     cut=request.cut,
-    #     percent_to_trim=request.percent_to_trim,
-    #     names=request.frame_title,
-    #     save_folder=request.save_folder,
-    #     figsize=request.figsize,
-    #     fit_format=class_registry[request.fit_format],
-    #     dark=request.dark,
-    #     dark_name=request.dark_name,
-    #     _zip=request.zip,
-    #     hists=request.hist,
-    #     remove_single_pixels=request.remove_single_pixels,
-    #     correct_matrix=request.correct_matrix,
-    #     Rayleigh=request.Rayleigh,
-    #     result_matrix_safe_folder=request.result_matrix_safe_folder,
-    #     type_diff = request.type_diff,
-    #     bins=request.bins,
-    #     counts_checks=1,
-    #     check_frame=None,
-    #     logfun=None,
-    #     data_index=request.data_index,
-    #     file_name=request.file_name,
-    #     multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
-    #     upper_limit=request.upper_limit,
-    #     lower_limit=request.lower_limit,
-    #     auto_contrast = request.auto_contrast,
-    #     auto_contrast_percentiles = request.auto_contrast_percentiles
-    # )
-
+def create_video_image_logic(request: CreateImageForVideoRequest):
     recipe = VideoRecipe.get_recipe_by_request(request)
-    # for k, v in vars(recipe).items():
-    #     print(f"{k} = {v}")
-    orchestrator.create_image_for_video(recipe, request.frame_number)
 
+    print_vars(recipe)
+    orchestrator.create_image_for_video(recipe, request.frame_number)
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
 
 def create_video_logic(request: CreateVideoRequest):
-    #  logics.create_video(
-    #     names_files=request.files_list,
-    #     new_path=rf"{request.data_path}",
-    #     start_i=request.first_frame_number,
-    #     end_i=request.last_frame_number,
-    #     name_file=request.name_file,
-    #     flag_info=request.flag_info,
-    #     name=request.general_title,
-    #     cut=request.cut,
-    #     names=request.frame_title,
-    #     save_folder=fr"{request.save_folder}",
-    #     save_folder_video=request.save_folder_video,
-    #     save_img=request.save_img,
-    #     name_img_folder=request.name_img_folder,
-    #     name_video_folder=request.name_video_folder,
-    #     dark=request.dark,
-    #     dark_name=request.dark_file_name,
-    #     fit_format=class_registry[request.fit_format],
-    #     _zip=request.zipped_file,
-    #     hists=request.hist,
-    #     remove_single_pixels=request.remove_single_pixels,
-    #     correct_matrix=request.correct_matrix_path,
-    #     Rayleigh=request.rayleigh,
-    #     result_matrix_safe_folder=request.result_matrix_safe_folder,
-    #     type_diff=request.type_diff,
-    #     counts_checks=request.counts_checks,
-    #     check_frame=request.check_frame,
-    #     bins=request.bins,
-    #     fps=request.fps,
-    #     frames_s=request.frames_s,
-    #     data_index=request.data_index,
-    #     multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
-    #     upper_limit=request.upper_limit,
-    #     lower_limit=request.lower_limit,
-    #     auto_contrast = request.auto_contrast,
-    #     auto_contrast_percentiles = request.auto_contrast_percentiles
-    # )
-
     recipe = VideoRecipe.get_recipe_by_request(request)
-
     return orchestrator.create_video(recipe)
 
 
@@ -217,31 +143,6 @@ def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
 
 
 def create_image_logic(request: CreateImageRequest):
-    # logics.create_image(
-    #     names_files=request.files_list,
-    #     root_path=request.data_path,
-    #     number=request.frame_number,
-    #     flag_info=request.flag_info,
-    #     name=request.general_title,
-    #     cut=request.cut,
-    #     percent_to_trim=request.percent_to_trim,
-    #     save_folder=request.save_folder,
-    #     figsize=request.figsize,
-    #     fit_format=class_registry[request.fit_format],
-    #     dark=request.dark,
-    #     dark_name=request.dark_file_name,
-    #     _zip=request.zipped_file,
-    #     remove_single_pixels=request.remove_single_pixels,
-    #     correct_matrix=request.correct_matrix_path,
-    #     Rayleigh=request.rayleigh,
-    #     result_matrix_safe_folder=request.result_matrix_save_folder,
-    #     logfun=None,
-    #     data_index=request.data_index,
-    #     file_name=request.file_name,
-    #     multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
-    #     auto_contrast = request.auto_contrast,
-    #     auto_contrast_percentiles = request.auto_contrast_percentiles
-    # )
     recipe = ImageRecipe.get_recipe_by_request(request)
 
     orchestrator.create_image(recipe)
