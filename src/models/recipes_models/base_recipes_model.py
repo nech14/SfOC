@@ -2,21 +2,23 @@
 from datetime import datetime
 from pathlib import Path
 import numpy as np
+from pydantic import BaseModel
+
 from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
 from src.models.fits_models.fits import FitsInfo
-from src.pipeline.utils import graphics_helpers
 from src.utils.common.fits_formats import fits_formats
 from src.utils.file import file
-from src.utils.logics.old_logicks import get_dark_avg #OLD
+from src.utils.logics.work_with_correct_matrix import create_correct_matrix
+from src.utils.logics.work_with_dark import get_dark_avg
 
 
 class BaseRecipes:
-    files_names: list[str] | None = None
-    root_path: str
+    files_names: list[str] = []
+    root_path: Path
     files_path: list[Path] = []
     frame_number: int
     flag_info: bool = False
@@ -32,7 +34,7 @@ class BaseRecipes:
     dark_data: list[DarkData] = []
     zipped_file: bool = True
     remove_single_pixels: bool = False
-    correct_matrix_path: str = None
+    correct_matrix_path: Path = None
     use_correct_matrix: bool = False
     rayleigh: bool = False
     result_matrix_save_folder: str = None
@@ -48,13 +50,22 @@ class BaseRecipes:
     dark_start: DarkData = None
     dart_end: DarkData = None
 
+    def get_frames_len(self):
+        if self.files_path is None or len(self.files_path) == 0:
+            self.get_path_files()
+        if len(self.files_names) > 0:
+            return len(self.files_names)
+        if len(self.files_path) > 0:
+            return len(self.files_path)
+        return 0
+
 
     def open_correct_matrix(self):
         # self.correct_matrix = graphics.create_correct_matrix(2, 2048, self.correct_matrix_path)
-        self.correct_matrix = graphics_helpers.create_correct_matrix_new(
+        self.correct_matrix = create_correct_matrix(
+            self.correct_matrix_path,
             2,
-            2048
-            ,Path(self.correct_matrix_path)
+            2048,
         )
 
 
@@ -129,13 +140,22 @@ class BaseRecipes:
             cls, request:
             CreateImageRequest|CreateHeatmapRequest
             |CreateImageForVideoRequest|CreateVideoRequest
-            |CreateImageDbRequest
+            |CreateImageDbRequest|BaseModel
     ):
         if ((hasattr(request, "files_list") and hasattr(request, "data_path"))
-                and cls.__name__ in ["ImageRecipe", "HeatmapRecipe", "VideoRecipe"]):
+                and cls.__name__ in ["ImageRecipe", "VideoRecipe"]):
             recipe = cls(request.files_list, request.data_path)
         else:
             recipe = cls()
+
+        if hasattr(request, "data_path") and request.data_path is not None:
+            recipe.root_path = request.data_path
+
+        if hasattr(request, "data_path") and request.data_path is not None:
+            recipe.names_files = request.files_list
+
+        if hasattr(request, "files_path") and request.files_path is not None:
+            recipe.files_path = request.files_path
 
         # Только для случаев, когда названия в request и recipe разные
         rename_map = {

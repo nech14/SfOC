@@ -8,7 +8,7 @@ from starlette.responses import StreamingResponse, FileResponse
 from config import rout_root, img_task_semaphore, img_executor, running_tasks_name, running_tasks, video_task_semaphore, \
     video_executor
 from src.api.api_tags import ApiTags
-from src.api.logic.logic import get_dark_files_logic, create_img_logic, create_image_logic, create_heatmap_logic, \
+from src.api.logic.logic import get_dark_files_logic, create_video_image_logic, create_image_logic, create_heatmap_logic, \
     create_video_logic
 from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
 from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
@@ -94,7 +94,7 @@ async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
 
-        task = loop.run_in_executor(img_executor, create_img_logic, request)
+        task = loop.run_in_executor(img_executor, create_video_image_logic, request)
         running_tasks_name.append(f"create_image {request}")
         running_tasks.append(task)
 

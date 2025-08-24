@@ -1,12 +1,14 @@
 from datetime import datetime
 
 import cv2
+import numpy as np
 from matplotlib import pyplot as plt
 
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
 from src.models.images_models.abstract_img import AbstractImg
 from src.models.images_models.img_model import Img
+from src.models.recipes_models.hist_recipe_model import HistRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 
 
@@ -85,5 +87,7 @@ class VideoImg(AbstractImg):
         plt.axis('off')
         plt.show()
 
-    def get_diff(self) -> list:
-        return self.img_first.data - self.img_second.data
+    def get_diff(self, recipe: HistRecipe) -> list:
+        diff = self.img_first.data - self.img_second.data
+        diff[(diff >= recipe.diff_limits[0]) & (diff <= recipe.diff_limits[1])] = np.nan
+        return diff

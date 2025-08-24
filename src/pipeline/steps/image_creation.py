@@ -4,7 +4,8 @@ from matplotlib import pyplot as plt
 
 from src.models.images_models.video_img_model import VideoImg
 from src.models.recipes_models.video_recipe_model import VideoRecipe
-from src.pipeline.utils.helpers import drive_to_color_palette, create_hists
+from src.pipeline.utils.helpers import drive_to_color_palette
+from src.utils.logics.work_with_hist import create_hists
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
 from src.pipeline.utils.save import save_heat_map
 
@@ -18,19 +19,10 @@ def create_image_with_hist(recipe: VideoRecipe, duo_img: VideoImg, diff_last=Non
     img_first = duo_img.img_first.data.copy()
     img_second = duo_img.img_second.data.copy()
 
-    diff = img_first - img_second
-
-    if (recipe.xmax_data is None or recipe.xmin_data is None or
-        recipe.ymax_data is None or recipe.ymin_data is None):
-        recipe.found_limits()
-
+    diff = duo_img.get_diff(recipe)
     img_hist = create_hists(img_first, img_second, diff, diff_last,
                             figsize_x=(img.shape[1] + 0.5) / 100, figsize_y=img.shape[0] / 100,
-                            xmin_data=recipe.xmin_data, xmax_data=recipe.xmax_data,
-                            xmin_diff=recipe.xmin_diff, xmax_diff=recipe.xmax_diff,
-                            ymin_data=recipe.ymin_data, ymax_data=recipe.ymax_data,
-                            ymin_diff=0, ymax_diff=recipe.ymax_diff,
-                            bins=recipe.bins)
+                            hist_limits=recipe.hist_limits, bins=recipe.bins)
     img_hist_BGR = cv2.cvtColor(img_hist, cv2.COLOR_RGB2BGR)
     duo_img.view_data = cv2.vconcat([img, img_hist_BGR])
     return duo_img
@@ -50,7 +42,7 @@ def create_base_img_for_video(recipe: VideoRecipe, duo_img: VideoImg) -> VideoIm
 
 def create_img_for_video(
         data, data1, name=None, names=None, text_place="t", _type=1, upper_limit=500.,
-        lower_limit=None, auto_contrast=True, auto_contrast_percentiles=[2, 98]
+        lower_limit=None, auto_contrast=True, auto_contrast_percentiles=(2, 98)
 ):
     ulimit = 10000
     dlimit = 5000

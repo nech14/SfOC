@@ -8,7 +8,7 @@ from src.models.images_models.abstract_img import AbstractImg
 from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
 from src.utils.graphics import old_graphics
-from src.utils.logics import old_logicks
+from src.utils.logics.work_with_dark import subtract_noise_frame
 
 
 class Img(AbstractImg):
@@ -48,10 +48,8 @@ class Img(AbstractImg):
 
     def dark_frames(self, dark_start: DarkData, dart_end: DarkData) -> 'Img':
         time = self.fit_format.get_datetime()
-        # dart_end.frame = dark_start.frame.copy()
-        self.data = old_logicks.subtract_noise_frame(
-            dark_start.frame, dart_end.frame,
-            dark_start.time, dart_end.time,
+        self.data = subtract_noise_frame(
+            dark_start, dart_end,
             self.data, time
         )
         return self
