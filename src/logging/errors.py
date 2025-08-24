@@ -58,6 +58,41 @@ class ErrorCode(StrEnum):
     ERROR_SHOW_IMAGE   = "Error in show_image"
 
     # create_hist
-    START_CREATE_HIST = "Starting create_hist for recipe %s"
+    START_CREATE_HIST   = "Starting create_hist for recipe %s"
     SUCCESS_CREATE_HIST = "Histogram created successfully"
-    ERROR_CREATE_HIST = "Error in create_hist"
+    ERROR_CREATE_HIST   = "Error in create_hist"
+
+    # create_image_with_hist
+    START_CREATE_IMAGE_WITH_HIST   = "Starting create_image_with_hist for recipe %s"
+    SUCCESS_CREATE_IMAGE_WITH_HIST = "Image with histogram created successfully"
+    ERROR_CREATE_IMAGE_WITH_HIST   = "Error in create_image_with_hist"
+
+    # create_base_img_for_video
+    START_CREATE_BASE_IMG_FOR_VIDEO   = "Starting create_base_img_for_video for recipe %s"
+    SUCCESS_CREATE_BASE_IMG_FOR_VIDEO = "Base image for video created successfully"
+    ERROR_CREATE_BASE_IMG_FOR_VIDEO   = "Error in create_base_img_for_video"
+
+    # save_result_matrix_image
+    START_SAVE_RESULT_MATRIX_IMAGE   = "Starting save_result_matrix_image for recipe %s"
+    SUCCESS_SAVE_RESULT_MATRIX_IMAGE = "Result matrix saved successfully"
+    ERROR_SAVE_RESULT_MATRIX_IMAGE   = "Error in save_result_matrix_image"
+
+    # save_image
+    START_SAVE_IMAGE   = "Starting save_image for recipe %s"
+    SUCCESS_SAVE_IMAGE = "Image saved successfully"
+    ERROR_SAVE_IMAGE   = "Error in save_image"
+
+    # save_heatmap_image
+    START_SAVE_HEATMAP_IMAGE   = "Starting save_heatmap_image for recipe %s"
+    SUCCESS_SAVE_HEATMAP_IMAGE = "Heatmap image saved successfully"
+    ERROR_SAVE_HEATMAP_IMAGE   = "Error in save_heatmap_image"
+
+    # save_image_for_video
+    START_SAVE_IMAGE_FOR_VIDEO   = "Starting save_image_for_video for recipe %s"
+    SUCCESS_SAVE_IMAGE_FOR_VIDEO = "Image for video saved successfully"
+    ERROR_SAVE_IMAGE_FOR_VIDEO   = "Error in save_image_for_video"
+
+    # save_video
+    START_SAVE_VIDEO   = "Starting save_video for recipe %s"
+    SUCCESS_SAVE_VIDEO = "Video saved successfully"
+    ERROR_SAVE_VIDEO   = "Error in save_video"
