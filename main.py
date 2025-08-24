@@ -9,11 +9,12 @@ from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 from src.utils.common.fits_formats import fits_formats
 from src.utils.editor.editor import Editor
-from src.logging.logging import setup_logging
-
+from src.logging.logging import setup_logging, get_logger
 
 if __name__ == "__main__":
     setup_logging()
+    LOGGER = get_logger()
+
     app = FastAPI(
         openapi_tags=[
             {"name": tags[0], "description": "Эндпоинты работы с задачами"},

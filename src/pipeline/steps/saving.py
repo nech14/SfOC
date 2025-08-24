@@ -13,14 +13,16 @@ from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.utils.save import create_mp4
 
-def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
+
+def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> Path | None:
     if recipe.result_matrix_save_folder is None or recipe.result_matrix_save_folder == "":
         return
 
     if recipe.result_matrix_save_folder == "" and not recipe.save_folder is None and recipe.save_folder != "":
         recipe.result_matrix_safe_folder = os.path.join(recipe.save_folder, "result_matrix")
 
-    img.save_rayleigh_matrix(folder=recipe.result_matrix_safe_folder, filename=recipe.file_name)
+    path = img.save_rayleigh_matrix(folder=recipe.result_matrix_safe_folder, filename=recipe.file_name)
+    return path
 
 
 def save_image(recipe: ImageRecipe, processed_image) -> None:

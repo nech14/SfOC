@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -52,7 +53,7 @@ class AbstractImg(ABC):
         pass
 
     @abstractmethod
-    def save_rayleigh_matrix(self, folder: str, filename: str) -> None:
+    def save_rayleigh_matrix(self, folder: str, filename: str) -> Path:
         pass
 
     @abstractmethod

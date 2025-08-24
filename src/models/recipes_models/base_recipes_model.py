@@ -10,6 +10,7 @@ from src.api.requests.edit_request.create_video_request import CreateVideoReques
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
 from src.models.fits_models.fits import FitsInfo
+from src.utils.common.common import get_vars_str
 from src.utils.common.fits_formats import fits_formats
 from src.utils.file import file
 from src.utils.logics.work_with_correct_matrix import create_correct_matrix
@@ -176,3 +177,6 @@ class BaseRecipes:
 
         return recipe
 
+
+    def __str__(self) -> str:
+        return get_vars_str(self)

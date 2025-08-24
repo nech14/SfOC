@@ -139,7 +139,6 @@ def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
 
 def create_image_logic(request: CreateImageRequest):
     recipe = ImageRecipe.get_recipe_by_request(request)
-
     orchestrator.create_image(recipe)
 
     return  os.path.join(request.save_folder, f'{request.file_name}.png')

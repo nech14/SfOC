@@ -28,9 +28,9 @@ def create_image(recipe: ImageRecipe) -> AbstractImg:
     img = get_image(recipe)
     img = base_operation_with_img(recipe, img)
     save_image(recipe, img.view_data)
-    plt.imshow(img.view_data, cmap="gray")
-    plt.gca().invert_yaxis()
-    plt.show()
+    # plt.imshow(img.view_data, cmap="gray")
+    # plt.gca().invert_yaxis()
+    # plt.show()
     return img
 
 

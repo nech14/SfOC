@@ -1,6 +1,7 @@
 import os
 import pickle
 from datetime import datetime
+from pathlib import Path
 
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract
@@ -76,7 +77,7 @@ class Img(AbstractImg):
         self._view_data, _, _ = auto_contrast_skimage(self.data, auto_contrast_percentiles=auto_contrast_percentiles) #Вынести в модуль!
         return self.view_data
 
-    def save_rayleigh_matrix(self, folder: str) -> None:
+    def save_rayleigh_matrix(self, folder: str) -> Path:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
@@ -91,3 +92,5 @@ class Img(AbstractImg):
 
         with open(save_path, 'wb') as file:
             pickle.dump(self.data_rayleigh, file)
+
+        return Path(save_path)

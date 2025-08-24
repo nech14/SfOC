@@ -1,29 +1,27 @@
-import matplotlib.pyplot as plt
-
-from src.logging.logging import get_logger
+from src.logging.errors import ErrorCode
 from src.models.images_models.abstract_img import AbstractImg
 from src.models.recipes_models.base_recipes_model import BaseRecipes
+from main import LOGGER
 
-logger = get_logger()
 
 def correct_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
     try:
         if recipe.use_correct_matrix:
-            logger.debug("Запуск correct_matrix_image для рецепта %s", recipe)
+            LOGGER.debug(ErrorCode.START_USE_CORRECT_MATRIX, recipe)
             if recipe.correct_matrix is None:
                 recipe.open_correct_matrix()
             img.correct_matrix(recipe.correct_matrix, recipe.multiplication_on_correct_matrix)
-            logger.debug("Матрица коррекции успешно применена")
+            LOGGER.debug(ErrorCode.SUCCESS_USE_CORRECT_MATRIX)
     except Exception as e:
-        logger.exception("Ошибка в correct_matrix_image: %s", e)
+        LOGGER.exception(ErrorCode.ERROR_USE_CORRECT_MATRIX, e)
 
 
 
 def rayleigh_image(recipe: BaseRecipes, img: AbstractImg) -> None:
     try:
         if recipe.rayleigh:
-            logger.debug("Запуск rayleigh_image для рецепта %s", recipe)
+            LOGGER.debug(ErrorCode.START_RAYLEIGH_IMAGE, recipe)
             img.rayleigh()
-            logger.debug("Рэле посчитаны успешно")
+            LOGGER.debug(ErrorCode.SUCCESS_RAYLEIGH_IMAGE)
     except Exception as e:
-        logger.exception("Ошибка в rayleigh_image: %s", e)
+        LOGGER.exception(ErrorCode.ERROR_RAYLEIGH_IMAGE, e)
