@@ -16,7 +16,6 @@ def correct_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> None:
         LOGGER.exception(ErrorCode.ERROR_USE_CORRECT_MATRIX, e)
 
 
-
 def rayleigh_image(recipe: BaseRecipes, img: AbstractImg) -> None:
     try:
         if recipe.rayleigh:

@@ -43,16 +43,21 @@ class ErrorCode(StrEnum):
     ERROR_GET_IMAGE_BY_NUMBER   = "Error in get_images_by_number"
 
     # use_dark_frames_image
-    START_USE_DARK_FRAMES = "Starting use_dark_frames_image for recipe %s"
+    START_USE_DARK_FRAMES   = "Starting use_dark_frames_image for recipe %s"
     SUCCESS_USE_DARK_FRAMES = "Dark frames applied successfully"
-    ERROR_USE_DARK_FRAMES = "Error in use_dark_frames_image"
+    ERROR_USE_DARK_FRAMES   = "Error in use_dark_frames_image"
 
     # remove_single_pixels_image
-    START_REMOVE_SINGLE_PIXELS = "Starting remove_single_pixels_image for recipe %s"
+    START_REMOVE_SINGLE_PIXELS   = "Starting remove_single_pixels_image for recipe %s"
     SUCCESS_REMOVE_SINGLE_PIXELS = "Single pixels removed successfully"
-    ERROR_REMOVE_SINGLE_PIXELS = "Error in remove_single_pixels_image"
+    ERROR_REMOVE_SINGLE_PIXELS   = "Error in remove_single_pixels_image"
 
     # show_image
-    START_SHOW_IMAGE = "Starting show_image for recipe %s"
+    START_SHOW_IMAGE   = "Starting show_image for recipe %s"
     SUCCESS_SHOW_IMAGE = "Image displayed successfully"
-    ERROR_SHOW_IMAGE = "Error in show_image"
+    ERROR_SHOW_IMAGE   = "Error in show_image"
+
+    # create_hist
+    START_CREATE_HIST = "Starting create_hist for recipe %s"
+    SUCCESS_CREATE_HIST = "Histogram created successfully"
+    ERROR_CREATE_HIST = "Error in create_hist"
