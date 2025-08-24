@@ -1,60 +1,14 @@
-from argparse import ArgumentTypeError
+from pathlib import Path
 
-from src.models.common_models.hist_limits import HistLimits
-from src.models.recipes_models.base_recipes_model import BaseRecipes
-from src.pipeline.utils.helpers import get_equal_intervals_integers
+from src.models.recipes_models.hist_recipe_model import HistRecipe
 
-class HeatmapRecipe(BaseRecipes):
-
-    edges: int = 50
-    first_frame_number: int = 0
-    _last_frame_number: int|None = None
-    bins: int = 1000
+class HeatmapRecipe(HistRecipe):
     cmap: str = "viridis"
-    counts_checks: int = 4
-    need_check_frames: list[int] | None = None
+    cmap_under: str = None #'#1a1a1a'
     result_auto_contrast: bool = False
-    hist_limits: HistLimits = None
 
-    def __init__(self, names_files, root_path):
-        self.names_files = names_files
-        self.root_path = root_path
-        self.name = "test1"
+    def __init__(self, names_files=None, root_path=None):
+        self.names_files: list[str] = names_files
+        self.root_path: Path = root_path
+        self.title: str = "test1"
         self.file_name = "buf_3"
-
-    @property
-    def last_frame_number(self):
-        if not self._last_frame_number is None:
-            return self._last_frame_number
-        if self.names_files is None or len(self.names_files)==0:
-            self.get_names_files()
-        return len(self.names_files)
-
-    @last_frame_number.setter
-    def last_frame_number(self, value: int):
-        if value is None or value <= 0:
-            raise ArgumentTypeError
-        self._last_frame_number = value
-
-    def get_check_frame(self):
-        end_i = self.last_frame_number
-        if end_i is None:
-            end_i = len(self.names_files) - 1
-
-        start_i = self.first_frame_number
-        count_frame = end_i - self.first_frame_number
-
-        check_frame = self.need_check_frames
-        if check_frame is None:
-            check_frame = []
-        elif isinstance(check_frame, int):
-            check_frame = [check_frame]
-
-        if count_frame > self.counts_checks and self.counts_checks > 0:
-            check_frame_buf = set(check_frame).union(get_equal_intervals_integers(start_i, end_i - 1, self.counts_checks))
-            check_frame = list(check_frame_buf)
-        elif len(check_frame) == 0:
-            check_frame = range(start_i, end_i)
-
-        self.need_check_frames = check_frame
-        return self.need_check_frames

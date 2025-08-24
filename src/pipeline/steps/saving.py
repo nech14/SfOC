@@ -44,10 +44,17 @@ def save_image(recipe: ImageRecipe, processed_image) -> None:
 def save_heatmap_image(recipe: HeatmapRecipe, transposed_data, info_for_heatmap, show=False):
     plt.figure(figsize=recipe.figsize, dpi=100)
 
-    if not recipe.name is None and recipe.name != "":
-        plt.title(recipe.name)
+    if recipe.title:
+        plt.title(recipe.title)
 
-    plt.imshow(transposed_data, cmap=recipe.cmap, aspect='auto')
+    # Создаем копию колормэпа, чтобы модифицировать
+    cmap = plt.get_cmap(recipe.cmap).copy()
+    if not recipe.cmap_under is None:
+        cmap.set_under(recipe.cmap_under)  # значения ниже минимального будут белыми
+        plt.imshow(transposed_data, cmap=cmap, aspect='auto', vmin=0.0001)
+    else:
+        plt.imshow(transposed_data, cmap=cmap, aspect='auto')
+
     colorbar = plt.colorbar()
     colorbar.set_label('n in bin')
 
@@ -77,7 +84,7 @@ def save_heatmap_image(recipe: HeatmapRecipe, transposed_data, info_for_heatmap,
 
 
 def save_image_for_video(recipe: VideoRecipe, duo_img: VideoImg) -> None:
-    if recipe.save_folder is None or recipe.save_folder == "":
+    if not recipe.save_folder:
         return
 
     if not os.path.exists(recipe.save_folder):

@@ -10,13 +10,13 @@ from src.api.requests.edit_request.create_image_for_video_request import CreateI
 from src.api.requests.edit_request.create_image_request import CreateImageRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesRequest
+from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
 from src.utils.common.common import print_vars
 from src.utils.logics.work_with_dark import get_dark, get_dark_avg
 from src.utils.file import file
-from src.utils.logics import old_logicks
 
 
 def create_video_image_logic(request: CreateImageForVideoRequest):
@@ -28,11 +28,9 @@ def create_video_image_logic(request: CreateImageForVideoRequest):
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
-
 def create_video_logic(request: CreateVideoRequest):
     recipe = VideoRecipe.get_recipe_by_request(request)
     return orchestrator.create_video(recipe)
-
 
 
 def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
@@ -134,12 +132,9 @@ def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
 
     result = request.save_folder + f"/{file_name_buf}.png"
     plt.savefig(result, bbox_inches='tight')
-    # plt.show()
     plt.close()
 
     return result
-
-
 
 
 def create_image_logic(request: CreateImageRequest):
@@ -150,39 +145,11 @@ def create_image_logic(request: CreateImageRequest):
     return  os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
-
 def create_heatmap_logic(request: CreateHeatmapRequest):
-    old_logicks.create_heatmap(
-        names=request.files_list,
-        new_path=request.data_path,
-        start_file=request.first_frame_number,
-        end_file=request.last_frame_number,
-        edges=request.edges,
-        title=request.title,
-        bins=request.bins,
-        cmap=request.cmap,
-        save_folder=request.save_folder,
-        _zip=request.zipped_file,
-        counts_checks=request.counts_checks,
-        check_frame=request.check_frame,
-        remove_single_pixels=request.remove_single_pixels,
-        correct_matrix=request.correct_matrix_path,
-        multiplication_on_correct_matrix=request.multiplication_on_correct_matrix,
-        Rayleigh=request.rayleigh,
-        dark=request.dark,
-        dark_name=request.dark_file_name,
-        cut=request.cut,
-        percent_to_trim=request.percent_to_trim,
-        data_index=request.data_index,
-        q=request.auto_contrast_percentiles,
-        name_file=request.file_name,
-        result_auto_contrast=request.result_auto_contrast,
-        auto_contrast=request.auto_contrast
-    )
-    # recipe = HeatmapRecipe.get_recipe_by_request(request)
-    # for k, v in vars(recipe).items():
-    #     print(f"{k} = {v}")
-    # orchestrator.create_heatmap(recipe)
+    recipe = HeatmapRecipe.get_recipe_by_request(request)
+    for k, v in vars(recipe).items():
+        print(f"{k} = {v}")
+    orchestrator.create_heatmap(recipe)
 
     return os.path.join(request.save_folder, f'{request.file_name}.png')
 

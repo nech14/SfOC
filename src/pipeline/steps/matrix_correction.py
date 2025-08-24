@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 
 from src.logging.logging import get_logger
 from src.models.images_models.abstract_img import AbstractImg

@@ -55,6 +55,16 @@ class HistLimits():
         self.add_max_d(max_d)
         self.add_max_dy(max_dy)
 
+    def add_base_limits(
+            self,
+            min_x:float, max_x:float,
+            min_y:float, max_y:float,
+    ):
+        self.add_min_x(min_x)
+        self.add_max_x(max_x)
+        self.add_min_y(min_y)
+        self.add_max_y(max_y)
+
     @property
     def xmax(self) -> float|None:
         return max(self.buf_max_x)
@@ -62,5 +72,41 @@ class HistLimits():
 
     @property
     def xmin(self) -> float|None:
-        return min(self.buf_max_x)
+        return min(self.buf_min_x)
         # return 0
+
+    @property
+    def ymin(self) -> float|None:
+        return min(self.buf_min_y)
+
+    @property
+    def ymax(self) -> float|None:
+        return max(self.buf_max_y)
+
+    @property
+    def xmin_diff(self) -> float | None:
+        return min(self.buf_min_d)
+
+    @property
+    def xmax_diff(self) -> float | None:
+        return max(self.buf_max_d)
+
+    @property
+    def ymin_diff(self) -> float | None:
+        return 0
+
+    @property
+    def ymax_diff(self) -> float | None:
+        return max(self.buf_max_dy)
+
+
+    @classmethod
+    def get_base_limits(cls):
+        hist_limits = HistLimits()
+        hist_limits.add_limits(
+            0, 42000,
+            0, 1000,
+            -42000, 42000,
+            50
+        )
+        return hist_limits

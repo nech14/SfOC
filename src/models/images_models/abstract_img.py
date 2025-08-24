@@ -59,6 +59,6 @@ class AbstractImg(ABC):
     def get_datetime(self) -> datetime:
         pass
 
-    def show(self, recipe: BaseRecipes) -> None:
+    def show(self, recipe: BaseRecipes=None) -> None:
         plt.imshow(self.view_data)
         plt.show()
