@@ -10,8 +10,8 @@ from src.api.requests.edit_db_request.create_image_for_video_db_request import C
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbInternal, CreateVideoDbRequest
 from src.database.database import Session
 from src.database.models.models import BackgroundsAll, Frames
-from src.models.data_models.filter_edit_db_model import FilterEditDbModel
-from src.models.data_models.frame_edit_db_model import FrameEditDbModel
+from src.models.api_models.filter_edit_db_model import FilterEditDbModel
+from src.models.api_models.frame_edit_db_model import FrameEditDbModel
 from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe

@@ -14,7 +14,7 @@ from src.api.requests.edit_db_request.create_heatmap_db_request import CreateHea
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_db_request.create_image_for_video_db_request import CreateImageForVideoDbRequest
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbRequest
-from src.models.data_models.frame_edit_db_model import FrameEditDbModel
+from src.models.api_models.frame_edit_db_model import FrameEditDbModel
 
 router = APIRouter(prefix="/editDB", tags=[ApiTags.EditDatabase.value])
 
