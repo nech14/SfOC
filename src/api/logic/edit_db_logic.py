@@ -8,6 +8,7 @@ from src.api.requests.edit_db_request.create_image_db_request import CreateImage
 from src.api.requests.edit_db_request.create_image_for_video_db_request import CreateImageForVideoDbInternal, \
     CreateImageForVideoDbRequest
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbInternal, CreateVideoDbRequest
+from src.api.requests.edit_db_request.get_dark_files_db_request import GetDarkFilesDbRequest
 from src.database.database import Session
 from src.database.models.models import BackgroundsAll, Frames
 from src.models.api_models.filter_edit_db_model import FilterEditDbModel
@@ -17,6 +18,8 @@ from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
 from src.utils.common.common import print_vars
+from src.utils.common.fits_formats import fits_formats
+from src.utils.logics.work_with_dark import get_dark_by_path, show_darks_frames
 
 
 def get_db():
@@ -83,6 +86,25 @@ def get_frames_by_night_filter(id_night: int, id_filter: int) -> list[Frames]:
         return db.query(Frames).filter(Frames.id_night == id_night and Frames.id_filtr == id_filter).all()
     finally:
         db.close()
+
+
+def get_dark_files_logic(request: GetDarkFilesDbRequest) -> Path:
+
+    dark_path = [path.dest for path in get_dark_frames(request.id_night)]
+    fit_format = fits_formats[request.fit_format]
+    dark_data = get_dark_by_path(dark_path, request.zipped_file, fit_format)
+
+    save_path = show_darks_frames(
+        dark_data,
+        save_folder=Path(request.save_folder),
+        file_name=request.file_name,
+        title=request.title,
+        row_f=request.row_f,
+        column_f=request.column_f,
+        figsize=request.figsize
+    )
+
+    return save_path
 
 
 def create_heatmap_logic(request: CreateHeatmapDbRequest):
@@ -157,3 +179,5 @@ def create_image_db_logic(request: CreateImageDbRequest):
     orchestrator.create_image(recipe)
 
     return os.path.join(req.save_folder, f'{req.file_name}.png')
+
+

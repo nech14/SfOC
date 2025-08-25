@@ -21,7 +21,7 @@ class CreateImageDbRequest(BaseModel):
     data_index: Optional[int] = None,
     zipped_file: Optional[bool] = True
     file_name: Optional[str] = "buf"
-    save_folder: Optional[str] = None
+    save_folder: Optional[str] = "buf"
     result_matrix_save_folder: Optional[str] = None
 
 

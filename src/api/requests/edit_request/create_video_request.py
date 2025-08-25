@@ -13,7 +13,7 @@ class CreateVideoRequest(BaseModel):
     general_title: Optional[str] = None
     cut: Optional[bool] = False
     frame_title: Optional[bool] = False
-    save_folder: Optional[str] = ""
+    save_folder: Optional[str] = "buf"
     save_folder_video: Optional[str] = None
     save_img: Optional[bool] = False
     name_img_folder: Optional[str] = "img_for_video"

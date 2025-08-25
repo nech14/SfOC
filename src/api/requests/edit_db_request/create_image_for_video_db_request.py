@@ -30,7 +30,7 @@ class CreateImageForVideoDbRequest(BaseModel):
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
     data_index: Optional[int] = None,
     file_name: Optional[str] = "buf"
-    save_folder: Optional[str] = None
+    save_folder: Optional[str] = "buf"
     result_matrix_safe_folder: Optional[str] = None
 
 

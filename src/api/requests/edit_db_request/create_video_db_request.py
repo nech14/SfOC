@@ -35,7 +35,7 @@ class CreateVideoDbRequest(BaseModel):
     name_file: Optional[str] = "output"
     name_img_folder: Optional[str] = "img_for_video"
     name_video_folder: Optional[str] = "video"
-    save_folder: Optional[str] = ""
+    save_folder: Optional[str] = "buf"
     save_folder_video: Optional[str] = None
     result_matrix_save_folder: Optional[str] = None
     save_img: Optional[bool] = False

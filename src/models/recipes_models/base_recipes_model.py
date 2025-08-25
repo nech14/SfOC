@@ -16,7 +16,7 @@ from src.utils.common.common import get_vars_str
 from src.utils.common.fits_formats import fits_formats
 from src.utils.file import file
 from src.utils.logics.work_with_correct_matrix import create_correct_matrix
-from src.utils.logics.work_with_dark import get_dark_avg
+from src.utils.logics.work_with_dark import get_dark_avg, get_dark_by_path
 
 
 class BaseRecipes:
@@ -114,15 +114,11 @@ class BaseRecipes:
 
     def get_dark_files(self) -> list[DarkData]:
         if len(self.dark_file_path) > 0:
-            self.dark_data = []
-            for path in self.dark_file_path:
-                info, data = file.open_gz(path, _zip=self.zipped_file)
-                info = self.fit_format(info)
-                time = info.get_datetime()
-                dark_f = DarkData(data, time)
-                self.dark_data.append(dark_f)
-
-            self.dark_data.sort(key=lambda e: e.time)
+            self.dark_data = get_dark_by_path(
+                self.dark_file_path,
+                self.zipped_file,
+                self.fit_format
+            )
         return self.dark_data
 
     def get_names_files(self) -> list[str]:

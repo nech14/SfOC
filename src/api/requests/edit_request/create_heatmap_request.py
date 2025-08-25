@@ -14,7 +14,7 @@ class CreateHeatmapRequest(BaseModel):
     title: Optional[str] = None
     cut: Optional[bool] = False
     percent_to_trim: Optional[float] = 0.1
-    save_folder: Optional[str] = None
+    save_folder: Optional[str] = "buf"
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
     fit_format: Optional[str] = "FitsInfo"
     dark: Optional[bool] = False

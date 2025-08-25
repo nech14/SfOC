@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
@@ -15,7 +16,7 @@ from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
 from src.utils.common.common import print_vars
 from src.utils.common.fits_formats import fits_formats
-from src.utils.logics.work_with_dark import get_dark, get_dark_avg
+from src.utils.logics.work_with_dark import get_dark, get_dark_avg, show_darks_frames
 from src.utils.file import file
 
 
@@ -32,8 +33,42 @@ def create_video_logic(request: CreateVideoRequest):
     recipe = VideoRecipe.get_recipe_by_request(request)
     return orchestrator.create_video(recipe)
 
+def get_dark_files_logic(request: GetDarkFilesRequest) -> Path:
+    if request.files_list is None or len(request.files_list) == 0:
+        request.files_list = file.get_name_files(request.data_path)
 
-def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
+    fit_format = fits_formats[request.fit_format]
+
+    dark_data= get_dark(
+        request.files_list,
+        Path(request.data_path),
+        request.dark_file_name,
+        _zip=request.zipped_file,
+        fit_format=fit_format)
+
+    dark_data_flip= get_dark(
+        np.flip(request.files_list),
+        Path(request.data_path),
+        request.dark_file_name,
+        _zip=request.zipped_file,
+        fit_format=fit_format)
+    dark_data_flip = np.flip(dark_data_flip)
+    dark_data = [*dark_data, *dark_data_flip]
+
+    save_path = show_darks_frames(
+        dark_data,
+        save_folder=Path(request.save_folder),
+        file_name=request.file_name,
+        title=request.title,
+        row_f=request.row_f,
+        column_f=request.column_f,
+        figsize=request.figsize
+    )
+
+    return save_path
+
+
+def get_dark_files_logic_old(request: GetDarkFilesRequest) -> str:
     if request.files_list is None or len(request.files_list) == 0:
         request.files_list = file.get_name_files(request.data_path)
 

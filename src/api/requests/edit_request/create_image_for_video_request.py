@@ -12,7 +12,7 @@ class CreateImageForVideoRequest(BaseModel):
     cut: Optional[bool] = False
     percent_to_trim: Optional[float] = 0.1
     frame_title: Optional[bool] = False
-    save_folder: Optional[str] = None
+    save_folder: Optional[str] = "buf"
     figsize: Optional[tuple] = (1920 / 100, 1080 / 100)
     fit_format: Optional[str] = "FitsInfo"  # Замените тип на нужный, если требуется
     dark: Optional[bool] = False
