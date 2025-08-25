@@ -4,8 +4,10 @@ from pathlib import Path
 import numpy as np
 from pydantic import BaseModel
 
-from src.api.base_api import CreateImageRequest, CreateHeatmapRequest, CreateImageForVideoRequest
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
+from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
+from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
+from src.api.requests.edit_request.create_image_request import CreateImageRequest
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.models.common_models.dark_data_model import DarkData
 from src.models.fits_models.abstract_fits import FitsInfoAbstract

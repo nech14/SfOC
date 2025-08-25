@@ -3,7 +3,7 @@ from src.models.images_models.abstract_img import AbstractImg
 from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.pipeline.utils.graphics_helpers import auto_contrast_skimage
-from main import LOGGER
+from src.logging.logging import LOGGER
 
 
 def auto_contrast_image(recipe: BaseRecipes, img: AbstractImg) -> list:

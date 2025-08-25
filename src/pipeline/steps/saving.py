@@ -1,10 +1,5 @@
 import os
 from pathlib import Path
-
-import cv2
-import numpy as np
-from matplotlib import pyplot as plt
-
 from src.logging.errors import ErrorCode
 from src.models.images_models.abstract_img import AbstractImg
 from src.models.images_models.video_img_model import VideoImg
@@ -15,7 +10,7 @@ from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline.utils.save import create_mp4
 from src.utils.logics.save_logic import save_image_by_recipe, save_heatmap_image_by_recipe, \
     save_image_for_video_by_recipe
-from main import LOGGER
+from src.logging.logging import LOGGER
 
 
 def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> Path | None:

@@ -1,17 +1,17 @@
 from fastapi import APIRouter
 
-from config import rout_root, running_tasks_name, running_tasks
+from config import API_ROOT, running_tasks_name, running_tasks
 from src.api.api_tags import ApiTags
 
-router = APIRouter(prefix="/task", tags=[ApiTags.Tasks.value])
+router = APIRouter(prefix="/task", tags=[ApiTags.Tasks])
 
 
-@router.get(f"{rout_root}/", description="Проверка api")
+@router.get(f"{API_ROOT}/", description="Проверка api")
 async def root():
     return {"status": "200"}
 
 
-@router.get(f"{rout_root}/tasks", tags=[ApiTags.Tasks.value])
+@router.get(f"{API_ROOT}/tasks", tags=[ApiTags.Tasks])
 async def get_tasks():
     # Получаем список активных задач
     active_tasks = [task for task in running_tasks_name]
@@ -21,7 +21,7 @@ async def get_tasks():
     }
 
 
-@router.post(f"{rout_root}/remove/task", tags=[ApiTags.Tasks.value])
+@router.post(f"{API_ROOT}/remove/task", tags=[ApiTags.Tasks])
 async def remove_task(task_id: str):
     if len(running_tasks_name)>0 and len(running_tasks) > int(task_id):
         running_tasks[int(task_id)].cancel()

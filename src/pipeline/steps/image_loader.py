@@ -6,7 +6,7 @@ from src.models.recipes_models.base_recipes_model import BaseRecipes
 from src.models.recipes_models.heatmap_recipe_model import HeatmapRecipe
 from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.utils.file import file
-from main import LOGGER
+from src.logging.logging import LOGGER
 
 
 def get_image(recipe: ImageRecipe) -> Img:

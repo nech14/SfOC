@@ -4,7 +4,6 @@ from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt, gridspec
 
-from src.api.base_api import class_registry
 from src.api.requests.edit_request.create_heatmap_request import CreateHeatmapRequest
 from src.api.requests.edit_request.create_image_for_video_request import CreateImageForVideoRequest
 from src.api.requests.edit_request.create_image_request import CreateImageRequest
@@ -15,6 +14,7 @@ from src.models.recipes_models.image_recipe_model import ImageRecipe
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.pipeline import orchestrator
 from src.utils.common.common import print_vars
+from src.utils.common.fits_formats import fits_formats
 from src.utils.logics.work_with_dark import get_dark, get_dark_avg
 from src.utils.file import file
 
@@ -37,7 +37,7 @@ def get_dark_files_logic(request: GetDarkFilesRequest) -> str:
     if request.files_list is None or len(request.files_list) == 0:
         request.files_list = file.get_name_files(request.data_path)
 
-    request.fit_format = class_registry[request.fit_format]
+    request.fit_format = fits_formats[request.fit_format]
 
     datas_start, times_start = get_dark(
         request.files_list,

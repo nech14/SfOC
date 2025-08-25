@@ -8,8 +8,8 @@ from matplotlib import pyplot as plt
 from starlette.responses import HTMLResponse, FileResponse
 from starlette.templating import Jinja2Templates
 
+from config import API_ROOT
 from src.api.api_tags import ApiTags
-from src.api.base_api import rout_root
 from src.api.requests.editor_request.auto_contrast_command_request import AutoContrastCommandRequest
 from src.api.requests.editor_request.correct_matrix_request import CorrectMatrixRequest
 from src.api.requests.editor_request.cut_command_request import CutCommandRequest
@@ -31,14 +31,12 @@ from src.utils.editor.commands.select_command import SelectCommand
 from src.utils.editor.commands.undo_command import UndoCommand
 from src.utils.editor.editor import Editor
 
-router = APIRouter(prefix="/Editor", tags=[ApiTags.Editor.value])
+router = APIRouter(prefix="/Editor", tags=[ApiTags.Editor])
 static_path = os.path.join(os.path.dirname(__file__), "static")
 # router.mount("/static", StaticFiles(directory=static_path), name="static")
 templates_path = os.path.join(os.path.dirname(__file__), "templates")
 templates = Jinja2Templates(directory=templates_path)
 
-print(static_path)
-print(templates_path)
 
 def check_editor():
     global editor
@@ -51,14 +49,14 @@ def check_editor():
     return True
 
 
-@router.get(f"{rout_root}/create", tags=[ApiTags.Editor.value])
+@router.get(f"{API_ROOT}/create", tags=[ApiTags.Editor])
 async def create_editor():
     global editor
     editor = Editor()
 
     return {"status": "editor created"}
 
-@router.get(f"{rout_root}/undo", tags=[ApiTags.Editor.value])
+@router.get(f"{API_ROOT}/undo", tags=[ApiTags.Editor])
 async def undo():
     editor.executeCommand(
         UndoCommand(
@@ -69,7 +67,7 @@ async def undo():
 
 
 
-@router.get(f"{rout_root}/view", response_class=HTMLResponse, tags=[ApiTags.Editor.value])
+@router.get(f"{API_ROOT}/view", response_class=HTMLResponse, tags=[ApiTags.Editor])
 async def view_editor_page(request: Request, auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data, так как он не нужен для шаблона
@@ -99,7 +97,7 @@ async def view_editor_page(request: Request, auth: bool = Depends(check_editor))
         raise HTTPException(status_code=500, detail=f"Error processing view: {str(e)}")
 
 
-@router.get(f"{rout_root}/view_data", tags=[ApiTags.Editor.value])
+@router.get(f"{API_ROOT}/view_data", tags=[ApiTags.Editor])
 async def view_editor_data(auth: bool = Depends(check_editor)):
     try:
         img_array, _ = editor.view()  # Игнорируем data
@@ -135,13 +133,13 @@ async def view_editor_data(auth: bool = Depends(check_editor)):
         raise HTTPException(status_code=500, detail=f"Error processing image: {str(e)}")
 
 
-@router.get(f"{rout_root}/clear")
+@router.get(f"{API_ROOT}/clear")
 async def clear(auth: bool = Depends(check_editor)):
     editor.clear()
     return {"status": "success"}
 
 
-@router.post(f"{rout_root}/load")
+@router.post(f"{API_ROOT}/load")
 async def load_data(
         request: LoadCommandRequest,
         auth: bool = Depends(check_editor)
@@ -161,7 +159,7 @@ async def load_data(
     return {"status": "success"}
 
 
-@router.get(f"{rout_root}/select")
+@router.get(f"{API_ROOT}/select")
 async def select_data(
         index: int = Query(..., ge=0),
         auth: bool = Depends(check_editor)
@@ -175,7 +173,7 @@ async def select_data(
     return {"status": f"{len(editor.datas)}"}
 
 
-@router.get(f"{rout_root}/select_index")
+@router.get(f"{API_ROOT}/select_index")
 async def select_index(
         auth: bool = Depends(check_editor)
 ):
@@ -183,7 +181,7 @@ async def select_index(
     return {"status": f"{index}"}
 
 
-@router.get(f"{rout_root}/count_all_datas")
+@router.get(f"{API_ROOT}/count_all_datas")
 async def count_all_datas(
         auth: bool = Depends(check_editor)
 ):
@@ -191,7 +189,7 @@ async def count_all_datas(
     return {"status": f"{count}"}
 
 
-@router.post(f"{rout_root}/save_img")
+@router.post(f"{API_ROOT}/save_img")
 async def save_img(
         request: SaveImgRequest,
         auth: bool = Depends(check_editor)
@@ -212,7 +210,7 @@ async def save_img(
     return {"status": "success"}
 
 
-@router.post(f"{rout_root}/save_data")
+@router.post(f"{API_ROOT}/save_data")
 async def save_data(
         request: SaveDataRequest,
         auth: bool = Depends(check_editor)
@@ -227,7 +225,7 @@ async def save_data(
     return {"status": "success"}
 
 
-@router.get(f"{rout_root}/download_data")
+@router.get(f"{API_ROOT}/download_data")
 async def download_data(
         auth: bool = Depends(check_editor)
 ):
@@ -248,7 +246,7 @@ async def download_data(
 
 
 
-@router.post(f"{rout_root}/cut")
+@router.post(f"{API_ROOT}/cut")
 async def cut(
         request:CutCommandRequest,
         auth: bool = Depends(check_editor)
@@ -262,7 +260,7 @@ async def cut(
     return {"status": "success"}
 
 
-@router.get(f"{rout_root}/dark_indexes")
+@router.get(f"{API_ROOT}/dark_indexes")
 async def dark_indexes(
         index_start: int | None = Query(..., ge=None),
         index_end: int | None = Query(..., ge=None),
@@ -274,7 +272,7 @@ async def dark_indexes(
     return {"status": "success"}
 
 
-@router.post(f"{rout_root}/dark")
+@router.post(f"{API_ROOT}/dark")
 async def dark(
         request:DarkCommandRequest,
         auth: bool = Depends(check_editor)
@@ -293,7 +291,7 @@ async def dark(
     return {"status": "success"}
 
 
-@router.get(f"{rout_root}/rayleigh")
+@router.get(f"{API_ROOT}/rayleigh")
 async def rayleigh(auth: bool = Depends(check_editor)):
     editor.executeCommand(
         RayleighCommand(
@@ -304,7 +302,7 @@ async def rayleigh(auth: bool = Depends(check_editor)):
     return {"status": "success"}
 
 
-@router.get(f"{rout_root}/remove_single_pixels")
+@router.get(f"{API_ROOT}/remove_single_pixels")
 async def remove_single_pixels(auth: bool = Depends(check_editor)):
     editor.executeCommand(
         RemoveSinglePixelsCommand(
@@ -315,7 +313,7 @@ async def remove_single_pixels(auth: bool = Depends(check_editor)):
     return {"status": "success"}
 
 
-@router.post(f"{rout_root}/auto_contrast")
+@router.post(f"{API_ROOT}/auto_contrast")
 async def auto_contrast(
         request: AutoContrastCommandRequest,
         auth: bool = Depends(check_editor)
@@ -330,7 +328,7 @@ async def auto_contrast(
     return {"status": "success"}
 
 
-@router.post(f"{rout_root}/corr_matrix")
+@router.post(f"{API_ROOT}/corr_matrix")
 async def correct_matrix(
         request: CorrectMatrixRequest,
         auth: bool = Depends(check_editor)

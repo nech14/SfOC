@@ -3,6 +3,8 @@ import sqlite3
 import os
 from datetime import datetime
 
+import config
+
 name_bd = 'logs.db'
 filet_name = "logs.txt"
 
@@ -63,19 +65,28 @@ def log_operation(operation, tag1, tag2):
 
 
 def setup_logging():
+    handlers = []
+    if config.LOG_TO_FILE:
+        handlers.append(logging.FileHandler(config.LOG_FILE, encoding="utf-8"))
+    if config.LOG_TO_CONSOLE:
+        handlers.append(logging.StreamHandler())
+
     logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.FileHandler("app.log", encoding="utf-8"),
-            logging.StreamHandler()
-        ]
+        level=getattr(logging, config.LOG_LEVEL, logging.INFO),
+        format=config.LOG_FORMAT,
+        handlers=handlers
     )
-    logging.getLogger("PIL").disabled = True
-    logging.getLogger("matplotlib").disabled = True
-    logging.getLogger("matplotlib.font_manager").disabled = True
-    logging.getLogger("PIL.PngImagePlugin").disabled = True
-    logging.getLogger("sqlalchemy.engine.Engine").disabled = True
+
+    # Отключаем лишний шум
+    for noisy in [
+        "PIL", "matplotlib", "matplotlib.font_manager",
+        "PIL.PngImagePlugin", "sqlalchemy.engine.Engine"
+    ]:
+        logging.getLogger(noisy).disabled = True
 
 def get_logger():
     return logging.getLogger(__name__)
+
+
+setup_logging()
+LOGGER = get_logger()

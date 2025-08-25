@@ -5,7 +5,7 @@ import os
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse, FileResponse
 
-from config import rout_root, img_task_semaphore, img_executor, running_tasks_name, running_tasks, video_task_semaphore, \
+from config import API_ROOT, img_task_semaphore, img_executor, running_tasks_name, running_tasks, video_task_semaphore, \
     video_executor
 from src.api.api_tags import ApiTags
 from src.api.logic.logic import get_dark_files_logic, create_video_image_logic, create_image_logic, create_heatmap_logic, \
@@ -16,11 +16,11 @@ from src.api.requests.edit_request.create_image_request import CreateImageReques
 from src.api.requests.edit_request.create_video_request import CreateVideoRequest
 from src.api.requests.edit_request.get_dark_files_request import GetDarkFilesRequest
 
-router = APIRouter(prefix="/edit", tags=[ApiTags.Edit.value])
+router = APIRouter(prefix="/edit", tags=[ApiTags.Edit])
 
 
 
-@router.post(f"{rout_root}/get_dark_files", tags=[ApiTags.Edit.value])
+@router.post(f"{API_ROOT}/get_dark_files", tags=[ApiTags.Edit])
 async def get_dark_files(request: GetDarkFilesRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -44,7 +44,7 @@ async def get_dark_files(request: GetDarkFilesRequest):
 
 
 
-@router.post(f"{rout_root}/create_img", tags=[ApiTags.Edit.value])
+@router.post(f"{API_ROOT}/create_img", tags=[ApiTags.Edit])
 async def create_img(request: CreateImageRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -67,7 +67,7 @@ async def create_img(request: CreateImageRequest):
         return StreamingResponse(io.BytesIO(img_data), media_type="image/png")
 
 
-@router.post(f"{rout_root}/create_video", tags=[ApiTags.Edit.value])
+@router.post(f"{API_ROOT}/create_video", tags=[ApiTags.Edit])
 async def create_video_endpoint(request: CreateVideoRequest):
     async with video_task_semaphore:  # Ограничиваем количество одновременных задач
         loop = asyncio.get_event_loop()
@@ -88,7 +88,7 @@ async def create_video_endpoint(request: CreateVideoRequest):
         )
 
 
-@router.post(f"{rout_root}/create_image_for_video", tags=[ApiTags.Edit.value])
+@router.post(f"{API_ROOT}/create_image_for_video", tags=[ApiTags.Edit])
 async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
     async with img_task_semaphore:  # Ограничиваем количество одновременных задач
@@ -113,7 +113,7 @@ async def create_image_for_video_endpoint(request: CreateImageForVideoRequest):
 
 
 
-@router.post(f"{rout_root}/create_heatmap", tags=[ApiTags.Edit.value])
+@router.post(f"{API_ROOT}/create_heatmap", tags=[ApiTags.Edit])
 async def create_heatmap(request: CreateHeatmapRequest):
     async with video_task_semaphore:
         loop = asyncio.get_event_loop()

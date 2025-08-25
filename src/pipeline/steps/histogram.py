@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 from src.logging.errors import ErrorCode
 from src.models.images_models.img_model import Img
 from src.models.recipes_models.hist_recipe_model import HistRecipe
-from main import LOGGER
+from src.logging.logging import LOGGER
 
 
 def create_hist(recipe: HistRecipe, img: Img) -> np.ndarray|None:

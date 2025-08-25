@@ -1,9 +1,6 @@
 from pathlib import Path
 from typing import TypeVar
-
 import numpy as np
-from matplotlib import pyplot as plt
-
 from src.models.common_models.hist_limits import HistLimits
 from src.models.images_models.abstract_img import AbstractImg
 from src.models.images_models.video_img_model import VideoImg

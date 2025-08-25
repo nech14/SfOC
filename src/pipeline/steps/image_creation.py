@@ -5,7 +5,7 @@ from src.models.images_models.video_img_model import VideoImg
 from src.models.recipes_models.video_recipe_model import VideoRecipe
 from src.utils.logics.create_image import create_img_for_video
 from src.utils.logics.work_with_hist import create_hists
-from main import LOGGER
+from src.logging.logging import LOGGER
 
 
 def create_image_with_hist(recipe: VideoRecipe, duo_img: VideoImg, diff_last=None) -> VideoImg:
