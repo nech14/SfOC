@@ -56,18 +56,6 @@ def get_frames_count(db: Session = Depends(get_db)):
 
 
 
-
-@router.get(f"{API_ROOT}/users/", tags=[ApiTags.Database])
-def get_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
-    return db.query(User).offset(skip).limit(limit).all()
-
-
-@router.get(f"{API_ROOT}/users/count", tags=[ApiTags.Database])
-def get_users_count(db: Session = Depends(get_db)):
-    return {"count": db.query(User).count()}
-
-
-
 @router.get(f"{API_ROOT}/cameras/", tags=[ApiTags.Database])
 def get_cameras(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     return db.query(Camera).offset(skip).limit(limit).all()

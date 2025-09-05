@@ -135,7 +135,7 @@ async def create_video_endpoint(request: CreateVideoDbRequest):
         )
 
 
-@router.post(f"{API_ROOT}/create_heatmap_db", tags=[ApiTags.Edit])
+@router.post(f"{API_ROOT}/create_heatmap_db", tags=[ApiTags.EditDatabase])
 async def create_heatmap(request: CreateHeatmapDbRequest):
     async with video_task_semaphore:
         loop = asyncio.get_event_loop()
