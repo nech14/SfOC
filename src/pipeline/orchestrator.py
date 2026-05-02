@@ -82,9 +82,9 @@ def create_heatmap(recipe: HeatmapRecipe) -> None:
     info_for_heatmap = []
 
     recipe.hist_limits = get_hist_found_limits(recipe)
-    print(f"first_frame_number: {recipe.first_frame_number, recipe.last_frame_number}")
+    # print(f"first_frame_number: {recipe.first_frame_number, recipe.last_frame_number}")
     for frame_id in range(recipe.first_frame_number, recipe.last_frame_number):
-        print(f"hist_frame: {frame_id}")
+        # print(f"hist_frame: {frame_id}")
         img = get_images_by_number(recipe, frame_id)
 
         # img.show(recipe)
@@ -117,7 +117,7 @@ def create_images_for_video(recipe: VideoRecipe) -> list[VideoImg]:
     last_diff = None
     recipe.hist_limits = get_hist_found_limits_images(recipe)
     for frame_id in range(recipe.first_frame_number, recipe.last_frame_number):
-        print(f"create: {frame_id}")
+        # print(f"create: {frame_id}")
         img = create_image_for_video(recipe, frame_id, last_diff)
         frames.append(img)
         last_diff=frames[-1].get_diff(recipe)

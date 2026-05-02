@@ -119,6 +119,8 @@ class BaseRecipes:
                 self.zipped_file,
                 self.fit_format
             )
+        elif len(self.dark_data) == 0:
+            self.open_dark()
         return self.dark_data
 
     def get_names_files(self) -> list[str]:

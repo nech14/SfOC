@@ -9,7 +9,7 @@ from src.utils.file import file
 from src.logging.logging import LOGGER
 
 
-def get_image(recipe: ImageRecipe) -> Img:
+def get_image(recipe: ImageRecipe) -> Img | None:
     try:
         LOGGER.debug(ErrorCode.START_GET_IMAGE, recipe)
         if recipe.files_path is None or len(recipe.files_path) == 0:
@@ -22,7 +22,7 @@ def get_image(recipe: ImageRecipe) -> Img:
         LOGGER.exception(ErrorCode.ERROR_GET_IMAGE, e)
 
 
-def get_images_path(recipe: HeatmapRecipe) -> list[Path]:
+def get_images_path(recipe: HeatmapRecipe) -> list[Path] | None:
     try:
         LOGGER.debug(ErrorCode.START_GET_IMAGES_PATH, recipe)
         if recipe.files_path is None or len(recipe.files_path) == 0:
@@ -33,7 +33,7 @@ def get_images_path(recipe: HeatmapRecipe) -> list[Path]:
         LOGGER.exception(ErrorCode.ERROR_GET_IMAGES_PATH, e)
 
 
-def get_images_by_number(recipe: BaseRecipes, number: int) -> Img:
+def get_images_by_number(recipe: BaseRecipes, number: int) -> Img | None:
     try:
         LOGGER.debug(ErrorCode.START_GET_IMAGE_BY_NUMBER, recipe)
         if recipe.files_path is None or len(recipe.files_path) == 0:

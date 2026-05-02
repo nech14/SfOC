@@ -70,9 +70,11 @@ def get_dark_avg(
     dark_datas = get_dark(names, root_path, dark_name, _zip=_zip, fit_format=fit_format)
     datas = [data.frame for data in dark_datas]
     data_avg = (np.mean(datas, axis=0))
-
     # Получаем среднее время в секундах
-    average_time_seconds = sum(dd.time for dd in dark_datas) / len(dark_datas)
+    average_time_seconds = sum(
+        dd.time if isinstance(dd.time, int) else dd.time.timestamp()
+        for dd in dark_datas
+    ) / len(dark_datas)
 
     # Преобразовываем среднее значение времени обратно в формат datetime.datetime
     time_avg = datetime.fromtimestamp(average_time_seconds)

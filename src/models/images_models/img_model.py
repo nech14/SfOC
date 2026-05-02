@@ -20,7 +20,7 @@ class Img(AbstractImg):
         self.data_rayleigh = None
         self.data_index = data_index
         self.fit_format: FitsInfoAbstract = fit_format
-        self.filename: str|None = None
+        self.filename: str | None = None
 
     @property
     def data(self):
@@ -63,7 +63,7 @@ class Img(AbstractImg):
             self.data = self.data * correct_matrix
         else:
             self.data = self.data / correct_matrix
-        return  self
+        return self
 
     def rayleigh(self) -> 'Img':
         self.data_rayleigh = old_graphics.calculate_frame_Rayleigh(self.data, self.fit_format, False)
@@ -74,14 +74,15 @@ class Img(AbstractImg):
         return self
 
     def auto_contrast_version(self, auto_contrast_percentiles=tuple[2, 98]) -> list:
-        self._view_data, _, _ = auto_contrast_skimage(self.data, auto_contrast_percentiles=auto_contrast_percentiles) #Вынести в модуль!
+        self._view_data, _, _ = auto_contrast_skimage(self.data,
+                                                      auto_contrast_percentiles=auto_contrast_percentiles)  # Вынести в модуль!
         return self.view_data
 
     def save_rayleigh_matrix(self, folder: str) -> Path:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if self.filename is None or len(self.filename)==0:
+        if self.filename is None or len(self.filename) == 0:
             self.filename = self.fit_format.get_datetime()
 
         save_path = (

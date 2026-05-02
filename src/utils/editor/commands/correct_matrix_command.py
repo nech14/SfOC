@@ -15,7 +15,7 @@ class CorrectMatrixCommand(BaseCommand):
     def execute(self) -> bool:
         self.saveBackup()
 
-        print(self.corr_matrix)
+        # print(self.corr_matrix)
         corr_matrix = create_correct_matrix(2, 2048, self.corr_matrix)
 
         if self.multiplication_on_correct_matrix:

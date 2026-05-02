@@ -228,7 +228,7 @@ def get_hist_p(names_files, new_path, start_i=0, end_i=None, _zip=False, counts_
 
 
         diff = data - data1
-
+        diff[(diff >= -1000) & (diff <= 1000)] = np.nan
 
 
         min_x, max_x, min_y, max_y, min_d, max_d, max_dy = old_graphics.get_hist_p(data, data1, diff, bins)
