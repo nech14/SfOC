@@ -153,8 +153,10 @@ cython_debug/
 /data/ASI0/2023/10/11/5577_img/
 *.mp4
 /data
-/result
 /.idea
 .idea/SfOC.iml
 .idea/misc.xml
 /.idea
+/string
+/buf
+/result_old/

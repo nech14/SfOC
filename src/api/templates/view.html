@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Editor View</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <style>
+    .loader {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      z-index: 1;
+    }
+    #image-container {
+      position: relative;
+      display: inline-block;
+    }
+    #img-display {
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <div id="main">
+      <h1>Current Image</h1>
+      <div id="image-container">
+        <div id="img-loader" class="loader" style="display:none;">
+          ⏳ Loading...
+        </div>
+        <img id="img-display" src="{{ img }}" alt="Current image">
+      </div>
+
+      <h2>Data</h2>
+      <button onclick="downloadData()">📥 Скачать данные</button>
+
+      <div class="loader" id="loader" style="display:none;">⌛ Processing...</div>
+
+      <h2>Commands</h2>
+
+      <button onclick="runCommand('undo')">Undo</button>
+
+      <!-- Rayleigh (GET) -->
+      <button onclick="runCommand('rayleigh')">Rayleigh</button>
+
+      <!-- Remove Single Pixels (GET) -->
+      <button onclick="runCommand('remove_single_pixels')">Remove Single Pixels</button>
+
+      <!-- Auto Contrast -->
+      <form onsubmit="return handleFormSubmit(event, (form) => {
+          const lower = parseInt(form.lower.value);
+          const upper = parseInt(form.upper.value);
+          if (isNaN(lower) || isNaN(upper) || lower < 0 || upper > 100 || lower >= upper) {
+            alert('Введите корректные значения процентов: 0 ≤ lower < upper ≤ 100');
+            return false;
+          }
+          return { auto_contrast_percentiles: [lower, upper] };
+        }, 'auto_contrast');">
+        <input type="number" name="lower" min="0" max="100" placeholder="Lower percentile (e.g. 2)" required>
+        <input type="number" name="upper" min="0" max="100" placeholder="Upper percentile (e.g. 98)" required>
+        <button type="submit">Auto Contrast</button>
+      </form>
+
+      <!-- Cut -->
+      <form onsubmit="return handleFormSubmit(event, (form) => ({percent_to_trim: parseFloat(form.percent.value)}), 'cut');">
+        <input type="number" step="any" name="percent" placeholder="Trim % (e.g. 0.1)">
+        <button type="submit">Cut</button>
+      </form>
+
+      <!-- Установка индексов для dark -->
+      <form onsubmit="return sendDarkIndexes(event)">
+        <input type="number" name="index_start" placeholder="Start index (e.g. 0)" required>
+        <input type="number" name="index_end" placeholder="End index (e.g. 5)" required>
+        <button type="submit">Set Dark Indexes</button>
+      </form>
+
+      <!-- Dark -->
+      <form onsubmit="return handleFormSubmit(event, (form) => {
+        const names = form.names.value.trim();
+        const rootPath = form.root_path.value.trim();
+        const fileName = form.file_name.value.trim() || 'DARK';
+
+        return {
+          names: names ? names.split(',') : [],
+          root_path: rootPath || null,
+          file_name: fileName,
+          _zip: form.zip.checked,
+          fit_format: form.format.value
+        };
+      }, 'dark');">
+        <input type="text" name="names" placeholder="Names (comma separated)">
+        <input type="text" name="root_path" placeholder="Root Path">
+        <input type="text" name="file_name" placeholder="File Name (default: DARK)">
+        <label><input type="checkbox" name="zip"> ZIP</label>
+        <input type="text" name="format" placeholder="Format (e.g. simple)">
+        <button type="submit">Dark</button>
+      </form>
+
+
+      <!-- Correct Matrix -->
+      <form onsubmit="return handleFormSubmit(event, (form) => ({
+        correct_matrix: form.corr_matrix.value.trim() || null,
+        multiplication_on_correct_matrix: form.multiply.checked
+      }), 'corr_matrix');">
+        <input type="text" name="corr_matrix" placeholder="Correct matrix path or name">
+        <label><input type="checkbox" name="multiply"> Multiply with matrix</label>
+        <button type="submit">Apply Correction Matrix</button>
+      </form>
+
+
+      <!-- Save Data -->
+      <form onsubmit="return handleFormSubmit(event, (form) => ({
+        save_folder: form.folder.value,
+        name_file: form.name.value
+      }), 'save_data');">
+        <input type="text" name="folder" placeholder="Folder">
+        <input type="text" name="name" placeholder="File Name">
+        <button type="submit">Save Data</button>
+      </form>
+
+      <!-- Save Image -->
+      <form onsubmit="return handleFormSubmit(event, (form) => ({
+        save_folder: form.folder.value,
+        title: form.title.value,
+        file_name: form.file.value,
+        figsize: form.figsize.value.split(',').map(Number),
+        dpi: parseInt(form.dpi.value),
+        cmap: form.cmap.value,
+        axis: form.axis.checked ? 'on' : 'off',  // ❗ фикс
+        bbox_inches: form.bbox.value
+      }), 'save_img');">
+        <input type="text" name="folder" placeholder="Folder">
+        <input type="text" name="title" placeholder="Title">
+        <input type="text" name="file" placeholder="File Name">
+        <input type="text" name="figsize" placeholder="Figsize (e.g. 6,6)">
+        <input type="number" name="dpi" placeholder="DPI">
+        <input type="text" name="cmap" placeholder="Colormap">
+        <label><input type="checkbox" name="axis"> Show Axis</label>
+        <input type="text" name="bbox" placeholder="BBox (e.g. tight)">
+        <button type="submit">Save Image</button>
+      </form>
+
+      <!-- Select (GET) -->
+      <form onsubmit="return sendForm(event)">
+        <input type="number" id="input-param" placeholder="Index to Select">
+        <button type="submit">Select Image</button>
+      </form>
+
+      <div style="margin-top: 20px;">
+        <h3>Navigation</h3>
+        <div>
+          <button onclick="selectPrev()">◀ Назад</button>
+          <span id="frame-indicator">Кадр: ...</span>
+          <button onclick="selectNext()">Вперёд ▶</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="history">
+      <h3>History</h3>
+      <ul id="history-log"></ul>
+    </div>
+  </div>
+
+  <script src="/static/main.js"></script>
+</body>
+</html>

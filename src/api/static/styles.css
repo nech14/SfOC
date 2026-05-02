@@ -1,0 +1,12 @@
+.loader {
+  font-size: 2em;
+  animation: blink 1s infinite;
+  pointer-events: none;
+  user-select: none;
+}
+
+@keyframes blink {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
