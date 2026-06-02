@@ -1,8 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from config import DATABASE_URL
+import config
 
-engine = create_engine(DATABASE_URL, echo=True)  # echo=True выводит все SQL-запросы
+engine = create_engine(
+    config.DATABASE_URL,
+    echo=config.DATABASE_PRINT_SQL_QUERIES,
+    pool_pre_put=True,
+)
 Session = sessionmaker(bind=engine)
 session = Session()

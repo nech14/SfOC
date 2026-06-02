@@ -20,6 +20,7 @@ DATABASE_PORT = int(os.getenv("database_port", 3306))
 DATABASE_USER = os.getenv("database_user", "root")
 DATABASE_PASSWORD = os.getenv("database_password", "")
 DATABASE_NAME = os.getenv("database_name", "db")
+DATABASE_PRINT_SQL_QUERIES = os.getenv("database_print_sql_queries", "True").lower() in ()
 
 if DATABASE_PASSWORD:
     DATABASE_URL = f"mysql+pymysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_IP}:{DATABASE_PORT}/{DATABASE_NAME}"
