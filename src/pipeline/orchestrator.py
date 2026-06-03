@@ -30,6 +30,11 @@ def create_image(recipe: ImageRecipe) -> AbstractImg:
     # plt.show()
     return img
 
+def create_matrix(recipe: ImageRecipe) -> AbstractImg:
+    img = get_image(recipe)
+    img = base_operation_with_img(recipe, img)
+    return img
+
 
 def _get_hist_found_limits_with_one_image(recipe: HistRecipe, img: T) -> T:
     base_operation_with_img(recipe, img)

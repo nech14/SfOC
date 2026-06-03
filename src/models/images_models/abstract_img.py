@@ -45,6 +45,10 @@ class AbstractImg(ABC):
         pass
 
     @abstractmethod
+    def no_rayleigh(self) -> 'AbstractImg':
+        pass
+
+    @abstractmethod
     def cut(self, percent_to_trim=0.1, nan=True) -> 'AbstractImg':
         pass
 

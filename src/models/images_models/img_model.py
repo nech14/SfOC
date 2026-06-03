@@ -1,3 +1,4 @@
+import copy
 import os
 import pickle
 from datetime import datetime
@@ -13,7 +14,6 @@ from src.utils.logics.work_with_dark import subtract_noise_frame
 
 
 class Img(AbstractImg):
-
     def __init__(self, data, fit_format, data_index=None):
         self._data = data
         self._view_data = None
@@ -69,6 +69,10 @@ class Img(AbstractImg):
         self.data_rayleigh = old_graphics.calculate_frame_Rayleigh(self.data, self.fit_format, False)
         return self
 
+    def no_rayleigh(self) -> 'AbstractImg':
+        self.data_rayleigh = copy.deepcopy(self.data)
+        return self
+
     def cut(self, percent_to_trim=0.1, nan=True) -> 'Img':
         self.data = old_graphics.cut_img(self.data, percent_to_trim=percent_to_trim, nan=nan)
         return self
@@ -78,16 +82,19 @@ class Img(AbstractImg):
                                                       auto_contrast_percentiles=auto_contrast_percentiles)  # Вынести в модуль!
         return self.view_data
 
-    def save_rayleigh_matrix(self, folder: str) -> Path:
+    def save_rayleigh_matrix(self, folder: str, filename: str) -> Path:
         if not os.path.exists(folder):
             os.makedirs(folder)
 
-        if self.filename is None or len(self.filename) == 0:
-            self.filename = self.fit_format.get_datetime()
+        if filename is None or len(filename) == 0:
+            if self.filename is None or len(self.filename) == 0:
+                filename = self.fit_format.get_datetime()
+            else:
+                filename = self.filename
 
         save_path = (
             os.path.join(
-                folder, f"{self.filename}.pkl"
+                folder, f"{filename}.pkl"
             )
         )
 

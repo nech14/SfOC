@@ -22,5 +22,7 @@ def rayleigh_image(recipe: BaseRecipes, img: AbstractImg) -> None:
             LOGGER.debug(ErrorCode.START_RAYLEIGH_IMAGE, recipe)
             img.rayleigh()
             LOGGER.debug(ErrorCode.SUCCESS_RAYLEIGH_IMAGE)
+        else:
+            img.no_rayleigh()
     except Exception as e:
         LOGGER.exception(ErrorCode.ERROR_RAYLEIGH_IMAGE, e)

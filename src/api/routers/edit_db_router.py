@@ -1,21 +1,24 @@
 import asyncio
 import io
 import os
+from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from starlette.responses import StreamingResponse, FileResponse
 
 from config import API_ROOT, img_task_semaphore, running_tasks_name, running_tasks, img_executor, video_task_semaphore, \
     video_executor
 from src.api.api_tags import ApiTags
 from src.api.logic.edit_db_logic import create_video_image_db_logic, create_video_db_logic, create_image_db_logic, \
-    get_frame_by_id, create_heatmap_logic, get_dark_files_logic
+    get_frame_by_id, create_heatmap_logic, get_dark_files_logic, create_matrix_db_logic
 from src.api.requests.edit_db_request.create_heatmap_db_request import CreateHeatmapDbRequest
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest
 from src.api.requests.edit_db_request.create_image_for_video_db_request import CreateImageForVideoDbRequest
+from src.api.requests.edit_db_request.create_matrix_db_request import CreateMatrixDbRequest
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbRequest
 from src.api.requests.edit_db_request.get_dark_files_db_request import GetDarkFilesDbRequest
 from src.models.api_models.frame_edit_db_model import FrameEditDbModel
+from src.utils.common.common import delete_file
 
 router = APIRouter(prefix="/editDB", tags=[ApiTags.EditDatabase])
 
@@ -157,3 +160,27 @@ async def create_heatmap(request: CreateHeatmapDbRequest):
 
 
 
+@router.post(f"{API_ROOT}/create_matrix_db", tags=[ApiTags.EditDatabase])
+async def create_matrix(request: CreateMatrixDbRequest, background_tasks: BackgroundTasks):
+    async with img_task_semaphore:
+        loop = asyncio.get_event_loop()
+
+        task = loop.run_in_executor(img_executor, create_matrix_db_logic, request)
+        running_tasks_name.append(f"create_matrix {request}")
+        running_tasks.append(task)
+
+        task.add_done_callback(lambda t: running_tasks_name.remove(f"create_matrix {request}"))
+        task.add_done_callback(lambda t: running_tasks.remove(t))
+
+        result = await task
+
+        if isinstance(result, str):
+            result = Path(result)
+
+        background_tasks.add_task(delete_file, result)
+
+        return FileResponse(
+            path=result,
+            media_type=".pkl",
+            filename=result.name
+        )

@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from pathlib import Path
 import numpy as np
@@ -25,7 +24,7 @@ class BaseRecipes:
     files_path: list[Path] = []
     frame_number: int
     flag_info: bool = False
-    name: str|None = None
+    name: str | None = None
     cut: bool = False
     percent_to_trim: float = 0.1
     save_folder: str = "result"
@@ -43,7 +42,7 @@ class BaseRecipes:
     result_matrix_save_folder: str = None
     logfun = None
     data_index: int = None
-    file_name: str = "result1252"
+    file_name: str = "result"
     multiplication_on_correct_matrix: bool = False
     auto_contrast: bool = False
     auto_contrast_percentiles: tuple[int, int] = [2, 98]
@@ -62,7 +61,6 @@ class BaseRecipes:
             return len(self.files_path)
         return 0
 
-
     def open_correct_matrix(self):
         # self.correct_matrix = graphics.create_correct_matrix(2, 2048, self.correct_matrix_path)
         self.correct_matrix = create_correct_matrix(
@@ -70,7 +68,6 @@ class BaseRecipes:
             2,
             2048,
         )
-
 
     def open_dark(self):
         self.dark_start = get_dark_avg(
@@ -97,7 +94,6 @@ class BaseRecipes:
         else:
             return self._open_dark_one_date(need_time)
 
-
     def _open_dark_one_date(self, dt) -> tuple[DarkData, DarkData]:
         dates_np = np.array([e.time for e in self.dark_data])
         mask = (dates_np[:-1] <= dt) & (dt <= dates_np[1:])
@@ -107,10 +103,8 @@ class BaseRecipes:
         self.dart_end = self.dark_data[i + 1]
         return self.dark_start, self.dart_end
 
-
     def _open_dark_two_dates(self, dt1, dt2):
         raise NotImplementedError
-
 
     def get_dark_files(self) -> list[DarkData]:
         if len(self.dark_file_path) > 0:
@@ -127,7 +121,6 @@ class BaseRecipes:
         self.files_names = file.get_name_files(self.root_path)
         return self.files_names
 
-
     def get_path_files(self) -> list[Path]:
         if not self.files_names:
             self.get_names_files()
@@ -135,13 +128,12 @@ class BaseRecipes:
         self.files_path = [Path(self.root_path, name) for name in self.files_names]
         return self.files_path
 
-
     @classmethod
     def get_recipe_by_request(
             cls, request:
-            CreateImageRequest|CreateHeatmapRequest
-            |CreateImageForVideoRequest|CreateVideoRequest
-            |CreateImageDbRequest|BaseModel
+            CreateImageRequest | CreateHeatmapRequest
+            | CreateImageForVideoRequest | CreateVideoRequest
+            | CreateImageDbRequest | BaseModel
     ):
         if ((hasattr(request, "files_list") and hasattr(request, "data_path"))
                 and cls.__name__ in ["ImageRecipe", "VideoRecipe"]):
@@ -176,7 +168,6 @@ class BaseRecipes:
         recipe.fit_format = fits_formats[request.fit_format]
 
         return recipe
-
 
     def __str__(self) -> str:
         return get_vars_str(self)

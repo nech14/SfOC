@@ -18,9 +18,9 @@ def save_result_matrix_image(recipe: BaseRecipes, img: AbstractImg) -> Path | No
         return None
     try:
         LOGGER.debug(ErrorCode.START_SAVE_RESULT_MATRIX_IMAGE, recipe)
-        if recipe.save_folder:
-            recipe.result_matrix_safe_folder = os.path.join(recipe.save_folder, "result_matrix")
-        path = img.save_rayleigh_matrix(folder=recipe.result_matrix_safe_folder, filename=recipe.file_name)
+        if recipe.save_folder and recipe.result_matrix_save_folder is None:
+            recipe.result_matrix_save_folder = os.path.join(recipe.save_folder, "result_matrix")
+        path = img.save_rayleigh_matrix(folder=recipe.result_matrix_save_folder, filename=recipe.file_name)
         LOGGER.debug(ErrorCode.SUCCESS_SAVE_RESULT_MATRIX_IMAGE)
         return path
     except Exception as e:

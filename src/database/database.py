@@ -6,7 +6,7 @@ import config
 engine = create_engine(
     config.DATABASE_URL,
     echo=config.DATABASE_PRINT_SQL_QUERIES,
-    pool_pre_put=True,
+    pool_pre_ping=True,
 )
 Session = sessionmaker(bind=engine)
 session = Session()

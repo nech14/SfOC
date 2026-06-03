@@ -1,4 +1,5 @@
 import os
+import uuid
 from pathlib import Path
 
 from sqlalchemy import text
@@ -7,6 +8,8 @@ from src.api.requests.edit_db_request.create_heatmap_db_request import CreateHea
 from src.api.requests.edit_db_request.create_image_db_request import CreateImageDbRequest, CreateImageDbInternal
 from src.api.requests.edit_db_request.create_image_for_video_db_request import CreateImageForVideoDbInternal, \
     CreateImageForVideoDbRequest
+from src.api.requests.edit_db_request.create_matrix_db_request import CreateMatrixDbRequest, \
+    CreateMatrixDbRequestInternal
 from src.api.requests.edit_db_request.create_video_db_request import CreateVideoDbInternal, CreateVideoDbRequest
 from src.api.requests.edit_db_request.get_dark_files_db_request import GetDarkFilesDbRequest
 from src.database.database import Session
@@ -89,7 +92,6 @@ def get_frames_by_night_filter(id_night: int, id_filter: int) -> list[Frames]:
 
 
 def get_dark_files_logic(request: GetDarkFilesDbRequest) -> Path:
-
     dark_path = [path.dest for path in get_dark_frames(request.id_night)]
     fit_format = fits_formats[request.fit_format]
     dark_data = get_dark_by_path(dark_path, request.zipped_file, fit_format)
@@ -119,7 +121,8 @@ def create_heatmap_logic(request: CreateHeatmapDbRequest):
     recipe = HeatmapRecipe.get_recipe_by_request(req)
     if req.dark:
         recipe.dark_file_path = [path.dest for path in get_dark_frames(req.id_night)]
-    print_vars(recipe)
+    if request.flag_info:
+        print_vars(recipe)
     orchestrator.create_heatmap(recipe)
 
     return os.path.join(request.save_folder, f'{request.file_name}.png')
@@ -139,7 +142,6 @@ def create_video_db_logic(request: CreateVideoDbRequest):
     if req.dark:
         recipe.dark_file_path = [path.dest for path in get_dark_frames(req.id_night)]
 
-
     return orchestrator.create_video(recipe)
 
 
@@ -156,28 +158,52 @@ def create_video_image_db_logic(request: CreateImageForVideoDbRequest):
     if req.dark:
         recipe.dark_file_path = [path.dest for path in get_dark_frames(req.id_night)]
 
-    print_vars(recipe)
+    if request.flag_info:
+        print_vars(recipe)
     orchestrator.create_image_for_video(recipe, req.frame_number)
 
-
-    return  os.path.join(request.save_folder, f'{request.file_name}.png')
+    return os.path.join(request.save_folder, f'{request.file_name}.png')
 
 
 def create_image_db_logic(request: CreateImageDbRequest):
-
-    frameModel = get_frame_by_id(request.frameId)
+    frame_model = get_frame_by_id(request.frameId)
     req = CreateImageDbInternal(**request.model_dump())
-    req.files_path = [Path(frameModel.framePath)]
+    req.files_path = [Path(frame_model.framePath)]
     req.frame_number = 0
-    req.correct_matrix_path = Path(frameModel.matrixFolder, frameModel.matrixName)
+    req.correct_matrix_path = Path(frame_model.matrixFolder, frame_model.matrixName)
 
     recipe = ImageRecipe.get_recipe_by_request(req)
     if req.dark:
-        recipe.dark_file_path = [path.dest for path in get_dark_frames(frameModel.id_night)]
+        recipe.dark_file_path = [path.dest for path in get_dark_frames(frame_model.id_night)]
 
-    print_vars(recipe)
+    if request.flag_info:
+        print_vars(recipe)
+
     orchestrator.create_image(recipe)
 
     return os.path.join(req.save_folder, f'{req.file_name}.png')
 
 
+def create_matrix_db_logic(request: CreateMatrixDbRequest):
+    frame_model = get_frame_by_id(request.frameId)
+
+    req = CreateMatrixDbRequestInternal(**request.model_dump())
+    req.files_path = [Path(frame_model.framePath)]
+    req.frame_number = 0
+    req.correct_matrix_path = Path(frame_model.matrixFolder, frame_model.matrixName)
+    req.file_name = f"{uuid.uuid4()}_{request.frameId}"
+
+    recipe = ImageRecipe.get_recipe_by_request(req)
+    if req.dark:
+        recipe.dark_file_path = [path.dest for path in get_dark_frames(frame_model.id_night)]
+
+    if request.flag_info:
+        print_vars(recipe)
+
+    orchestrator.create_matrix(recipe)
+
+    path = f"{recipe.save_folder}/{req.file_name}.pkl"
+
+    return path
+
+    # return r"C:\work\search_for_oxide_cloud\SfOC\buf12\result_matrix\buf12.pkl"
