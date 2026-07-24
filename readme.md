@@ -158,10 +158,4 @@ GET /database/frames
 - Matplotlib
 - Astropy
 
----
-
-## 📄 Лицензия
-
-MIT
-
 
